@@ -1,0 +1,238 @@
+﻿
+> startup_log_utf8.txt:1:[
+INFO] Error stacktraces 
+are turned on.
+  startup_log_utf8.txt:2:[
+INFO] Scanning for 
+projects...
+  startup_log_utf8.txt:3:[
+INFO] 
+  startup_log_utf8.txt:56:
+2026-03-10T15:27:06.380+05
+:30  INFO 24236 --- 
+[safeline] [           
+main] j.LocalContainerEnti
+tyManagerFactoryBean : 
+Initialized JPA 
+EntityManagerFactory for 
+persistence unit 'default'
+  startup_log_utf8.txt:57:
+2026-03-10T15:27:06.795+05
+:30  WARN 24236 --- 
+[safeline] [           
+main] JpaBaseConfiguration
+$JpaWebConfiguration : 
+spring.jpa.open-in-view 
+is enabled by default. 
+Therefore, database 
+queries may be performed 
+during view rendering. 
+Explicitly configure 
+spring.jpa.open-in-view 
+to disable this warning
+> startup_log_utf8.txt:58:
+2026-03-10T15:27:06.973+05
+:30  INFO 24236 --- 
+[safeline] [           
+main] o.s.s.web.DefaultSec
+urityFilterChain     : 
+Will secure any request 
+with [org.springframework.
+security.web.session.Disab
+leEncodeUrlFilter@7e8f97dd
+, org.springframework.secu
+rity.web.context.request.a
+sync.WebAsyncManagerIntegr
+ationFilter@183435c0, org.
+springframework.security.w
+eb.context.SecurityContext
+HolderFilter@21ebf9be, org
+.springframework.security.
+web.header.HeaderWriterFil
+ter@25031fd4, org.springfr
+amework.web.filter.CorsFil
+ter@69862a1, org.springfra
+mework.security.web.authen
+tication.logout.LogoutFilt
+er@27244a88, com.safeline.
+safeline.security.JwtAuthF
+ilter@7f3a92fd, org.spring
+framework.security.web.sav
+edrequest.RequestCacheAwar
+eFilter@7860a014, org.spri
+ngframework.security.web.s
+ervletapi.SecurityContextH
+olderAwareRequestFilter@86
+e8469, org.springframework
+.security.web.authenticati
+on.AnonymousAuthentication
+Filter@585718dd, org.sprin
+gframework.security.web.se
+ssion.SessionManagementFil
+ter@5f5076f9, org.springfr
+amework.security.web.acces
+s.ExceptionTranslationFilt
+er@51d41b97, org.springfra
+mework.security.web.access
+.intercept.AuthorizationFi
+lter@d426e01]
+> startup_log_utf8.txt:59:
+2026-03-10T15:27:07.130+05
+:30  WARN 24236 --- 
+[safeline] [           
+main] ConfigServletWebServ
+erApplicationContext : 
+Exception encountered 
+during context 
+initialization - 
+cancelling refresh 
+attempt: org.springframewo
+rk.context.ApplicationCont
+extException: Failed to 
+start bean 
+'webServerStartStop'
+  startup_log_utf8.txt:60:
+2026-03-10T15:27:07.131+05
+:30  INFO 24236 --- 
+[safeline] [           
+main] j.LocalContainerEnti
+tyManagerFactoryBean : 
+Closing JPA 
+EntityManagerFactory for 
+persistence unit 'default'
+  startup_log_utf8.txt:61:
+2026-03-10T15:27:07.132+05
+:30  INFO 24236 --- 
+[safeline] [           
+main] com.zaxxer.hikari.Hi
+kariDataSource       : 
+HikariPool-1 - Shutdown 
+initiated...
+  startup_log_utf8.txt:63:
+2026-03-10T15:27:07.143+05
+:30  INFO 24236 --- 
+[safeline] [           
+main] .s.b.a.l.ConditionEv
+aluationReportLogger : 
+  startup_log_utf8.txt:64:
+> startup_log_utf8.txt:65:
+Error starting 
+ApplicationContext. To 
+display the condition 
+evaluation report re-run 
+your application with 
+'debug' enabled.
+> startup_log_utf8.txt:66:
+2026-03-10T15:27:07.152+05
+:30 ERROR 24236 --- 
+[safeline] [           
+main] o.s.b.d.LoggingFailu
+reAnalysisReporter   : 
+  startup_log_utf8.txt:67:
+  startup_log_utf8.txt:68:
+**************************
+*
+  startup_log_utf8.txt:84:
+[INFO] Finished at: 
+2026-03-10T15:27:07+05:30
+  startup_log_utf8.txt:85:
+[INFO] -------------------
+--------------------------
+--------------------------
+-
+> startup_log_utf8.txt:86:
+[ERROR] Failed to execute 
+goal org.springframework.b
+oot:spring-boot-maven-plug
+in:3.2.3:run 
+(default-cli) on project 
+safeline: Process 
+terminated with exit 
+code: 1 -> [Help 1]
+> startup_log_utf8.txt:87:
+org.apache.maven.lifecycle
+.LifecycleExecutionExcepti
+on: Failed to execute 
+goal org.springframework.b
+oot:spring-boot-maven-plug
+in:3.2.3:run 
+(default-cli) on project 
+safeline: Process 
+terminated with exit 
+code: 1
+  
+startup_log_utf8.txt:88:  
+  at org.apache.maven.life
+cycle.internal.MojoExecuto
+r.doExecute2 
+(MojoExecutor.java:333)
+  
+startup_log_utf8.txt:89:  
+  at org.apache.maven.life
+cycle.internal.MojoExecuto
+r.doExecute 
+(MojoExecutor.java:316)
+  
+startup_log_utf8.txt:112: 
+   at org.codehaus.plexus.
+classworlds.launcher.Launc
+her.mainWithExitCode 
+(Launcher.java:407)
+  
+startup_log_utf8.txt:113: 
+   at org.codehaus.plexus.
+classworlds.launcher.Launc
+her.main 
+(Launcher.java:348)
+> startup_log_utf8.txt:114
+:Caused by: org.apache.mav
+en.plugin.MojoExecutionExc
+eption: Process 
+terminated with exit 
+code: 1
+  
+startup_log_utf8.txt:115: 
+   at org.springframework.
+boot.maven.JavaProcessExec
+utor.run (JavaProcessExecu
+tor.java:74)
+  
+startup_log_utf8.txt:116: 
+   at org.springframework.
+boot.maven.RunMojo.run 
+(RunMojo.java:76)
+  
+startup_log_utf8.txt:144: 
+   at org.codehaus.plexus.
+classworlds.launcher.Launc
+her.mainWithExitCode 
+(Launcher.java:407)
+  
+startup_log_utf8.txt:145: 
+   at org.codehaus.plexus.
+classworlds.launcher.Launc
+her.main 
+(Launcher.java:348)
+> startup_log_utf8.txt:146
+:[ERROR] 
+> startup_log_utf8.txt:147
+:[ERROR] Re-run Maven 
+using the -X switch to 
+enable full debug logging.
+> startup_log_utf8.txt:148
+:[ERROR] 
+> startup_log_utf8.txt:149
+:[ERROR] For more 
+information about the 
+errors and possible 
+solutions, please read 
+the following articles:
+> startup_log_utf8.txt:150
+:[ERROR] [Help 1] http://c
+wiki.apache.org/confluence
+/display/MAVEN/MojoExecuti
+onException
+  
+startup_log_utf8.txt:151:
+
+

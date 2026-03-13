@@ -1,0 +1,332 @@
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
+import Card from '../../components/ui/Card';
+import Stat from '../../components/ui/Stat';
+import {
+  FileText, Clock, CheckCircle, Users, UserPlus, X, MessageSquare, ChevronRight, Filter, ShieldCheck
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import MessageBoard from '../../components/ui/MessageBoard';
+import Badge from '../../components/ui/Badge';
+
+// Modular Components
+import AddUserModal from '../../components/dashboard/AddUserModal';
+import ComplaintTable from '../../components/dashboard/ComplaintTable';
+import TriageModal from '../../components/dashboard/TriageModal';
+import { useAuth } from '../../context/AuthContext';
+
+const OrgAdminDashboard = () => {
+  const { user } = useAuth();
+  const [complaints, setComplaints] = useState([]);
+  const [investigators, setInvestigators] = useState([]);
+  const [allTeam, setAllTeam] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [stats, setStats] = useState({ total: 0, pending: 0, resolved: 0 });
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [triageComplaint, setTriageComplaint] = useState(null);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('ALL');
+
+  const tenantDomain = localStorage.getItem('tenantDomain') || 'Organization';
+
+  useEffect(() => {
+    fetchData();
+    fetchTeamData();
+  }, [page, filterStatus]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const endpoint = filterStatus === 'ALL'
+        ? `/complaints/all?page=${page}&size=10`
+        : `/complaints/all?status=${filterStatus}&page=${page}&size=10`;
+      const resp = await api.get(endpoint);
+      setComplaints(resp.data.content || []);
+      setTotalPages(resp.data.totalPages || 0);
+
+      const all = resp.data.content || [];
+      const pending = all.filter(c => c.status !== 'RESOLVED' && c.status !== 'CLOSED').length;
+      setStats({ total: resp.data.totalElements || 0, pending, resolved: (resp.data.totalElements || 0) - pending });
+    } catch (err) {
+      console.error('Failed to fetch org complaints', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTeamData = async () => {
+    try {
+      const [invResp, allResp] = await Promise.all([
+        api.get('/admin/users/investigators'),
+        api.get('/admin/users/all')
+      ]);
+      setInvestigators(invResp.data);
+      setAllTeam(allResp.data);
+    } catch (err) {
+      console.error('Failed to load team data');
+    }
+  };
+
+  const handleUpdateStatus = async (id, status) => {
+    try {
+      await api.put(`/complaints/${id}/status?status=${status}`);
+      fetchData();
+    } catch (err) { alert('Failed to update status'); }
+  };
+
+  const handleAssign = async (complaintId, investigatorId) => {
+    try {
+      await api.put(`/complaints/${complaintId}/assign?investigatorId=${investigatorId}`);
+      fetchData();
+    } catch (err) { alert('Failed to assign investigator'); }
+  };
+
+  const handleTriage = async (id, data) => {
+    try {
+      await api.put(`/complaints/${id}/triage?priority=${data.priority}&classification=${data.classification}${data.status ? `&status=${data.status}` : ''}`);
+      fetchData();
+    } catch (err) {
+      alert('Failed to update triage details');
+    }
+  };
+
+  const handleSaveUser = async (formData) => {
+    try {
+      await api.post('/admin/users', { ...formData });
+      fetchTeamData();
+    } catch (err) {
+      alert('Failed to enroll member');
+    }
+  };
+
+  const userRole = user?.role || 'STAFF';
+
+  const getDashboardTitle = () => {
+    switch(userRole) {
+      case 'ORG_ADMIN': return 'Executive Hub';
+      case 'INTAKE_OFFICER': return 'Fleet Operations';
+      case 'EXECUTIVE': return 'Executive Suite';
+      case 'HR_MANAGER': return 'Personnel Hub';
+      case 'COMPLIANCE_OFFICER': return 'Protocol Hub';
+      default: return 'Fleet Operational';
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  return (
+    <div className="space-y-8">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-1">{getDashboardTitle()}</h1>
+          <p className="text-text-secondary text-sm font-medium">
+            Management console for <span className="text-primary font-semibold">{tenantDomain}</span>
+          </p>
+        </div>
+        {userRole === 'ORG_ADMIN' && (
+          <button className="btn btn-primary" onClick={() => setShowAddUser(true)}>
+            <UserPlus size={18} />
+            <span>Add Team Member</span>
+          </button>
+        )}
+      </header>
+
+      <div className="metrics-grid">
+        <Stat label="Total Reports" value={stats.total} icon={FileText} color="#5e6ad2" />
+        <Stat label="Active Cases" value={stats.pending} icon={Clock} color="#facc15" />
+        <Stat label="Resolved Cases" value={stats.resolved} icon={CheckCircle} color="#4ade80" />
+        <Stat label="Team Members" value={allTeam.length} icon={Users} color="#5e6ad2" />
+      </div>
+
+      <motion.div variants={itemVariants}>
+        <Card 
+          title="Case Management" 
+          subtitle="Real-time listing of all organization-wide concerns and reports"
+        >
+          <div className="overflow-x-auto -mx-8">
+            <div className="px-8">
+              <ComplaintTable 
+                complaints={complaints}
+                investigators={investigators}
+                loading={loading}
+                page={page}
+                totalPages={totalPages}
+                filterStatus={filterStatus}
+                onAssign={handleAssign}
+                onUpdateStatus={handleUpdateStatus}
+                onPageChange={setPage}
+                onFilterChange={(s) => { setFilterStatus(s); setPage(0); }}
+                onViewDetails={setSelectedComplaint}
+                onTriage={setTriageComplaint}
+                userRole={userRole}
+                showAssignment={userRole === 'ORG_ADMIN'}
+              />
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+
+      {userRole === 'ORG_ADMIN' && (
+        <motion.div variants={itemVariants}>
+          <Card title="Team Directory" subtitle="Investigators and department staff">
+            <div className="overflow-x-auto -mx-8">
+              <table className="w-full text-left">
+                <thead className="border-b border-white/5 bg-white/5">
+                  <tr>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Username</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Email Authority</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted text-right">Access Protocol</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {allTeam.length === 0 ? (
+                    <tr><td colSpan="3" className="px-8 py-10 text-center text-text-muted font-bold">No team members enrolled yet.</td></tr>
+                  ) : allTeam.map(inv => (
+                    <tr key={inv.id} className="hover:bg-white/5 transition-colors group">
+                      <td className="px-8 py-5 text-sm font-bold text-white uppercase tracking-tight">{inv.username}</td>
+                      <td className="px-8 py-5 text-sm text-text-muted font-medium">{inv.email}</td>
+                      <td className="px-8 py-5 text-right">
+                        <span className="px-3 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase">
+                          {inv.role.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
+      <AddUserModal 
+        isOpen={showAddUser}
+        onClose={() => setShowAddUser(false)}
+        onSave={handleSaveUser}
+      />
+
+      <TriageModal 
+        isOpen={!!triageComplaint}
+        onClose={() => setTriageComplaint(null)}
+        complaint={triageComplaint}
+        onTriage={handleTriage}
+      />
+
+      <AnimatePresence>
+        {selectedComplaint && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedComplaint(null)}
+              className="absolute inset-0 bg-bg-primary/90 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-card relative w-full h-full max-w-6xl max-h-[85vh] overflow-hidden flex flex-col"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-hover" />
+              <div className="h-16 px-8 flex items-center justify-between border-b border-white/5 bg-white/5">
+                <div className="flex items-center gap-3">
+                   <Badge variant={getStatusVariant(selectedComplaint.status)}>{selectedComplaint.status}</Badge>
+                   <span className="text-[10px] font-bold text-text-muted tracking-widest">{selectedComplaint.trackingId}</span>
+                </div>
+                <button onClick={() => setSelectedComplaint(null)} className="p-2 rounded-xl hover:bg-white/5 text-text-muted transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 flex min-h-0">
+                <div className="flex-[0.8] p-10 border-r border-white/5 overflow-y-auto custom-scrollbar">
+                  <div className="mb-10">
+                    <h3 className="text-2xl font-black text-white leading-tight mb-4">{selectedComplaint.title}</h3>
+                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                      <p className="text-text-muted font-medium leading-relaxed italic">"{selectedComplaint.description}"</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Category</p>
+                      <p className="font-bold text-white">{selectedComplaint.categoryName || 'General'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Classification</p>
+                      <p className="font-bold text-primary">{selectedComplaint.classification?.replace(/_/g, ' ') || 'GENERAL'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Priority</p>
+                      <Badge variant={getPriorityVariant(selectedComplaint.priority)}>{selectedComplaint.priority || 'NORMAL'}</Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Received</p>
+                      <p className="font-bold text-white">{new Date(selectedComplaint.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-[1.2] flex flex-col min-h-0">
+                  { (userRole !== 'INTAKE_OFFICER' && userRole !== 'EXECUTIVE') ? (
+                    <div className="flex-1 min-h-0 flex flex-col">
+                      <div className="p-6 border-b border-white/5 bg-white/5 flex items-center gap-2">
+                        <MessageSquare size={16} className="text-primary" />
+                        <span className="text-xs font-black uppercase tracking-widest text-white">Investigation Log</span>
+                      </div>
+                      <div className="flex-1 min-h-0">
+                        <MessageBoard complaintId={selectedComplaint.id} isStaff={true} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-text-muted bg-white/5 p-12">
+                      <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                        <ShieldCheck size={32} opacity={0.2} />
+                      </div>
+                      <h4 className="font-bold text-white mb-2">Restricted Access</h4>
+                      <p className="text-sm text-center font-medium max-w-xs">Chat and investigation details are currently restricted for your access level.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const getStatusVariant = (status) => {
+  switch (status) {
+    case 'RESOLVED': case 'CLOSED': return 'success';
+    case 'SUBMITTED': case 'TRIAGED': return 'warning';
+    case 'INVESTIGATION': case 'ASSIGNED': return 'primary';
+    case 'REOPENED': return 'danger';
+    default: return 'warning';
+  }
+};
+
+const getPriorityVariant = (priority) => {
+  switch (priority) {
+    case 'CRITICAL':
+    case 'URGENT': return 'danger';
+    case 'HIGH': return 'warning';
+    case 'NORMAL': return 'primary';
+    case 'LOW': return 'secondary';
+    default: return 'secondary';
+  }
+};
+
+export default OrgAdminDashboard;
