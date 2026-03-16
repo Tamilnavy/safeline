@@ -48,25 +48,25 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="flex bg-bg-primary min-h-screen">
+    <div className="flex bg-[#f8fafc] min-h-screen">
       {/* Sidebar */}
       <motion.aside 
         initial={false}
-        animate={{ width: sidebarOpen ? 240 : 72 }}
-        className="sidebar-bg border-r border-border-subtle flex flex-col z-50 sticky top-0 h-screen transition-all duration-200"
+        animate={{ width: sidebarOpen ? 256 : 80 }}
+        className="sidebar-bg z-50 sticky top-0 h-screen transition-all shadow-sm"
       >
         <div className="h-16 px-6 flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-8 h-8 rounded-lg bg-primary flex-shrink-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex-shrink-0 flex items-center justify-center shadow-sm">
               <Shield className="text-white" size={18} />
             </div>
             {sidebarOpen && (
-              <span className="font-bold text-lg text-text-primary tracking-tight">SafeLine</span>
+              <span className="font-bold text-lg text-slate-900 tracking-tight">SafeLine</span>
             )}
           </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-4 py-6 space-y-1.5">
           {filteredMenu.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -85,10 +85,10 @@ const DashboardLayout = () => {
           })}
         </nav>
 
-        <div className="p-3 border-t border-border-subtle">
+        <div className="p-4 border-t border-slate-100">
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-danger hover:bg-danger/10 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
           >
             <LogOut size={18} />
             {sidebarOpen && <span>Sign Out</span>}
@@ -98,17 +98,17 @@ const DashboardLayout = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen min-w-0">
-        <header className="h-16 flex items-center justify-between px-8 border-b border-border-subtle sticky top-0 z-40 bg-bg-primary/80 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-sm text-text-secondary">
+        <header className="h-16 flex items-center justify-between px-8 border-b border-slate-200 sticky top-0 z-40 bg-white/80 backdrop-blur-md">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1.5 -ml-2 rounded-md hover:bg-white/5 transition-colors mr-2"
+              className="p-1.5 -ml-2 rounded-lg hover:bg-slate-100 transition-colors mr-2"
             >
               <Menu size={18} />
             </button>
-            <span>Dashboard</span>
+            <span className="font-medium">Dashboard</span>
             <ChevronRight size={14} className="opacity-40" />
-            <span className="text-text-primary font-medium">
+            <span className="text-slate-900 font-semibold">
               {location.pathname.split('/').pop()?.replace(/-/g, ' ') || 'Overview'}
             </span>
           </div>
@@ -116,17 +116,17 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-semibold text-text-primary leading-tight">{user.username}</p>
-                <p className="text-[10px] text-text-secondary font-medium tracking-wide uppercase">{user.role?.replace(/_/g, ' ')}</p>
+                <p className="text-sm font-semibold text-slate-900 leading-tight">{user.username}</p>
+                <p className="text-[10px] text-slate-500 font-bold tracking-wider uppercase">{user.role?.replace(/_/g, ' ')}</p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-bg-surface border border-border-subtle flex items-center justify-center group-hover:border-primary transition-colors">
-                <User size={16} className="text-text-secondary group-hover:text-primary transition-colors" />
+              <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center group-hover:border-indigo-500 transition-colors shadow-sm">
+                <User size={18} className="text-slate-600 group-hover:text-indigo-600 transition-colors" />
               </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto main-scroll-area">
+        <main className="flex-1 main-scroll-area">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -138,8 +138,8 @@ const DashboardLayout = () => {
               <Route path="/assigned" element={<InvestigatorDashboard />} />
               <Route path="/org" element={<OrgAdminDashboard />} />
               <Route path="/registry" element={<SuperAdminDashboard />} />
-              <Route path="/logs" element={<div className="card text-center p-20 text-text-secondary">Access Restricted</div>} />
-              <Route path="/messages" element={<div className="card text-center p-20 text-text-secondary">Messaging Module Syncing...</div>} />
+              <Route path="/logs" element={<div className="card text-center py-20 text-slate-500">Access Restricted</div>} />
+              <Route path="/messages" element={<div className="card text-center py-20 text-slate-500">Messaging Module Syncing...</div>} />
             </Routes>
           </motion.div>
         </main>

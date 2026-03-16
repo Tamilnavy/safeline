@@ -1,25 +1,27 @@
 import { motion } from 'framer-motion';
 
-const Stat = ({ label, value, icon: Icon, trend, color = 'var(--primary)' }) => (
+const Stat = ({ label, value, icon: Icon, trend }) => (
   <motion.div 
     whileHover={{ y: -2 }}
-    className="bg-bg-surface border border-border-subtle rounded-lg p-5 flex flex-col gap-4 hover:border-border-interactive transition-colors shadow-sm"
+    className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-md transition-all"
   >
     <div className="flex items-center justify-between">
-      <div className="p-2 rounded-md bg-white/5 border border-white/5" style={{ color }}>
+      <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm">
         {Icon && <Icon size={20} />}
       </div>
       {trend && (
-        <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-          trend > 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+        <div className={`text-xs font-bold px-2.5 py-1 rounded-full border shadow-sm ${
+          trend > 0 
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+            : 'bg-rose-50 text-rose-700 border-rose-100'
         }`}>
           {trend > 0 ? '+' : ''}{trend}%
         </div>
       )}
     </div>
     <div>
-      <p className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-bold text-text-primary tracking-tight">{value}</p>
+      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-2xl font-bold text-slate-900 tracking-tight">{value}</p>
     </div>
   </motion.div>
 );

@@ -34,37 +34,44 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen relative bg-bg-primary overflow-hidden">
-      <div className="container relative pt-32 pb-24 px-6 mx-auto">
+    <div className="min-h-screen relative bg-slate-50 overflow-hidden">
+      <div className="container relative pt-32 pb-24 px-6 mx-auto max-w-7xl">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
-          className="max-w-3xl mx-auto text-center mb-32"
+          className="max-w-4xl mx-auto text-center mb-32"
         >
-          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 mb-8">
-            <Globe size={14} className="text-primary" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Next-Gen Incident Management</span>
+          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 mb-10 shadow-sm">
+            <Globe size={16} className="text-indigo-600" />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-700">Next-Gen Incident Management</span>
           </motion.div>
 
           <motion.h1
             variants={itemVariants}
-            className="text-5xl md:text-6xl font-bold text-text-primary tracking-tight mb-6 leading-[1.1]"
+            className="text-6xl md:text-7xl font-bold text-slate-900 tracking-tight mb-8 leading-[1.05]"
           >
             Safe & Anonymous <br />
-            Internal Reporting.
+            <span className="text-indigo-600">Internal Reporting.</span>
           </motion.h1>
 
-          <motion.p variants={itemVariants} className="text-text-secondary mb-10 max-w-2xl mx-auto text-lg font-medium leading-relaxed">
-            SafeLine provides a secure gateway for employees to report concerns with <span className="text-text-primary">guaranteed anonymity</span> and enterprise-grade encryption.
+          <motion.p variants={itemVariants} className="text-slate-500 mb-12 max-w-2xl mx-auto text-xl font-medium leading-relaxed">
+            SafeLine provides a secure gateway for employees to report concerns with <span className="text-slate-900 font-bold underline decoration-indigo-500/30 underline-offset-4">guaranteed anonymity</span> and enterprise-grade encryption.
           </motion.p>
 
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button onClick={() => navigate('/submit')} className="btn btn-primary px-10 py-3.5 text-base font-bold shadow-lg shadow-primary/20 group">
-              File a Report <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+          <motion.div variants={itemVariants} className="flex flex-col sm:row gap-6 justify-center">
+            <button 
+              onClick={() => navigate('/submit')} 
+              className="px-10 h-14 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold rounded-2xl shadow-xl shadow-indigo-600/20 transition-all flex items-center justify-center gap-3 group"
+            >
+              <span>File a Report</span> 
+              <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
             </button>
-            <button onClick={() => navigate('/track')} className="btn btn-secondary px-10 py-3.5 text-base font-bold bg-bg-surface border border-border-subtle hover:border-text-secondary transition-all">
+            <button 
+              onClick={() => navigate('/track')} 
+              className="px-10 h-14 bg-white hover:bg-slate-50 text-slate-900 text-lg font-bold rounded-2xl border border-slate-200 shadow-sm transition-all"
+            >
               Track Incident
             </button>
           </motion.div>
@@ -75,22 +82,22 @@ const Home = () => {
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
           <FeatureCard
-            icon={<Lock className="text-primary" size={24} />}
+            icon={<Lock className="text-indigo-600" size={28} />}
             title="E2E Encryption"
             description="Reports are encrypted in-browser before transmission, ensuring 100% data privacy."
             variants={itemVariants}
           />
           <FeatureCard
-            icon={<Zap className="text-primary" size={24} />}
+            icon={<Zap className="text-indigo-600" size={28} />}
             title="Instant Tracking"
             description="Follow case progress in real-time using a unique, secure anonymous key."
             variants={itemVariants}
           />
           <FeatureCard
-            icon={<ShieldCheck className="text-primary" size={24} />}
+            icon={<ShieldCheck className="text-indigo-600" size={28} />}
             title="Verified Anonymity"
             description="Zero IP tracking or device metadata storage. Your reporting is completely unlinkable."
             variants={itemVariants}
@@ -104,13 +111,13 @@ const Home = () => {
 const FeatureCard = ({ icon, title, description, variants }) => (
   <motion.div
     variants={variants}
-    className="card group hover:scale-[1.02] transition-all"
+    className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 group hover:scale-[1.02] hover:shadow-2xl hover:shadow-indigo-600/5 transition-all duration-300"
   >
-    <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-center mb-6 group-hover:bg-primary/10 transition-colors">
+    <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-8 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
       {icon}
     </div>
-    <h3 className="text-lg font-bold text-text-primary mb-3">{title}</h3>
-    <p className="text-sm text-text-secondary leading-relaxed font-medium">
+    <h3 className="text-xl font-bold text-slate-900 mb-4">{title}</h3>
+    <p className="text-sm text-slate-500 leading-relaxed font-medium">
       {description}
     </p>
   </motion.div>

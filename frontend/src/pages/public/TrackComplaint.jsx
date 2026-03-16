@@ -58,31 +58,31 @@ const TrackComplaint = () => {
 
   if (!complaint) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg-primary">
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="card w-full max-w-px-380 border border-border-subtle shadow-xl bg-bg-surface p-8 md:p-10"
+          className="bg-white w-full max-w-md p-10 rounded-3xl shadow-2xl shadow-slate-200 border border-slate-100"
         >
-          <div className="flex flex-col items-center mb-8 text-center">
+          <div className="flex flex-col items-center mb-10 text-center">
             <motion.div 
               whileHover={{ rotate: 10, scale: 1.1 }}
-              className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/20 cursor-pointer"
+              className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center mb-6 shadow-xl shadow-indigo-600/30 cursor-pointer"
             >
-              <Search className="text-white" size={24} />
+              <Search className="text-white" size={28} />
             </motion.div>
-            <h2 className="text-2xl font-bold text-text-primary tracking-tight">Track Case</h2>
-            <p className="text-text-secondary text-sm font-medium mt-1">Monitor your submission in real-time</p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Track Case</h2>
+            <p className="text-slate-500 text-sm font-medium mt-2">Monitor your submission in real-time</p>
           </div>
 
-          <form onSubmit={handleTrack} className="space-y-5">
-            <div>
-              <label className="text-xs font-semibold text-text-secondary mb-1.5 block">Access Identifier</label>
+          <form onSubmit={handleTrack} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Access Identifier</label>
               <div className="relative group">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" />
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input 
                   type="text" 
-                  className="input-field pl-10 font-mono uppercase tracking-wider" 
+                  className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 placeholder:text-slate-400 font-mono uppercase tracking-widest" 
                   placeholder="CMP-XXXXXXXX" 
                   value={trackingId} 
                   onChange={(e) => setTrackingId(e.target.value.toUpperCase())} 
@@ -91,13 +91,13 @@ const TrackComplaint = () => {
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-text-secondary mb-1.5 block">Secure PIN</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Secure PIN</label>
               <div className="relative group">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input 
                   type="password" 
-                  className="input-field pl-10 tracking-widest" 
+                  className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 placeholder:text-slate-400 tracking-widest" 
                   placeholder="••••••" 
                   value={pin} 
                   onChange={(e) => setPin(e.target.value)} 
@@ -112,7 +112,7 @@ const TrackComplaint = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-[11px] font-bold text-center"
+                  className="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold text-center"
                 >
                   {error}
                 </motion.div>
@@ -123,18 +123,18 @@ const TrackComplaint = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit" 
-              className="btn btn-primary w-full py-3 text-sm font-bold shadow-md shadow-primary/20 mt-2" 
+              className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 group mt-2" 
               disabled={loading}
             >
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                   <span>Authenticating...</span>
                 </div>
               ) : (
                 <>
                   <span>Initialize Dashboard</span>
-                  <ArrowRight size={16} className="ml-1" />
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
             </motion.button>
@@ -145,20 +145,18 @@ const TrackComplaint = () => {
   }
 
   return (
-    <div className="relative min-h-screen py-12">
-      <div className="bg-mesh" />
-      
-      <div className="container relative">
+    <div className="min-h-screen py-12 bg-slate-50">
+      <div className="container max-w-7xl mx-auto px-6">
         <motion.button 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={() => setComplaint(null)} 
-          className="btn btn-ghost !px-1 mb-6 group opacity-60 hover:opacity-100"
+          className="flex items-center gap-2 mb-8 group"
         >
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-            <ChevronLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" /> 
-            Back to Triage
+          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-all shadow-sm">
+            <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
           </div>
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">Back to Triage</span>
         </motion.button>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -168,30 +166,30 @@ const TrackComplaint = () => {
             animate={{ opacity: 1, y: 0 }}
             className="lg:col-span-8 space-y-8"
           >
-            <div className="glass-card !p-6">
-              <div className="flex flex-wrap justify-between items-start gap-4 mb-6 pb-6 border-b border-white/5">
+            <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+              <div className="flex flex-wrap justify-between items-start gap-4 mb-8 pb-8 border-b border-slate-100">
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="px-2 py-0.5 rounded bg-primary/5 border border-primary/20 flex items-center gap-1.5">
-                      <div className="w-1 h-1 rounded-full bg-primary heartbeat shadow-[0_0_8px_var(--primary-glow)]" />
-                      <span className="text-[9px] font-black uppercase tracking-widest text-primary">{complaint.status}</span>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">{complaint.status}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-text-muted bg-white/5 px-2 py-0.5 rounded opacity-60 tracking-wider font-bold">{complaint.trackingId}</span>
+                    <span className="text-[11px] font-mono font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100 tracking-wider">#{complaint.trackingId}</span>
                   </div>
-                  <h1 className="text-xl font-black text-white tracking-tight uppercase leading-tight">{complaint.title}</h1>
-                  <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mt-1.5 opacity-40">Incident monitoring console</p>
+                  <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">{complaint.title}</h1>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Incident monitoring console</p>
                 </div>
               </div>
 
-              <div className="p-5 rounded-lg bg-bg-secondary border border-white/5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <FileText size={40} />
+              <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-100 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <FileText size={48} />
                 </div>
-                <p className="text-xs text-text-secondary leading-relaxed relative z-10 font-bold opacity-80">{complaint.description}</p>
+                <p className="text-sm text-slate-600 font-medium leading-relaxed relative z-10">{complaint.description}</p>
               </div>
             </div>
 
-            <div className="glass-card !p-0 overflow-hidden h-[600px]">
+            <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden h-[600px]">
               <MessageBoard 
                 complaintId={complaint.id} 
                 trackingId={complaint.trackingId} 
@@ -206,18 +204,18 @@ const TrackComplaint = () => {
             animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-4 space-y-6"
           >
-            <div className="glass-card !p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-1 h-1 rounded-full bg-primary heartbeat shadow-[0_0_8px_var(--primary-glow)]" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Event Log</h3>
+            <div className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+              <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-900">Event Log</h3>
               </div>
-              <div className="space-y-5 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-white/5">
+              <div className="space-y-6 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
                 {activities.map((act, i) => (
-                  <div key={i} className="relative pl-6">
-                    <div className="absolute left-0.5 top-1.5 w-3 h-3 rounded-full bg-bg-surface border border-primary shadow-[0_0_5px_var(--primary-glow)] z-10" />
-                    <p className="text-[10px] font-black text-white uppercase tracking-wider mb-1 opacity-90">{act.action.replace(/_/g, ' ')}</p>
-                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-text-muted uppercase tracking-tight opacity-60">
-                      <Clock size={10} />
+                  <div key={i} className="relative pl-8 animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${i * 100}ms` }}>
+                    <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-white border-2 border-indigo-600 shadow-sm z-10 transition-transform hover:scale-125" />
+                    <p className="text-[11px] font-bold text-slate-900 uppercase tracking-wider mb-1">{act.action.replace(/_/g, ' ')}</p>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                      <Clock size={12} className="text-indigo-600/50" />
                       {new Date(act.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
                     </div>
                   </div>
@@ -225,11 +223,11 @@ const TrackComplaint = () => {
               </div>
             </div>
 
-            <div className="glass-card bg-success/5 border-success/10 flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-success/10 text-success">
-                <ShieldCheck size={20} />
+            <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-3xl flex items-center gap-4 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center text-emerald-600 flex-shrink-0">
+                <ShieldCheck size={24} />
               </div>
-              <p className="text-xs text-secondary font-medium">This session is protected by end-to-end encryption.</p>
+              <p className="text-xs text-emerald-800 font-bold leading-relaxed">This session is protected by end-to-end encryption.</p>
             </div>
           </motion.div>
         </div>

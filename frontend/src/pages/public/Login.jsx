@@ -61,21 +61,21 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg-primary">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="card w-full max-w-px-280 border border-border-subtle shadow-xl bg-bg-surface p-8 md:p-10"
+        className="bg-white w-full max-w-md p-10 rounded-3xl shadow-2xl shadow-slate-200 border border-slate-100"
       >
-        <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
-            <ShieldCheck className="text-white" size={24} />
+        <div className="flex flex-col items-center mb-10 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center mb-6 shadow-xl shadow-indigo-600/30">
+            <ShieldCheck className="text-white" size={32} />
           </div>
-          <h2 className="text-2xl font-bold text-text-primary tracking-tight">
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
             {isOtpMode ? 'OTP Authentication' : 'Welcome back'}
           </h2>
-          <p className="text-text-secondary text-sm font-medium mt-1">
-            {isOtpMode ? 'Enter your temporary access code' : 'Secure access to your workspace'}
+          <p className="text-slate-500 text-sm font-medium mt-2">
+            {isOtpMode ? 'Enter your temporary access code' : 'Secure access to your professional workspace'}
           </p>
         </div>
 
@@ -84,22 +84,23 @@ const Login = () => {
             <motion.div 
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-xs font-semibold flex items-center gap-2"
+              className="mb-8 p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold flex items-center gap-3"
             >
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
               {error}
             </motion.div>
           )}
         </AnimatePresence>
 
         {!isOtpMode ? (
-          <form onSubmit={handlePasswordLogin} className="space-y-5">
-            <div>
-              <label className="text-xs font-semibold text-text-secondary mb-1.5 block">Username</label>
+          <form onSubmit={handlePasswordLogin} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Username</label>
               <div className="relative group">
-                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" />
+                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input 
                   type="text" 
-                  className="input-field pl-10" 
+                  className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 placeholder:text-slate-400" 
                   placeholder="Enter your username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -108,13 +109,13 @@ const Login = () => {
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-text-secondary mb-1.5 block">Password</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Password</label>
               <div className="relative group">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" />
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input 
                   type="password" 
-                  className="input-field pl-10" 
+                  className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 placeholder:text-slate-400" 
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -123,21 +124,32 @@ const Login = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full py-2.5 text-sm font-bold shadow-md shadow-primary/10 mt-2" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
+            <button 
+              type="submit" 
+              className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 group mt-4 disabled:opacity-50 disabled:cursor-not-allowed" 
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>Sign in</span>
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {!otpSent ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-text-secondary mb-1.5 block">Username / Email</label>
+              <div className="space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Username / Email</label>
                   <div className="relative group">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" />
+                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                     <input 
                       type="text" 
-                      className="input-field pl-10" 
+                      className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 placeholder:text-slate-400" 
                       placeholder="Enter your username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
@@ -145,19 +157,30 @@ const Login = () => {
                     />
                   </div>
                 </div>
-                <button onClick={handleGenerateOtp} className="btn btn-primary w-full py-2.5 text-sm font-bold shadow-md shadow-primary/10" disabled={loading}>
-                  {loading ? 'Sending...' : 'Send Access Code'}
+                <button 
+                  onClick={handleGenerateOtp} 
+                  className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>Send Access Code</span>
+                      <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <form onSubmit={handleVerifyOtp} className="space-y-6">
                 <div>
-                  <label className="text-xs font-semibold text-text-secondary mb-1.5 block text-center">Enter 6-digit code</label>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 block text-center mb-4">Enter 6-digit code</label>
                   <div className="relative group">
-                    <Key size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" />
+                    <Key size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
                     <input 
                       type="text" 
-                      className="input-field pl-10 tracking-[0.5em] text-center font-bold text-lg" 
+                      className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-2xl font-bold text-slate-900 text-center tracking-[0.5em] placeholder:text-slate-200" 
                       placeholder="000000"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
@@ -166,22 +189,36 @@ const Login = () => {
                     />
                   </div>
                 </div>
-                <button type="submit" className="btn btn-primary w-full py-2.5 text-sm font-bold shadow-md shadow-primary/10" disabled={loading}>
-                  {loading ? 'Verifying...' : 'Verify Email'}
+                <button 
+                  type="submit" 
+                  className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>Verify Email</span>
+                      <ShieldCheck size={18} />
+                    </>
+                  )}
                 </button>
-                <button onClick={() => setOtpSent(false)} className="w-full text-xs font-semibold text-text-secondary hover:text-primary transition-colors">
-                  Resend code
-                </button>
+                <div className="flex justify-center">
+                  <button onClick={() => setOtpSent(false)} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors leading-none">
+                    Resend code
+                  </button>
+                </div>
               </form>
             )}
           </div>
         )}
 
-        <div className="mt-8 pt-6 border-t border-border-subtle text-center">
+        <div className="mt-10 pt-8 border-t border-slate-100 flex justify-center">
           <button 
             onClick={() => { setIsOtpMode(!isOtpMode); setOtpSent(false); setError(''); }} 
-            className="text-xs font-semibold text-text-secondary hover:text-primary transition-colors"
+            className="text-xs font-bold text-slate-500 hover:text-indigo-600 transition-all flex items-center gap-2 group"
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-indigo-600 transition-colors" />
             {isOtpMode ? 'Use password instead' : 'Sign in with one-time code'}
           </button>
         </div>

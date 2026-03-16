@@ -48,13 +48,16 @@ const ComplaintTable = ({
   return (
     <div className="flex flex-col gap-6">
       {/* Status filter */}
-      <div className="flex gap-2 mb-2 overflow-x-auto pb-2" style={{ flexWrap: 'wrap' }}>
+      <div className="flex gap-2 mb-2 overflow-x-auto pb-2 scrollbar-none">
         {statusStages.map(s => (
           <button
             key={s}
             onClick={() => onFilterChange(s)}
-            className={`btn ${filterStatus === s ? 'btn-primary' : 'btn-secondary shadow-none'}`}
-            style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+            className={`btn transition-all ${
+              filterStatus === s 
+                ? 'btn-primary' 
+                : 'btn-secondary text-xs py-1.5'
+            }`}
           >
             {s.replace(/_/g, ' ')}
           </button>
@@ -62,52 +65,54 @@ const ComplaintTable = ({
       </div>
 
       {loading ? (
-        <div className="py-20 text-center text-text-secondary font-medium animate-pulse">Loading case data...</div>
+        <div className="py-24 text-center text-slate-500 font-semibold animate-pulse bg-white border border-slate-200 rounded-xl">
+          Loading case data...
+        </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="table-container">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-border-subtle">
-                  <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Tracking ID</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Summary</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Priority</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
-                  {showAssignment && <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Owner</th>}
-                  <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Actions</th>
+                <tr className="table-header">
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Tracking ID</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Summary</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Priority</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                  {showAssignment && <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Owner</th>}
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-subtle">
+              <tbody className="bg-white">
                 {complaints.length === 0 ? (
                   <tr>
-                    <td colSpan={showAssignment ? 6 : 5} className="py-20 text-center text-text-secondary">
+                    <td colSpan={showAssignment ? 6 : 5} className="py-24 text-center text-slate-500 font-medium">
                       No matching records found.
                     </td>
                   </tr>
                 ) : complaints.map(c => (
-                  <tr key={c.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-primary font-bold text-sm">{c.trackingId}</span>
-                      <div className="text-text-secondary text-[10px] mt-0.5">{new Date(c.createdAt).toLocaleDateString()}</div>
+                  <tr key={c.id} className="table-row group">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className="text-indigo-600 font-bold text-sm tracking-tight">{c.trackingId}</span>
+                      <div className="text-slate-400 text-[10px] mt-1 font-medium">{new Date(c.createdAt).toLocaleDateString()}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="td-summary">
-                        <div className="font-semibold text-text-primary text-sm truncate max-w-[280px]">{c.title}</div>
-                        <div className="text-text-secondary text-[10px] uppercase tracking-wider font-bold opacity-60">
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col gap-1 min-w-[200px]">
+                        <div className="font-bold text-slate-900 text-sm truncate max-w-[280px]">{c.title}</div>
+                        <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold opacity-70">
                           {c.categoryName || 'General Ethics'}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-5">
                       <Badge variant={getPriorityVariant(c.priority)}>{c.priority || 'NORMAL'}</Badge>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-5">
                       <Badge variant={getStatusVariant(c.status)}>{c.status?.replace(/_/g, ' ')}</Badge>
                     </td>
                     {showAssignment && (
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <select
-                          className="input-field !py-1 !px-2 !text-[11px] !w-auto min-w-[120px]"
+                          className="input-field !py-1 !px-2 !text-[11px] !w-auto min-w-[130px] shadow-sm"
                           value={c.assignedToId || ""}
                           onChange={(e) => { if (e.target.value) onAssign(c.id, e.target.value); }}
                         >
@@ -118,11 +123,11 @@ const ComplaintTable = ({
                         </select>
                       </td>
                     )}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex gap-2 justify-end items-center">
+                    <td className="px-6 py-5 text-right">
+                      <div className="flex gap-3 justify-end items-center">
                         {(userRole === 'ORG_ADMIN' || userRole === 'INVESTIGATOR') && (
                           <select
-                            className="input-field !py-1 !px-2 !text-[11px] !w-auto min-w-[100px]"
+                            className="input-field !py-1 !px-2 !text-[11px] !w-auto min-w-[110px] shadow-sm"
                             value={c.status}
                             onChange={(e) => onUpdateStatus(c.id, e.target.value)}
                           >
@@ -132,11 +137,11 @@ const ComplaintTable = ({
                           </select>
                         )}
 
-                        <div className="flex gap-1">
+                        <div className="flex gap-2">
                           {(userRole === 'ORG_ADMIN' || userRole === 'INTAKE_OFFICER') && (
                             <button 
                               onClick={() => onTriage?.(c)}
-                              className="p-1.5 rounded hover:bg-white/5 text-warning transition-colors" 
+                              className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-colors border border-transparent hover:border-amber-100 shadow-sm" 
                               title="Triage Case"
                             >
                               <ShieldAlert size={16} />
@@ -144,10 +149,10 @@ const ComplaintTable = ({
                           )}
                           
                           <motion.button 
-                            whileHover={{ scale: 1.1, backgroundColor: 'rgba(94, 106, 210, 0.1)' }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             onClick={() => onViewDetails(c)}
-                            className="p-2 rounded-lg text-primary transition-all border border-transparent hover:border-primary/20 bg-primary/5" 
+                            className="p-2 rounded-lg text-indigo-600 transition-all border border-slate-200 hover:border-indigo-200 bg-white hover:bg-indigo-50 shadow-sm" 
                             title="Open Investigation Console"
                           >
                             <MessageSquare size={16} />
@@ -162,14 +167,22 @@ const ComplaintTable = ({
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-6 pt-4" style={{ borderTop: '1px solid var(--border-light)' }}>
-              <p className="text-muted" style={{ fontSize: '0.8rem' }}>Page {page + 1} of {totalPages}</p>
+            <div className="flex justify-between items-center py-4 px-2 border-t border-slate-200 mt-4">
+              <p className="text-slate-500 font-medium text-xs">Page {page + 1} of {totalPages}</p>
               <div className="flex gap-2">
-                <button disabled={page === 0} onClick={() => onPageChange(page - 1)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', opacity: page === 0 ? 0.5 : 1 }}>
-                  <ChevronLeft size={14} />
+                <button 
+                  disabled={page === 0} 
+                  onClick={() => onPageChange(page - 1)} 
+                  className="btn btn-secondary !py-1.5 !px-3 disabled:opacity-30"
+                >
+                  <ChevronLeft size={16} />
                 </button>
-                <button disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', opacity: page >= totalPages - 1 ? 0.5 : 1 }}>
-                  <ChevronRight size={14} />
+                <button 
+                  disabled={page >= totalPages - 1} 
+                  onClick={() => onPageChange(page + 1)} 
+                  className="btn btn-secondary !py-1.5 !px-3 disabled:opacity-30"
+                >
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>

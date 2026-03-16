@@ -29,32 +29,32 @@ const TriageModal = ({ isOpen, onClose, complaint, onTriage }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '1rem'
-    }}>
-      <div className="glass flex flex-col gap-6" style={{ width: '100%', maxWidth: '500px', padding: '2rem', position: 'relative' }}>
-        <button onClick={onClose} className="btn btn-secondary" style={{ position: 'absolute', top: '1rem', right: '1rem', padding: '0.4rem' }}>
-          <X size={18} />
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-lg p-8 rounded-2xl shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-200 relative">
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+          <X size={20} />
         </button>
 
-        <header>
-          <div className="flex items-center gap-3 mb-2">
-            <div style={{ padding: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', borderRadius: 'var(--radius-sm)' }}>
+        <header className="mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-xl shadow-sm border border-indigo-100">
               <ShieldAlert size={24} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.25rem' }}>Case Triage</h3>
-              <p className="text-muted" style={{ fontSize: '0.8rem' }}>Set priority and classify the report.</p>
+              <h3 className="text-xl font-bold text-slate-900 tracking-tight">Case Triage</h3>
+              <p className="text-slate-500 text-sm font-medium">Set priority and classify the report.</p>
             </div>
           </div>
         </header>
 
-        <div className="flex flex-col gap-5">
-          <div className="input-group">
-            <label className="input-label"><Tag size={12} /> Priority Level</label>
+        <div className="space-y-6">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
+              <Tag size={12} className="text-indigo-600" />
+              Priority Level
+            </label>
             <select 
-              className="input-field" 
+              className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer" 
               value={priority} 
               onChange={(e) => setPriority(e.target.value)}
             >
@@ -62,10 +62,13 @@ const TriageModal = ({ isOpen, onClose, complaint, onTriage }) => {
             </select>
           </div>
 
-          <div className="input-group">
-            <label className="input-label"><ShieldAlert size={12} /> Classification</label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
+              <ShieldAlert size={12} className="text-indigo-600" />
+              Classification
+            </label>
             <select 
-              className="input-field" 
+              className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer" 
               value={classification} 
               onChange={(e) => setClassification(e.target.value)}
             >
@@ -73,10 +76,13 @@ const TriageModal = ({ isOpen, onClose, complaint, onTriage }) => {
             </select>
           </div>
 
-          <div className="input-group">
-            <label className="input-label"><CheckCircle size={12} /> Update Status</label>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2">
+              <CheckCircle size={12} className="text-indigo-600" />
+              Update Status
+            </label>
             <select 
-              className="input-field" 
+              className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer" 
               value={status} 
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -87,15 +93,26 @@ const TriageModal = ({ isOpen, onClose, complaint, onTriage }) => {
           </div>
         </div>
 
-        <div className="flex gap-3 justify-end mt-4">
-          <button onClick={onClose} className="btn btn-secondary" style={{ border: 'none' }}>Cancel</button>
+        <div className="flex gap-3 justify-end mt-10">
+          <button 
+            onClick={onClose} 
+            className="h-12 px-6 text-slate-500 font-bold text-sm hover:text-slate-900 transition-colors"
+          >
+            Cancel
+          </button>
           <button 
             onClick={handleTriage} 
             disabled={loading}
-            className="btn btn-primary"
-            style={{ minWidth: '120px' }}
+            className="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Processing...' : 'Complete Triage'}
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>
+                <CheckCircle size={18} />
+                <span>Complete Triage</span>
+              </>
+            )}
           </button>
         </div>
       </div>

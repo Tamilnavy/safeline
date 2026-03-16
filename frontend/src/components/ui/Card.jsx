@@ -1,9 +1,9 @@
 const Card = ({ children, className = '', title, subtitle }) => (
-  <div className={`glass-card p-8 ${className}`}>
+  <div className={`card ${className}`}>
     {(title || subtitle) && (
-      <div className="mb-8 pb-6 border-b border-white/5">
-        {title && <h3 className="text-xl font-bold text-white mb-1">{title}</h3>}
-        {subtitle && <p className="text-sm text-text-muted">{subtitle}</p>}
+      <div className="mb-6 pb-4 border-b border-slate-100">
+        {title && <h3 className="text-base font-semibold text-slate-900 mb-1">{title}</h3>}
+        {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
       </div>
     )}
     <div className="relative">
