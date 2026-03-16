@@ -11,12 +11,12 @@ const Home = () => {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, scale: 0.98, y: 15 },
+    hidden: { opacity: 0, scale: 0.98, y: 20 },
     visible: { 
       opacity: 1, 
       scale: 1, 
       y: 0, 
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } 
+      transition: { type: "spring", stiffness: 100, damping: 15 } 
     }
   };
 

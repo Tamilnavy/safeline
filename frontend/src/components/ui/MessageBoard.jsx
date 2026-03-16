@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
-import { Send, User, Shield } from 'lucide-react';
+import { Send, User, MessageSquare } from 'lucide-react';
 
-const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false }) => {
+const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeader = true, minimal = false }) => {
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,18 +68,25 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false }) => {
   const safeMessages = Array.isArray(messages) ? messages : [];
 
   return (
-    <div className="flex flex-col h-full bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden" style={{ minHeight: '400px', maxHeight: '600px' }}>
-      <header className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-        <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center shadow-md shadow-indigo-600/20">
-          <Shield size={16} className="text-white" />
-        </div>
-        <div>
-          <h4 className="text-sm font-bold text-slate-900 tracking-tight">Case Communication</h4>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Secure encrypted channel</p>
-        </div>
-      </header>
+    <div 
+      className={`flex flex-col h-full bg-white overflow-hidden ${minimal ? '' : 'border border-slate-100 rounded-2xl shadow-sm'}`} 
+      style={{ height: '100%', maxHeight: '500px' }}
+    >
+      {showHeader && (
+        <header className="p-6 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#3b82f6] shadow-sm ring-1 ring-blue-100">
+              <MessageSquare size={20} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Communication Center</h3>
+              <p className="text-[11px] text-slate-400 font-medium">Direct channel with investigative team</p>
+            </div>
+          </div>
+        </header>
+      )}
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-4 m-2 bg-slate-50/30 border border-slate-100/80 rounded-2xl space-y-6 scrollbar-hide">
         {safeMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3">
             <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">

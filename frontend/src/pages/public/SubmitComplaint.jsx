@@ -13,7 +13,12 @@ import {
   MapPin,
   Tag,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  AlertCircle,
+  Check,
+  AlertTriangle,
+  FileUp,
+  CloudUpload
 } from 'lucide-react';
 
 const SubmitComplaint = () => {
@@ -26,10 +31,12 @@ const SubmitComplaint = () => {
     location: '',
     isAnonymous: true
   });
+  const [declarationChecked, setDeclarationChecked] = useState(false);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [copiedType, setCopiedType] = useState(null); // 'id' or 'pin'
 
   useEffect(() => {
     fetchCategories();
@@ -49,13 +56,14 @@ const SubmitComplaint = () => {
   };
 
   const handleSubmit = async () => {
+    if (!declarationChecked) return;
     setLoading(true);
     setError('');
     try {
       const data = new FormData();
       data.append('request', JSON.stringify({
         ...formData,
-        anonymous: formData.isAnonymous
+        anonymous: true 
       }));
 
       files.forEach(file => {
@@ -63,7 +71,6 @@ const SubmitComplaint = () => {
       });
 
       const resp = await api.post('/complaints/submit', data);
-
       setResult(resp.data);
       setStep(4);
     } catch (err) {
@@ -73,185 +80,213 @@ const SubmitComplaint = () => {
     }
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text);
+    setCopiedType(type);
+    setTimeout(() => setCopiedType(null), 2000);
   };
 
-  return (
-    <div className="min-h-screen py-20 flex flex-col items-center bg-slate-50">
-      <div className="container max-w-md mx-auto relative px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
-        >
-          <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 shadow-sm">
-            <ShieldCheck className="text-indigo-600" size={14} />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Secure Channel Active</span>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">Submit a Report</h1>
-          <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto">Provide accurate details to help us investigate the incident effectively.</p>
-        </motion.div>
+  const steps = [
+    { id: 1, label: 'Incident Details' },
+    { id: 2, label: 'Details' },
+    { id: 3, label: 'Evidence & Review' }
+  ];
 
-        {step < 4 && (
-          <div className="flex gap-4 items-center mb-8">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex-1 flex flex-col gap-2">
-                <div className="flex justify-between items-center px-1">
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${step >= s ? 'text-indigo-600' : 'text-slate-400'}`}>
-                    Step 0{s}
-                  </span>
-                  {step > s && <CheckCircle size={12} className="text-emerald-500" />}
+  return (
+    <div className="min-h-screen bg-[#f4f7ff] pb-24 pt-12 px-6 flex flex-col items-center">
+      {/* Background Ambient Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px] -z-10" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 100, damping: 15 }}
+        className="w-full max-w-2xl relative"
+      >
+        {/* Darker Stepper Header - Reverted to preferred tint */}
+        <div className="bg-slate-800/95 backdrop-blur-md rounded-t-3xl p-5 mb-0 relative z-20 shadow-xl overflow-hidden border-x border-t border-slate-700/50">
+          <div className="flex justify-between items-center max-w-lg mx-auto px-4 relative z-10">
+            {steps.map((s, idx) => (
+              <div key={s.id} className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  step === s.id ? 'bg-[#3b82f6]/20 text-[#3b82f6] border-2 border-[#3b82f6] shadow-lg shadow-blue-500/20' : 
+                  step > s.id ? 'bg-[#3b82f6] text-white' : 
+                  'bg-slate-700/50 text-slate-400 border border-slate-600/30'
+                }`}>
+                  {step > s.id ? <Check size={14} strokeWidth={4} /> : s.id}
                 </div>
-                <div className="h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: step > s ? '100%' : (step === s ? '50%' : '0%') }}
-                    className="h-full bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.4)]"
-                  />
-                </div>
+                <span className={`text-[11px] font-bold tracking-tight transition-colors hidden sm:block ${
+                  step === s.id ? 'text-white' : 'text-slate-500'
+                }`}>
+                  {s.label}
+                </span>
+                {idx < steps.length - 1 && (
+                  <div className="w-8 h-[1px] bg-slate-800 mx-1 hidden md:block" />
+                )}
               </div>
             ))}
           </div>
-        )}
+        </div>
 
+        {/* Form Container White Card - Subtler curves */}
         <motion.div
-          layout
-          className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.1 }}
+          className="bg-white rounded-b-3xl rounded-t-none -mt-6 pt-16 pb-12 px-8 md:px-12 shadow-2xl shadow-indigo-500/10 border border-white relative z-10"
         >
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm">
-                    <FileText size={24} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Basic Info</h2>
-                    <p className="text-slate-500 text-xs font-medium">Primary details about the incident</p>
-                  </div>
+                <div className="flex items-center gap-4 mb-2">
+                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">What happened?</h2>
                 </div>
                 
                 <div className="space-y-6">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Report Title</label>
+                  <div className="space-y-2">
+                    <label className="text-[13px] font-bold text-slate-700 ml-1">Complaint Title *</label>
                     <input 
                       type="text" 
-                      className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400" 
-                      placeholder="e.g., Financial Irregularity in Sector 7" 
+                      className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm" 
+                      placeholder="Brief summary of the issue" 
                       value={formData.title} 
                       onChange={(e) => setFormData({...formData, title: e.target.value})} 
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Category</label>
-                      <div className="relative group">
-                        <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={14} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-bold text-slate-700 ml-1">Category *</label>
+                      <div className="relative">
                         <select 
-                          className="w-full h-12 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer" 
+                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer shadow-sm" 
                           value={formData.categoryId} 
                           onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
                         >
-                          <option value="">Select Category</option>
+                          <option value="">Select a category...</option>
                           {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                         </select>
+                        <Tag className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
                     </div>
-                    
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Location</label>
-                      <div className="relative group">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={14} />
+
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-bold text-slate-700 ml-1">Location / Platform</label>
+                      <div className="relative">
                         <input 
                           type="text" 
-                          className="w-full h-12 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400" 
-                          placeholder="Building/Dept" 
+                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm" 
+                          placeholder="e.g. 5th Floor office, etc." 
                           value={formData.location} 
                           onChange={(e) => setFormData({...formData, location: e.target.value})} 
                         />
+                        <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <button 
-                  onClick={() => setStep(2)} 
-                  className="w-full h-12 mt-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group" 
-                  disabled={!formData.title || !formData.categoryId}
-                >
-                  <span>Continue to Details</span>
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </button>
+                <div className="flex justify-end pt-6 border-t border-slate-50">
+                  <button 
+                    onClick={() => setStep(2)} 
+                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group" 
+                    disabled={!formData.title || !formData.categoryId}
+                  >
+                    <span>Next Step</span>
+                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
               </motion.div>
             )}
 
             {step === 2 && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
-                    <Send size={24} />
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-[#3b82f6] shadow-sm ring-1 ring-blue-100">
+                    <AlertTriangle size={18} />
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Description</h2>
-                    <p className="text-slate-500 text-xs font-medium">Describe what happened and attach evidence</p>
-                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">Incident Description</h2>
                 </div>
 
                 <div className="space-y-6">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Incident Description</label>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center ml-1 mb-2">
+                      <label className="text-[13px] font-bold text-slate-700">Detailed Description *</label>
+                      <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100 shadow-sm">
+                        {formData.description.length} / 2000
+                      </span>
+                    </div>
                     <textarea 
-                      className="w-full min-h-[160px] p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 leading-relaxed" 
-                      placeholder="Provide a detailed sequence of events including names, dates, and specific incidents..." 
+                      className="w-full min-h-[110px] px-7 py-5 bg-white border border-slate-200/60 rounded-[28px] focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 leading-relaxed shadow-sm hover:shadow-md" 
+                      placeholder="Please provide specifics: who, what, when, where, and why. Be factual." 
                       value={formData.description} 
                       onChange={(e) => setFormData({...formData, description: e.target.value})} 
                     />
                   </div>
                   
-                  <motion.div 
-                    whileHover={{ scale: 1.01, backgroundColor: 'rgb(248, 250, 252)' }}
-                    className="border-2 border-dashed border-slate-200 p-8 text-center rounded-2xl bg-slate-50/50 cursor-pointer group transition-all" 
-                    onClick={() => document.getElementById('file-input').click()}
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:bg-indigo-50 transition-all duration-300">
-                      <Image size={24} className="text-slate-400 group-hover:text-indigo-600 transition-colors" />
-                    </div>
-                    <p className="text-sm font-bold text-slate-900 mb-1">Attach Evidence</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Supports images, PDF, or documents</p>
-                    <input id="file-input" type="file" multiple hidden onChange={handleFileChange} />
-                    {files.length > 0 && (
-                      <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-600 text-white text-[10px] font-bold shadow-lg shadow-indigo-600/20 animate-in zoom-in duration-300">
-                        <CheckCircle size={14} />
-                        <span>{files.length} documents attached</span>
+                  <div className="space-y-4 pt-4 border-t border-slate-50">
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#3b82f6]">
+                        <FileUp size={18} />
                       </div>
-                    )}
-                  </motion.div>
+                      <h3 className="text-lg font-bold text-slate-900">Evidence Map</h3>
+                    </div>
+                    
+                    <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
+                      Upload any documents, screenshots, or files that support your report. If you are reporting anonymously, <span className="font-bold text-slate-800">ensure your name is not within the files themselves.</span>
+                    </p>
+
+                    <motion.div 
+                      whileHover={{ scale: 1.002, backgroundColor: '#fcfdff' }}
+                      className="border-2 border-dashed border-slate-200 p-8 text-center rounded-[24px] bg-slate-50/30 cursor-pointer group transition-all relative overflow-hidden" 
+                      onClick={() => document.getElementById('file-input').click()}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-all duration-300 ring-1 ring-slate-100">
+                        <CloudUpload size={24} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                      </div>
+                      <p className="text-[14px] font-bold text-slate-700 mb-0.5">
+                        <span className="text-slate-900">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium tracking-tight mt-1">
+                        PDF, PNG, JPG or DOCX (max. 15MB)
+                      </p>
+                      
+                      <input id="file-input" type="file" multiple hidden onChange={handleFileChange} />
+                      
+                      {files.length > 0 && (
+                        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#3b82f6] text-white text-[11px] font-bold shadow-lg shadow-blue-500/20 animate-in zoom-in">
+                          <CheckCircle size={14} />
+                          <span>{files.length} documents attached</span>
+                        </div>
+                      )}
+                    </motion.div>
+                  </div>
                 </div>
 
-                <div className="flex gap-4 mt-10">
-                  <button onClick={() => setStep(1)} className="flex-1 h-12 px-6 flex items-center justify-center gap-2 text-slate-500 font-bold text-sm bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200">
-                    <ChevronLeft size={18} />
+                <div className="flex justify-between pt-6 border-t border-slate-50">
+                  <button onClick={() => setStep(1)} className="h-11 px-8 flex items-center justify-center gap-2 border-2 border-slate-900 text-slate-900 font-bold text-[13px] rounded-xl hover:bg-slate-50 transition-all active:scale-95">
+                    <ChevronLeft size={16} />
                     <span>Back</span>
                   </button>
                   <button 
                     onClick={() => setStep(3)} 
-                    className="flex-3 h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 group" 
+                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 group" 
                     disabled={!formData.description}
                   >
-                    <span>Next Step</span>
-                    <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                    <span>Last Step</span>
+                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </motion.div>
@@ -260,74 +295,71 @@ const SubmitComplaint = () => {
             {step === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600 shadow-sm">
-                    <ShieldCheck size={24} />
+                <div className="space-y-8 pt-4">
+                  {/* High-Fidelity Anonymity Confirmation */}
+                  <div className="p-6 rounded-[32px] bg-[#f8faff] border border-blue-100 flex items-start gap-4 shadow-sm mx-1">
+                    <div className="w-8 h-8 rounded-lg bg-[#9333ea] flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/20">
+                      <CheckCircle size={20} className="text-white" strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-bold text-slate-900 mb-1">Submit Anonymously</h4>
+                      <p className="text-[12px] text-slate-500 font-medium leading-[1.6]">
+                        If checked, your employer will absolutely <span className="font-bold text-slate-700">not</span> know who submitted this report. You will still receive a Tracking ID to communicate securely without revealing your identity.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Privacy</h2>
-                    <p className="text-slate-500 text-xs font-medium">Choose your identification level</p>
+
+                  <h3 className="text-xl font-bold text-slate-900 ml-2 pt-2">Declaration</h3>
+                  
+                  {/* High-Fidelity Declaration Box - Fixed Alignment */}
+                  <div 
+                    className="p-6 rounded-[32px] bg-white border border-slate-200 flex items-start gap-5 cursor-pointer group hover:border-blue-400 transition-all duration-300 shadow-sm mx-1"
+                    onClick={() => setDeclarationChecked(!declarationChecked)}
+                  >
+                    <div className={`mt-0.5 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-500 ${
+                      declarationChecked ? 'bg-[#3b82f6] border-[#3b82f6]' : 'bg-white border-slate-300 group-hover:border-blue-500'
+                    }`}>
+                      {declarationChecked && <CheckCircle size={18} className="text-white" strokeWidth={3} />}
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[14px] font-bold text-slate-800 leading-tight select-none">
+                        I declare that the information provided is true and correct to the best of my knowledge.
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium leading-relaxed select-none">
+                        Submitting false or malicious reports intentionally may be subject to disciplinary action depending on your organization's policies.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`p-5 cursor-pointer rounded-2xl border-2 transition-all relative overflow-hidden ${formData.isAnonymous ? 'border-indigo-600 bg-indigo-50/30' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`} 
-                    onClick={() => setFormData({...formData, isAnonymous: true})}
-                  >
-                    {formData.isAnonymous && <div className="absolute top-0 right-0 w-8 h-8 bg-indigo-600 text-white flex items-center justify-center rounded-bl-xl"><CheckCircle size={14} /></div>}
-                    <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${formData.isAnonymous ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-100 text-slate-400'}`}>
-                        <ShieldCheck size={24} />
-                      </div>
-                      <div className="pr-4">
-                        <h3 className="text-sm font-bold text-slate-900 mb-1">Stay Anonymous</h3>
-                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed">Identity is completely hidden. No personal data stored. SafeLine encrypts all traffic.</p>
-                      </div>
-                    </div>
-                  </motion.div>
-    
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`p-5 cursor-pointer rounded-2xl border-2 transition-all relative overflow-hidden ${!formData.isAnonymous ? 'border-indigo-600 bg-indigo-50/30' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`} 
-                    onClick={() => setFormData({...formData, isAnonymous: false})}
-                  >
-                    {!formData.isAnonymous && <div className="absolute top-0 right-0 w-8 h-8 bg-indigo-600 text-white flex items-center justify-center rounded-bl-xl"><CheckCircle size={14} /></div>}
-                    <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${!formData.isAnonymous ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-100 text-slate-400'}`}>
-                        <CheckCircle size={24} />
-                      </div>
-                      <div className="pr-4">
-                        <h3 className="text-sm font-bold text-slate-900 mb-1">Disclose Identity</h3>
-                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed">Provide details for direct communication. Only authorized officers will see your data.</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
+                {error && (
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-[12px] font-bold">
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                  </div>
+                )}
 
-                <div className="flex gap-4 mt-10">
-                  <button onClick={() => setStep(2)} className="flex-1 h-12 px-6 flex items-center justify-center gap-2 text-slate-500 font-bold text-sm bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200">
-                    <ChevronLeft size={18} />
+                <div className="flex justify-between pt-6 border-t border-slate-50">
+                  <button onClick={() => setStep(2)} className="h-11 px-8 flex items-center justify-center gap-2 border-2 border-slate-900 text-slate-900 font-bold text-[13px] rounded-xl hover:bg-slate-50 transition-all active:scale-95">
+                    <ChevronLeft size={16} />
                     <span>Back</span>
                   </button>
                   <button 
                     onClick={handleSubmit} 
-                    className="flex-3 h-12 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group" 
-                    disabled={loading}
+                    className="h-11 px-10 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed group" 
+                    disabled={loading || !declarationChecked}
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>Submit Report</span> 
-                        <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        <span>Submit Secure Report</span> 
+                        <Send size={16} className="group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
                   </button>
@@ -340,57 +372,48 @@ const SubmitComplaint = () => {
                 key="step4"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center"
+                className="text-center py-4"
               >
-                <div className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-sm animate-in zoom-in duration-500">
-                  <CheckCircle size={40} />
+                <div className="w-16 h-16 rounded-full bg-blue-50 text-[#3b82f6] flex items-center justify-center mx-auto mb-6 ring-1 ring-blue-100 shadow-xl shadow-blue-500/10 animate-in zoom-in duration-500">
+                  <CheckCircle size={32} />
                 </div>
-                <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">Success</h2>
-                <p className="text-slate-500 text-sm font-medium mb-10">Report received and encrypted. Protect these credentials.</p>
+                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Success!</h2>
+                <p className="text-slate-500 text-sm font-medium mb-8 max-w-sm mx-auto leading-relaxed">Report encrypted. Save these credentials safely.</p>
 
-                <div className="space-y-4 mb-10">
-                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-inner">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-6 text-center border-b border-slate-200 pb-2">Tracking Credentials</p>
-                    
-                    <div className="flex justify-between items-center mb-6 group px-2">
-                      <div className="text-left">
-                        <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Tracking ID</p>
-                        <p className="font-mono text-xl font-bold text-indigo-600">{result.trackingId}</p>
-                      </div>
-                      <button onClick={() => copyToClipboard(result.trackingId)} className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-lg transition-all">
-                        <Copy size={18} />
-                      </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  <div className="p-5 bg-slate-50 rounded-[32px] border border-slate-100 group">
+                    <div className="flex justify-between items-center mb-2 mx-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tracking ID</p>
+                      {copiedType === 'id' && <span className="text-[10px] font-bold text-blue-600 animate-bounce">Copied!</span>}
                     </div>
-
-                    <div className="flex justify-between items-center group px-2">
-                      <div className="text-left">
-                        <p className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">Security PIN</p>
-                        <p className="font-mono text-xl font-bold text-emerald-600">{result.rawPin}</p>
-                      </div>
-                      <button onClick={() => copyToClipboard(result.rawPin)} className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-100 hover:shadow-lg transition-all">
-                        <Copy size={18} />
+                    <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm transition-all group-hover:shadow-md">
+                      <span className="font-mono text-lg font-bold text-blue-600 tracking-wider transition-all">{result.trackingId}</span>
+                      <button onClick={() => copyToClipboard(result.trackingId, 'id')} className="p-2 text-slate-400 hover:text-blue-600 transition-all active:scale-90">
+                        {copiedType === 'id' ? <Check size={18} /> : <Copy size={18} />}
                       </button>
                     </div>
                   </div>
 
-                  <div className="p-5 flex items-center gap-4 bg-indigo-50 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-600 text-white/5 opacity-0 group-hover:opacity-10 transition-opacity flex items-center justify-center rounded-bl-full"><QrCode size={40} /></div>
-                    <div className="w-12 h-12 rounded-xl bg-white border border-indigo-100 flex items-center justify-center flex-shrink-0 shadow-sm">
-                      <QrCode size={24} className="text-indigo-600" />
+                  <div className="p-5 bg-slate-50 rounded-[32px] border border-slate-100 group">
+                    <div className="flex justify-between items-center mb-2 mx-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Security PIN</p>
+                      {copiedType === 'pin' && <span className="text-[10px] font-bold text-emerald-600 animate-bounce">Copied!</span>}
                     </div>
-                    <div className="text-left">
-                      <p className="text-sm font-bold text-indigo-900 mb-0.5">Mobile Sync</p>
-                      <p className="text-[11px] text-indigo-600/80 font-medium leading-relaxed">Save to your mobile vault for easy access.</p>
+                    <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm transition-all group-hover:shadow-md">
+                      <span className="font-mono text-lg font-bold text-emerald-600 tracking-wider transition-all">{result.rawPin}</span>
+                      <button onClick={() => copyToClipboard(result.rawPin, 'pin')} className="p-2 text-slate-400 hover:text-emerald-600 transition-all active:scale-90">
+                        {copiedType === 'pin' ? <Check size={18} /> : <Copy size={18} />}
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => window.location.href = '/track'} className="h-12 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button onClick={() => window.location.href = '/track'} className="h-12 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm">
                     <span>Track Status Now</span>
                     <ArrowRight size={18} />
                   </button>
-                  <button onClick={() => window.location.href = '/'} className="h-12 text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-slate-900 transition-colors">
+                  <button onClick={() => window.location.href = '/'} className="h-12 px-8 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 font-bold rounded-xl transition-all flex items-center justify-center text-sm">
                     Return Home
                   </button>
                 </div>
@@ -398,11 +421,12 @@ const SubmitComplaint = () => {
             )}
           </AnimatePresence>
         </motion.div>
-
-        <p className="mt-10 text-center text-[11px] text-slate-400 font-bold uppercase tracking-[0.2em] max-w-xs mx-auto drop-shadow-sm">
-          Military Grade Encryption • Anonymous Submission
-        </p>
-      </div>
+      </motion.div>
+ 
+      {/* Info Footer */}
+      <p className="mt-8 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.25em]">
+        Military Grade Encryption • Full Anonymity Active
+      </p>
     </div>
   );
 };
