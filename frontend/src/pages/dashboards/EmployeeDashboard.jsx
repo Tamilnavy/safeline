@@ -93,8 +93,14 @@ const EmployeeDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {complaints.map(c => (
-                    <tr key={c.id} className="table-row group">
+                  {complaints.map((c, i) => (
+                    <motion.tr
+                      key={c.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="table-row group"
+                    >
                       <td className="px-8 py-5">
                         <span className="text-indigo-600 font-bold tracking-widest text-xs tracking-tighter">{c.trackingId}</span>
                       </td>
