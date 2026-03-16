@@ -1,8 +1,0 @@
-﻿ id |        description         |            name             | tenant_id 
-----+----------------------------+-----------------------------+-----------
-  1 | Bribery, corruption, fraud | Ethics & Compliance         |         1
-  2 | Unsafe working conditions  | Safety & Hazard             |         1
-  3 | Workplace misconduct       | Discrimination & Harassment |         1
-  4 | Miscellaneous issues       | General Grievance           |         1
-(4 rows)
-

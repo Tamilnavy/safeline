@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
@@ -17,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const OrgAdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [complaints, setComplaints] = useState([]);
   const [investigators, setInvestigators] = useState([]);
   const [allTeam, setAllTeam] = useState([]);
@@ -166,7 +168,7 @@ const OrgAdminDashboard = () => {
                 onUpdateStatus={handleUpdateStatus}
                 onPageChange={setPage}
                 onFilterChange={(s) => { setFilterStatus(s); setPage(0); }}
-                onViewDetails={setSelectedComplaint}
+                onViewDetails={(c) => navigate(`/dashboard/complaint/${c.id}`)}
                 onTriage={setTriageComplaint}
                 userRole={userRole}
                 showAssignment={userRole === 'ORG_ADMIN'}
@@ -223,86 +225,7 @@ const OrgAdminDashboard = () => {
       />
 
       <AnimatePresence>
-        {selectedComplaint && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedComplaint(null)}
-              className="absolute inset-0 bg-bg-primary/90 backdrop-blur-xl"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="glass-card relative w-full h-full max-w-6xl max-h-[85vh] overflow-hidden flex flex-col"
-            >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-hover" />
-              <div className="h-16 px-8 flex items-center justify-between border-b border-white/5 bg-white/5">
-                <div className="flex items-center gap-3">
-                   <Badge variant={getStatusVariant(selectedComplaint.status)}>{selectedComplaint.status}</Badge>
-                   <span className="text-[10px] font-bold text-text-muted tracking-widest">{selectedComplaint.trackingId}</span>
-                </div>
-                <button onClick={() => setSelectedComplaint(null)} className="p-2 rounded-xl hover:bg-white/5 text-text-muted transition-colors">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="flex-1 flex min-h-0">
-                <div className="flex-[0.8] p-10 border-r border-white/5 overflow-y-auto custom-scrollbar">
-                  <div className="mb-10">
-                    <h3 className="text-2xl font-black text-white leading-tight mb-4">{selectedComplaint.title}</h3>
-                    <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                      <p className="text-text-muted font-medium leading-relaxed italic">"{selectedComplaint.description}"</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Category</p>
-                      <p className="font-bold text-white">{selectedComplaint.categoryName || 'General'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Classification</p>
-                      <p className="font-bold text-primary">{selectedComplaint.classification?.replace(/_/g, ' ') || 'GENERAL'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Priority</p>
-                      <Badge variant={getPriorityVariant(selectedComplaint.priority)}>{selectedComplaint.priority || 'NORMAL'}</Badge>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Received</p>
-                      <p className="font-bold text-white">{new Date(selectedComplaint.createdAt).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-[1.2] flex flex-col min-h-0">
-                  { (userRole !== 'INTAKE_OFFICER' && userRole !== 'EXECUTIVE') ? (
-                    <div className="flex-1 min-h-0 flex flex-col">
-                      <div className="p-6 border-b border-white/5 bg-white/5 flex items-center gap-2">
-                        <MessageSquare size={16} className="text-primary" />
-                        <span className="text-xs font-black uppercase tracking-widest text-white">Investigation Log</span>
-                      </div>
-                      <div className="flex-1 min-h-0">
-                        <MessageBoard complaintId={selectedComplaint.id} isStaff={true} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-text-muted bg-white/5 p-12">
-                      <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                        <ShieldCheck size={32} opacity={0.2} />
-                      </div>
-                      <h4 className="font-bold text-white mb-2">Restricted Access</h4>
-                      <p className="text-sm text-center font-medium max-w-xs">Chat and investigation details are currently restricted for your access level.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        {/* Detail view is now handled by dedicated InvestigationDetails page */}
       </AnimatePresence>
     </div>
   );

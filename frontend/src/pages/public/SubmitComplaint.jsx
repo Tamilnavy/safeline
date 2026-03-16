@@ -335,38 +335,54 @@ const SubmitComplaint = () => {
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-2">Success</h2>
                 <p className="text-text-secondary text-xs font-medium mb-8">Report received and encrypted.</p>
 
-                <div className="space-y-3 mb-8">
-                  <div className="card !p-5 bg-bg-secondary/50 border-border-subtle">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-text-secondary mb-3 text-left border-b border-border-subtle pb-1.5 px-0.5">Credentials</p>
-                    
-                    <div className="flex justify-between items-center mb-4 group px-0.5">
-                      <div className="text-left">
-                        <p className="text-[9px] font-bold text-text-secondary mb-0.5 uppercase">Track ID</p>
-                        <p className="font-mono text-base font-bold text-primary">{result.trackingId}</p>
+                <div className="space-y-4 mb-8">
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-success/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-all" />
+                    <div className="relative glass-card !p-8 bg-bg-secondary/80 border-white/10 overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Lock size={60} />
                       </div>
-                      <button onClick={() => copyToClipboard(result.trackingId)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-text-secondary hover:text-text-primary">
-                        <Copy size={16} />
-                      </button>
-                    </div>
+                      
+                      <div className="text-left mb-6 flex justify-between items-start">
+                        <div>
+                          <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Secure Tracking Identity</p>
+                          <p className="font-mono text-xl font-black text-white tracking-widest">{result.trackingId}</p>
+                        </div>
+                        <button onClick={() => copyToClipboard(result.trackingId)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-white transition-all">
+                          <Copy size={16} />
+                        </button>
+                      </div>
 
-                    <div className="flex justify-between items-center group px-0.5">
-                      <div className="text-left">
-                        <p className="text-[9px] font-bold text-text-secondary mb-0.5 uppercase">PIN</p>
-                        <p className="font-mono text-base font-bold text-success">{result.rawPin}</p>
+                      <div className="text-left flex justify-between items-end">
+                        <div>
+                          <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">Access PIN</p>
+                          <div className="flex items-center gap-3">
+                             <p className="font-mono text-xl font-black text-success tracking-[0.3em]">{result.rawPin}</p>
+                             <div className="px-2 py-0.5 rounded-md bg-success/10 border border-success/20 text-[8px] font-bold text-success uppercase tracking-widest">PRIVATE</div>
+                          </div>
+                        </div>
+                        <button onClick={() => copyToClipboard(result.rawPin)} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-white transition-all">
+                          <Copy size={16} />
+                        </button>
                       </div>
-                      <button onClick={() => copyToClipboard(result.rawPin)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-text-secondary hover:text-text-primary">
-                        <Copy size={16} />
-                      </button>
+                      
+                      <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                            <Shield size={14} className="text-primary" />
+                            <span className="text-[9px] font-black text-text-muted uppercase tracking-widest">End-to-End Encrypted</span>
+                         </div>
+                         <QrCode size={18} className="text-white/20" />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="card !p-4 flex items-center gap-4 bg-primary/5 border-primary/10">
-                    <div className="w-10 h-10 rounded-lg bg-bg-secondary flex items-center justify-center flex-shrink-0">
-                      <QrCode size={20} className="text-primary opacity-80" />
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-bg-secondary flex items-center justify-center text-primary">
+                       <Download size={16} />
                     </div>
                     <div className="text-left">
-                      <p className="text-[10px] font-bold text-text-primary mb-0.5">Mobile Sync</p>
-                      <p className="text-[9px] text-text-secondary font-medium leading-relaxed">Save to your mobile vault.</p>
+                       <p className="text-[10px] font-black text-white uppercase tracking-widest">Download Identity Card</p>
+                       <p className="text-[9px] text-text-muted font-bold uppercase tracking-tighter">Save your credentials securely</p>
                     </div>
                   </div>
                 </div>

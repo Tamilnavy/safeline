@@ -63,9 +63,9 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-bg-primary">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="card w-full max-w-px-280 border border-border-subtle shadow-xl bg-bg-surface p-8 md:p-10"
+        className="card w-full max-w-px-380 border border-border-subtle shadow-xl bg-bg-surface p-8 md:p-10"
       >
         <div className="flex flex-col items-center mb-8 text-center">
           <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/20">

@@ -87,36 +87,52 @@ const EmployeeDashboard = () => {
               <Link to="/submit" className="btn btn-secondary !px-8 decoration-none">Get Started</Link>
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-8">
+            <div className="overflow-x-auto -mx-8 relative">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent" />
               <table className="w-full text-left">
-                <thead className="border-b border-white/5 bg-white/5">
+                <thead className="border-b border-white/5 bg-white/[0.02]">
                   <tr>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Ref ID</th>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Operational Logs</th>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Stage</th>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted text-right">Actions</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Tracking Ref</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Incident Context</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Current Stage</th>
+                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted text-right">Operations</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {complaints.map(c => (
-                    <tr key={c.id} className="hover:bg-white/5 transition-colors group">
+                  {complaints.map((c, i) => (
+                    <motion.tr 
+                      key={c.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="hover:bg-white/[0.03] transition-all group cursor-default"
+                    >
                       <td className="px-8 py-5">
-                        <span className="text-primary font-black tracking-widest text-[11px]">{c.trackingId}</span>
+                        <div className="flex items-center gap-3">
+                           <div className="w-2 h-2 rounded-full bg-primary/40 group-hover:scale-125 transition-transform shadow-[0_0_8px_rgba(79,70,229,0.3)]" />
+                           <span className="text-primary font-black tracking-widest text-[11px] font-mono">{c.trackingId}</span>
+                        </div>
                       </td>
                       <td className="px-8 py-5">
-                        <div className="font-bold text-white mb-1 uppercase tracking-tight text-xs">{c.title}</div>
-                        <div className="text-[9px] text-text-muted font-black uppercase tracking-[0.1em] opacity-40">Filed {new Date(c.createdAt).toLocaleDateString()}</div>
+                        <div className="font-bold text-white mb-0.5 uppercase tracking-tight text-xs group-hover:text-primary transition-colors">{c.title}</div>
+                        <div className="text-[9px] text-text-muted font-black uppercase tracking-[0.1em] opacity-40">Submitted {new Date(c.createdAt).toLocaleDateString()}</div>
                       </td>
                       <td className="px-8 py-5">
-                        <Badge variant={c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'success' : 'warning'}>{c.status}</Badge>
+                        <Badge variant={c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'success' : 'warning'}>
+                          {c.status?.replace(/_/g, ' ')}
+                        </Badge>
                       </td>
                       <td className="px-8 py-5 text-right">
-                        <Link to="/track" state={{ trackingId: c.trackingId }} className="inline-flex items-center gap-2 text-xs font-bold text-text-muted hover:text-white transition-colors decoration-none group">
-                          Track Status
-                          <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        <Link 
+                          to="/track" 
+                          state={{ trackingId: c.trackingId }} 
+                          className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-white transition-all decoration-none group/link"
+                        >
+                          Access Intelligence
+                          <ExternalLink size={12} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                         </Link>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
@@ -21,6 +22,7 @@ const InvestigatorDashboard = () => {
   const [selectedCase, setSelectedCase] = useState(null);
 
   const { user } = useAuth();
+  const navigate = useNavigate();
   const userRole = user?.role || 'INVESTIGATOR';
 
   useEffect(() => {
@@ -118,7 +120,7 @@ const InvestigatorDashboard = () => {
                 onUpdateStatus={updateStatus}
                 onPageChange={setPage}
                 onFilterChange={(s) => { setFilter(s); setPage(0); }}
-                onViewDetails={setSelectedCase}
+                onViewDetails={(c) => navigate(`/dashboard/complaint/${c.id}`)}
               />
             </div>
           </div>

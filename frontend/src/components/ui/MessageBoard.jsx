@@ -30,7 +30,8 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false }) => {
       } else {
         resp = await api.get(`/communication/messages-reporter?trackingId=${trackingId}&pin=${pin}`);
       }
-      setMessages(Array.isArray(resp.data) ? resp.data : []);
+      const data = resp.data;
+      setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load messages', err);
       setMessages([]);
