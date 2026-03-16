@@ -27,6 +27,7 @@ com\safeline\safeline\model\Permission.class
 com\safeline\safeline\repository\ComplaintRepository.class
 com\safeline\safeline\config\TenantFilterConfig.class
 com\safeline\safeline\service\EncryptionService.class
+com\safeline\safeline\dto\TenantResponse.class
 com\safeline\safeline\config\TenantFilterAspect.class
 com\safeline\safeline\dto\AuthRequest.class
 com\safeline\safeline\SafelineApplication.class
@@ -61,6 +62,7 @@ com\safeline\safeline\security\TenantHeaderFilter.class
 com\safeline\safeline\repository\CategoryRepository.class
 com\safeline\safeline\dto\UserRequest.class
 com\safeline\safeline\repository\ComplaintActivityLogRepository.class
+com\safeline\safeline\dto\TenantCreateRequest.class
 com\safeline\safeline\dto\PlatformMetricsDTO.class
 com\safeline\safeline\service\SafelineUserDetailsService.class
 com\safeline\safeline\model\ComplaintEvidence.class

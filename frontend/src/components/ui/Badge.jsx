@@ -3,7 +3,8 @@ const Badge = ({ children, variant = 'pending' }) => {
     pending: 'badge-pending',
     success: 'badge-success',
     danger: 'badge-danger',
-    info: 'badge-info' // We can add this to CSS if needed
+    info: 'badge-info',
+    primary: 'badge-primary'
   };
 
   return (

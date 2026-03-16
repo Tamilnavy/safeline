@@ -9,66 +9,69 @@ const TenantTable = ({
 }) => {
   if (loading) {
     return (
-      <div style={{ padding: '6rem 0', textAlign: 'center' }}>
-        <div className="animate-pulse" style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Synchronizing secure registry...</div>
+      <div className="py-24 text-center">
+        <div className="animate-pulse text-slate-500 font-semibold">Synchronizing secure registry...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ overflowX: 'auto', margin: '0 -1.5rem' }}>
-      <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: '0 0.5rem' }}>
+    <div className="table-container">
+      <table className="w-full text-left">
         <thead>
-          <tr>
-            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Organization</th>
-            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Subdomain</th>
-            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Status</th>
-            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'left', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Provisioned</th>
-            <th style={{ padding: '0.75rem 1.5rem', textAlign: 'right', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>Actions</th>
+          <tr className="table-header">
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Organization</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Subdomain</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Provisioned</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="bg-white">
           {tenants.map(t => (
-            <tr key={t.id} className="animate-fade-in group">
-              <td style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', borderLeft: '1px solid var(--border-subtle)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', borderTopLeftRadius: 'var(--radius-md)', borderBottomLeftRadius: 'var(--radius-md)' }}>
-                <div className="flex items-center gap-3">
-                  <div style={{ width: '36px', height: '36px', background: 'var(--bg-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-subtle)' }}>
-                    <Building size={16} className="text-primary" />
+            <tr key={t.id} className="table-row group">
+              <td className="px-6 py-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-100 shadow-sm group-hover:border-indigo-100 transition-colors">
+                    <Building size={18} className="text-indigo-600" />
                   </div>
-                  <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem' }}>{t.name}</span>
+                  <span className="font-bold text-slate-900 text-sm tracking-tight">{t.name}</span>
                 </div>
               </td>
-              <td style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
-                <div className="flex items-center gap-2 text-primary" style={{ fontSize: '0.875rem', fontWeight: '600' }}>
-                  <Globe size={14} className="opacity-50" />
+              <td className="px-6 py-5">
+                <div className="flex items-center gap-2 text-indigo-600 text-sm font-semibold">
+                  <Globe size={14} className="opacity-60" />
                   <span>{t.domain}.safeline.io</span>
                 </div>
               </td>
-              <td style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+              <td className="px-6 py-5">
                 <div className="flex items-center gap-2">
-                  <div className="pulse-indicator" style={{ background: 'var(--success)', width: '6px', height: '6px' }}></div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--success)' }}>Active</span>
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse" />
+                  <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Active</span>
                 </div>
               </td>
-              <td style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '500' }}>
+              <td className="px-6 py-5 text-slate-500 text-sm font-medium">
                 {new Date(t.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
               </td>
-              <td style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', borderRight: '1px solid var(--border-subtle)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', borderTopRightRadius: 'var(--radius-md)', borderBottomRightRadius: 'var(--radius-md)', textAlign: 'right' }}>
+              <td className="px-6 py-5 text-right">
                 <div className="flex gap-2 justify-end">
                   <button
-                    className="btn btn-outline"
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+                    className="btn btn-secondary !py-1.5 !px-3 !text-xs"
                     onClick={() => onManage(t)}
                   >
-                    <Users size={14} /> Manage
+                    <Users size={14} className="mr-2" /> Manage
                   </button>
-                  <button className="btn btn-outline" style={{ padding: '0.4rem', border: '1px solid var(--border-subtle)' }} onClick={() => window.open(`http://${t.domain}.localhost:5173`, '_blank')}>
+                  <button 
+                    className="btn btn-secondary !p-2" 
+                    onClick={() => window.open(`http://${t.domain}.localhost:5173`, '_blank')}
+                    title="Visit Portal"
+                  >
                     <ExternalLink size={14} />
                   </button>
                   <button 
-                    className="btn btn-outline" 
-                    style={{ padding: '0.4rem', color: 'var(--danger)', border: '1px solid var(--border-subtle)' }}
+                    className="btn btn-secondary !p-2 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100" 
                     onClick={() => onDelete(t.id)}
+                    title="Terminate Environment"
                   >
                     <Trash2 size={14} />
                   </button>

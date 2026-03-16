@@ -37,11 +37,11 @@ public class TenantController {
         return ResponseEntity.ok(tenantService.getPlatformMetrics());
     }
 
-    // Create tenant
+    // Create tenant with Admin
     @PostMapping
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
-    public ResponseEntity<Tenant> createTenant(@RequestBody Tenant tenant) {
-        return ResponseEntity.ok(tenantService.createTenant(tenant));
+    public ResponseEntity<com.safeline.safeline.dto.TenantResponse> createTenant(@RequestBody com.safeline.safeline.dto.TenantCreateRequest request) {
+        return ResponseEntity.ok(tenantService.createTenantWithAdmin(request));
     }
 
     // DELETE tenant
@@ -69,7 +69,7 @@ public class TenantController {
     }
 
     // ------------------------------------------------
-    // GET users for a specific tenant
+    // GET users for a specific tenant (Super Admin can still see list)
     // ------------------------------------------------
     @GetMapping("/{id}/users")
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
@@ -88,14 +88,7 @@ public class TenantController {
     }
 
     // ------------------------------------------------
-    // Add a user (org admin / investigator) to a tenant
+    // Add a user - REMOVED for Super Admin
+    // Only Tenant Admin should add users via UserController
     // ------------------------------------------------
-    @PostMapping("/{id}/users")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
-    public ResponseEntity<UserResponse> addUserToTenant(
-            @PathVariable Long id,
-            @RequestBody UserRequest request) {
-        request.setTenantId(id);
-        return ResponseEntity.ok(userService.createUser(request));
-    }
 }

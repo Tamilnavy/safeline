@@ -88,7 +88,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('ORG_ADMIN')")
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
         return ResponseEntity.ok(userService.createUser(request));
     }

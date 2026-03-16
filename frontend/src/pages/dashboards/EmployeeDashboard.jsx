@@ -35,11 +35,6 @@ const EmployeeDashboard = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
@@ -49,20 +44,20 @@ const EmployeeDashboard = () => {
     <div className="space-y-8">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-1">My Reports</h1>
-          <p className="text-text-secondary text-sm font-medium">Personal reporting console and case tracking</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">My Reports</h1>
+          <p className="text-slate-500 text-sm font-medium">Personal reporting console and case tracking</p>
         </div>
-        <Link to="/submit" className="btn btn-primary">
-          <PlusCircle size={18} />
+        <Link to="/submit" className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20">
+          <PlusCircle size={18} className="mr-2" />
           <span>New Report</span>
         </Link>
       </header>
 
       <div className="metrics-grid">
-        <Stat label="Total Submissions" value={summary.total} icon={FileText} color="#5e6ad2" />
-        <Stat label="Active Cases" value={summary.pending} icon={Clock} color="#facc15" />
-        <Stat label="Resolved" value={summary.resolved} icon={ShieldCheck} color="#4ade80" />
-        <Stat label="Privacy Status" value="Secure" icon={ShieldCheck} color="#5e6ad2" />
+        <Stat label="Total Submissions" value={summary.total} icon={FileText} />
+        <Stat label="Active Cases" value={summary.pending} icon={Clock} trend={-1} />
+        <Stat label="Resolved" value={summary.resolved} icon={ShieldCheck} trend={2} />
+        <Stat label="Privacy Status" value="Secure" icon={ShieldCheck} />
       </div>
 
       <motion.div variants={itemVariants}>
@@ -71,72 +66,83 @@ const EmployeeDashboard = () => {
           subtitle="Tracking logs for your encrypted submissions."
         >
           {loading ? (
-            <div className="py-20 text-center">
-              <div className="inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
-              <div className="text-text-muted font-bold animate-pulse">Synchronizing history...</div>
+            <div className="py-24 text-center">
+              <div className="inline-block w-10 h-10 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin mb-4" />
+              <div className="text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Synchronizing history...</div>
             </div>
           ) : complaints.length === 0 ? (
-            <div className="py-24 text-center">
-              <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6">
-                <Search size={32} className="text-text-muted opacity-20" />
+            <div className="py-24 text-center border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
+              <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <Search size={32} className="text-slate-200" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">No activity logs found</h3>
-              <p className="text-text-muted max-w-md mx-auto mb-8 font-medium">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No activity logs found</h3>
+              <p className="text-slate-500 max-w-sm mx-auto mb-8 font-medium">
                 Your workspace is currently empty. Start by filing a secure report to track its progress here.
               </p>
-              <Link to="/submit" className="btn btn-secondary !px-8 decoration-none">Get Started</Link>
+              <Link to="/submit" className="btn btn-secondary !px-10 h-11 inline-flex items-center decoration-none">Get Started</Link>
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-8">
+            <div className="table-container">
               <table className="w-full text-left">
-                <thead className="border-b border-white/5 bg-white/5">
-                  <tr>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Ref ID</th>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Operational Logs</th>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted">Stage</th>
-                    <th className="px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] text-text-muted text-right">Actions</th>
+                <thead>
+                  <tr className="table-header">
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Ref ID</th>
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Operational Logs</th>
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Stage</th>
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
-                  {complaints.map(c => (
-                    <tr key={c.id} className="hover:bg-white/5 transition-colors group">
+                <tbody className="bg-white">
+                  {complaints.map((c, i) => (
+                    <motion.tr
+                      key={c.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="table-row group"
+                    >
                       <td className="px-8 py-5">
-                        <span className="text-primary font-black tracking-widest text-[11px]">{c.trackingId}</span>
+                        <span className="text-indigo-600 font-bold tracking-widest text-xs tracking-tighter">{c.trackingId}</span>
                       </td>
                       <td className="px-8 py-5">
-                        <div className="font-bold text-white mb-1 uppercase tracking-tight text-xs">{c.title}</div>
-                        <div className="text-[9px] text-text-muted font-black uppercase tracking-[0.1em] opacity-40">Filed {new Date(c.createdAt).toLocaleDateString()}</div>
+                        <div className="font-bold text-slate-900 mb-1 tracking-tight text-sm group-hover:text-indigo-600 transition-colors uppercase">{c.title}</div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Filed {new Date(c.createdAt).toLocaleDateString()}</div>
                       </td>
                       <td className="px-8 py-5">
-                        <Badge variant={c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'success' : 'warning'}>{c.status}</Badge>
+                        <Badge variant={c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'success' : 'warning'}>
+                          {c.status?.replace(/_/g, ' ')}
+                        </Badge>
                       </td>
                       <td className="px-8 py-5 text-right">
-                        <Link to="/track" state={{ trackingId: c.trackingId }} className="inline-flex items-center gap-2 text-xs font-bold text-text-muted hover:text-white transition-colors decoration-none group">
+                        <Link to="/track" state={{ trackingId: c.trackingId }} className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-indigo-600 transition-all decoration-none">
                           Track Status
                           <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </Link>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
 
               {totalPages > 1 && (
-                <div className="flex justify-end gap-3 px-8 py-6 border-t border-white/5">
-                  <button 
-                    disabled={page === 0}
-                    onClick={() => setPage(prev => prev - 1)}
-                    className="p-2 rounded-xl bg-white/5 border border-white/10 text-text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <button 
-                    disabled={page >= totalPages - 1}
-                    onClick={() => setPage(prev => prev + 1)}
-                    className="p-2 rounded-xl bg-white/5 border border-white/10 text-text-muted hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
+                <div className="flex justify-end items-center gap-4 px-8 py-6 border-t border-slate-50 bg-slate-50/30">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Page {page + 1} of {totalPages}</span>
+                  <div className="flex gap-2">
+                    <button 
+                      disabled={page === 0}
+                      onClick={() => setPage(prev => prev - 1)}
+                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button 
+                      disabled={page >= totalPages - 1}
+                      onClick={() => setPage(prev => prev + 1)}
+                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

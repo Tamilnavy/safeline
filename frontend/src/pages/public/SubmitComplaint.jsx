@@ -13,7 +13,12 @@ import {
   MapPin,
   Tag,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  AlertCircle,
+  Check,
+  AlertTriangle,
+  FileUp,
+  CloudUpload
 } from 'lucide-react';
 
 const SubmitComplaint = () => {
@@ -26,10 +31,12 @@ const SubmitComplaint = () => {
     location: '',
     isAnonymous: true
   });
+  const [declarationChecked, setDeclarationChecked] = useState(false);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [copiedType, setCopiedType] = useState(null); // 'id' or 'pin'
 
   useEffect(() => {
     fetchCategories();
@@ -49,13 +56,14 @@ const SubmitComplaint = () => {
   };
 
   const handleSubmit = async () => {
+    if (!declarationChecked) return;
     setLoading(true);
     setError('');
     try {
       const data = new FormData();
       data.append('request', JSON.stringify({
         ...formData,
-        anonymous: formData.isAnonymous
+        anonymous: true 
       }));
 
       files.forEach(file => {
@@ -63,7 +71,6 @@ const SubmitComplaint = () => {
       });
 
       const resp = await api.post('/complaints/submit', data);
-
       setResult(resp.data);
       setStep(4);
     } catch (err) {
@@ -73,181 +80,213 @@ const SubmitComplaint = () => {
     }
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text);
+    setCopiedType(type);
+    setTimeout(() => setCopiedType(null), 2000);
   };
 
-  return (
-    <div className="min-h-screen py-20 flex flex-col items-center bg-bg-primary">
-      <div className="container max-w-md mx-auto relative px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
-        >
-          <div className="inline-flex items-center gap-2 mb-3.5 px-3 py-1 rounded-full bg-primary/5 border border-primary/10">
-            <ShieldCheck className="text-primary" size={12} />
-            <span className="text-[9px] font-bold uppercase tracking-wider text-primary">Secure Channel Active</span>
-          </div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight mb-2">Submit a Report</h1>
-          <p className="text-text-secondary text-xs font-medium max-w-xs mx-auto">Provide accurate details to help us investigate the incident effectively.</p>
-        </motion.div>
+  const steps = [
+    { id: 1, label: 'Incident Details' },
+    { id: 2, label: 'Details' },
+    { id: 3, label: 'Evidence & Review' }
+  ];
 
-        {step < 4 && (
-          <div className="flex gap-3 items-center mb-8 px-2">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex-1 flex flex-col gap-1.5">
-                <div className="flex justify-between items-center px-0.5">
-                  <span className={`text-[9px] font-bold uppercase tracking-wider ${step >= s ? 'text-primary' : 'text-text-secondary opacity-40'}`}>
-                    S0{s}
-                  </span>
-                  {step > s && <CheckCircle size={10} className="text-primary" />}
+  return (
+    <div className="min-h-screen bg-[#f4f7ff] pb-24 pt-12 px-6 flex flex-col items-center">
+      {/* Background Ambient Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px] -z-10" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 100, damping: 15 }}
+        className="w-full max-w-2xl relative"
+      >
+        {/* Darker Stepper Header - Reverted to preferred tint */}
+        <div className="bg-slate-800/95 backdrop-blur-md rounded-t-3xl p-5 mb-0 relative z-20 shadow-xl overflow-hidden border-x border-t border-slate-700/50">
+          <div className="flex justify-between items-center max-w-lg mx-auto px-4 relative z-10">
+            {steps.map((s, idx) => (
+              <div key={s.id} className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                  step === s.id ? 'bg-[#3b82f6]/20 text-[#3b82f6] border-2 border-[#3b82f6] shadow-lg shadow-blue-500/20' : 
+                  step > s.id ? 'bg-[#3b82f6] text-white' : 
+                  'bg-slate-700/50 text-slate-400 border border-slate-600/30'
+                }`}>
+                  {step > s.id ? <Check size={14} strokeWidth={4} /> : s.id}
                 </div>
-                <div className="h-0.5 rounded-full bg-border-subtle overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: step > s ? '100%' : (step === s ? '50%' : '0%') }}
-                    className="h-full bg-primary"
-                  />
-                </div>
+                <span className={`text-[11px] font-bold tracking-tight transition-colors hidden sm:block ${
+                  step === s.id ? 'text-white' : 'text-slate-500'
+                }`}>
+                  {s.label}
+                </span>
+                {idx < steps.length - 1 && (
+                  <div className="w-8 h-[1px] bg-slate-800 mx-1 hidden md:block" />
+                )}
               </div>
             ))}
           </div>
-        )}
+        </div>
 
+        {/* Form Container White Card - Subtler curves */}
         <motion.div
-          layout
-          className="card !p-6 md:!p-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 100, damping: 15, delay: 0.1 }}
+          className="bg-white rounded-b-3xl rounded-t-none -mt-6 pt-16 pb-12 px-8 md:px-12 shadow-2xl shadow-indigo-500/10 border border-white relative z-10"
         >
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-center text-primary">
-                    <FileText size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-text-primary tracking-tight">Basic Info</h2>
-                    <p className="text-text-secondary text-[10px] font-medium">Primary details about the incident</p>
-                  </div>
+                <div className="flex items-center gap-4 mb-2">
+                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">What happened?</h2>
                 </div>
                 
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-text-secondary mb-1 block">Report Title</label>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[13px] font-bold text-slate-700 ml-1">Complaint Title *</label>
                     <input 
                       type="text" 
-                      className="input-field" 
-                      placeholder="e.g., Financial Irregularity in Sector 7" 
+                      className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm" 
+                      placeholder="Brief summary of the issue" 
                       value={formData.title} 
                       onChange={(e) => setFormData({...formData, title: e.target.value})} 
                     />
                   </div>
                   
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-text-secondary block">Category</label>
-                        <div className="relative group">
-                          <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" size={14} />
-                          <select 
-                            className="input-field pl-10 appearance-none" 
-                            value={formData.categoryId} 
-                            onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
-                          >
-                            <option value="">Select Category</option>
-                            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                          </select>
-                        </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-bold text-slate-700 ml-1">Category *</label>
+                      <div className="relative">
+                        <select 
+                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer shadow-sm" 
+                          value={formData.categoryId} 
+                          onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                        >
+                          <option value="">Select a category...</option>
+                          {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                        </select>
+                        <Tag className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
-                      
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-text-secondary block">Location</label>
-                        <div className="relative group">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" size={14} />
-                          <input 
-                            type="text" 
-                            className="input-field pl-10" 
-                            placeholder="Building/Dept" 
-                            value={formData.location} 
-                            onChange={(e) => setFormData({...formData, location: e.target.value})} 
-                          />
-                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-bold text-slate-700 ml-1">Location / Platform</label>
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm" 
+                          placeholder="e.g. 5th Floor office, etc." 
+                          value={formData.location} 
+                          onChange={(e) => setFormData({...formData, location: e.target.value})} 
+                        />
+                        <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
                     </div>
                   </div>
+                </div>
 
-                <button 
-                  onClick={() => setStep(2)} 
-                  className="btn btn-primary w-full py-2.5 mt-8 font-bold text-sm" 
-                  disabled={!formData.title || !formData.categoryId}
-                >
-                  Continue to Details <ArrowRight size={16} className="ml-1" />
-                </button>
+                <div className="flex justify-end pt-6 border-t border-slate-50">
+                  <button 
+                    onClick={() => setStep(2)} 
+                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group" 
+                    disabled={!formData.title || !formData.categoryId}
+                  >
+                    <span>Next Step</span>
+                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
               </motion.div>
             )}
 
             {step === 2 && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-success/5 border border-success/20 flex items-center justify-center text-success">
-                    <Send size={20} />
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-[#3b82f6] shadow-sm ring-1 ring-blue-100">
+                    <AlertTriangle size={18} />
                   </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-text-primary tracking-tight">Description</h2>
-                    <p className="text-text-secondary text-[10px] font-medium">Describe what happened and attach evidence</p>
-                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">Incident Description</h2>
                 </div>
 
+                <div className="space-y-6">
                   <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-text-secondary block">Incident Description</label>
-                      <textarea 
-                        className="input-field min-h-[140px] leading-relaxed py-3" 
-                        placeholder="Provide a detailed sequence of events including names, dates, and specific incidents..." 
-                        value={formData.description} 
-                        onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                      />
+                    <div className="flex justify-between items-center ml-1 mb-2">
+                      <label className="text-[13px] font-bold text-slate-700">Detailed Description *</label>
+                      <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100 shadow-sm">
+                        {formData.description.length} / 2000
+                      </span>
+                    </div>
+                    <textarea 
+                      className="w-full min-h-[110px] px-7 py-5 bg-white border border-slate-200/60 rounded-[28px] focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 leading-relaxed shadow-sm hover:shadow-md" 
+                      placeholder="Please provide specifics: who, what, when, where, and why. Be factual." 
+                      value={formData.description} 
+                      onChange={(e) => setFormData({...formData, description: e.target.value})} 
+                    />
+                  </div>
+                  
+                  <div className="space-y-4 pt-4 border-t border-slate-50">
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#3b82f6]">
+                        <FileUp size={18} />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900">Evidence Map</h3>
                     </div>
                     
+                    <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
+                      Upload any documents, screenshots, or files that support your report. If you are reporting anonymously, <span className="font-bold text-slate-800">ensure your name is not within the files themselves.</span>
+                    </p>
+
                     <motion.div 
-                      whileHover={{ scale: 1.01, backgroundColor: 'rgba(94, 106, 210, 0.05)' }}
-                      className="border border-dashed border-border-subtle p-6 text-center rounded-lg bg-white-5 cursor-pointer group transition-all" 
+                      whileHover={{ scale: 1.002, backgroundColor: '#fcfdff' }}
+                      className="border-2 border-dashed border-slate-200 p-8 text-center rounded-[24px] bg-slate-50/30 cursor-pointer group transition-all relative overflow-hidden" 
                       onClick={() => document.getElementById('file-input').click()}
                     >
-                      <div className="w-10 h-10 rounded-lg bg-bg-secondary flex items-center justify-center mx-auto mb-2.5 group-hover:bg-primary-10 transition-colors">
-                        <Image size={20} className="text-text-secondary group-hover:text-primary transition-colors" />
+                      <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-all duration-300 ring-1 ring-slate-100">
+                        <CloudUpload size={24} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
                       </div>
-                      <p className="text-xs font-bold text-text-primary mb-0.5">Attach Evidence</p>
-                      <p className="text-[10px] text-text-secondary font-medium">Add images, PDF, or documents</p>
+                      <p className="text-[14px] font-bold text-slate-700 mb-0.5">
+                        <span className="text-slate-900">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium tracking-tight mt-1">
+                        PDF, PNG, JPG or DOCX (max. 15MB)
+                      </p>
+                      
                       <input id="file-input" type="file" multiple hidden onChange={handleFileChange} />
+                      
                       {files.length > 0 && (
-                        <div className="mt-2.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary-10 text-primary text-[10px] font-bold border border-primary/20">
-                          <CheckCircle size={12} /> {files.length} documents attached
+                        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#3b82f6] text-white text-[11px] font-bold shadow-lg shadow-blue-500/20 animate-in zoom-in">
+                          <CheckCircle size={14} />
+                          <span>{files.length} documents attached</span>
                         </div>
                       )}
                     </motion.div>
                   </div>
+                </div>
 
-                <div className="flex gap-3 mt-8">
-                  <button onClick={() => setStep(1)} className="btn btn-secondary flex-1 font-bold text-sm">
-                    <ChevronLeft size={16} /> Back
+                <div className="flex justify-between pt-6 border-t border-slate-50">
+                  <button onClick={() => setStep(1)} className="h-11 px-8 flex items-center justify-center gap-2 border-2 border-slate-900 text-slate-900 font-bold text-[13px] rounded-xl hover:bg-slate-50 transition-all active:scale-95">
+                    <ChevronLeft size={16} />
+                    <span>Back</span>
                   </button>
                   <button 
                     onClick={() => setStep(3)} 
-                    className="btn btn-primary flex-1 font-bold text-sm" 
+                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 group" 
                     disabled={!formData.description}
                   >
-                    Next Step <ChevronRight size={16} />
+                    <span>Last Step</span>
+                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </motion.div>
@@ -256,67 +295,73 @@ const SubmitComplaint = () => {
             {step === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-8"
               >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-center text-primary">
-                    <ShieldCheck size={20} />
+                <div className="space-y-8 pt-4">
+                  {/* High-Fidelity Anonymity Confirmation */}
+                  <div className="p-6 rounded-[32px] bg-[#f8faff] border border-blue-100 flex items-start gap-4 shadow-sm mx-1">
+                    <div className="w-8 h-8 rounded-lg bg-[#9333ea] flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/20">
+                      <CheckCircle size={20} className="text-white" strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-bold text-slate-900 mb-1">Submit Anonymously</h4>
+                      <p className="text-[12px] text-slate-500 font-medium leading-[1.6]">
+                        If checked, your employer will absolutely <span className="font-bold text-slate-700">not</span> know who submitted this report. You will still receive a Tracking ID to communicate securely without revealing your identity.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-text-primary tracking-tight">Privacy</h2>
-                    <p className="text-text-secondary text-[10px] font-medium">Choose your identification level</p>
+
+                  <h3 className="text-xl font-bold text-slate-900 ml-2 pt-2">Declaration</h3>
+                  
+                  {/* High-Fidelity Declaration Box - Fixed Alignment */}
+                  <div 
+                    className="p-6 rounded-[32px] bg-white border border-slate-200 flex items-start gap-5 cursor-pointer group hover:border-blue-400 transition-all duration-300 shadow-sm mx-1"
+                    onClick={() => setDeclarationChecked(!declarationChecked)}
+                  >
+                    <div className={`mt-0.5 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-500 ${
+                      declarationChecked ? 'bg-[#3b82f6] border-[#3b82f6]' : 'bg-white border-slate-300 group-hover:border-blue-500'
+                    }`}>
+                      {declarationChecked && <CheckCircle size={18} className="text-white" strokeWidth={3} />}
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[14px] font-bold text-slate-800 leading-tight select-none">
+                        I declare that the information provided is true and correct to the best of my knowledge.
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium leading-relaxed select-none">
+                        Submitting false or malicious reports intentionally may be subject to disciplinary action depending on your organization's policies.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.99 }}
-                    className={`card !p-4 cursor-pointer border-2 transition-all ${formData.isAnonymous ? 'border-primary bg-primary-5' : 'border-border-subtle opacity-60 hover:opacity-100'}`} 
-                    onClick={() => setFormData({...formData, isAnonymous: true})}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${formData.isAnonymous ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-bg-secondary text-text-secondary'}`}>
-                        <ShieldCheck size={20} />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-text-primary mb-0.5">Stay Anonymous</h3>
-                        <p className="text-[10px] text-text-secondary font-medium leading-relaxed">Identity is completely hidden. No personal data stored.</p>
-                      </div>
-                    </div>
-                  </motion.div>
-    
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.99 }}
-                    className={`card !p-4 cursor-pointer border-2 transition-all ${!formData.isAnonymous ? 'border-primary bg-primary-5' : 'border-border-subtle opacity-60 hover:opacity-100'}`} 
-                    onClick={() => setFormData({...formData, isAnonymous: false})}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${!formData.isAnonymous ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-bg-secondary text-text-secondary'}`}>
-                        <CheckCircle size={20} />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-text-primary mb-0.5">Disclose Identity</h3>
-                        <p className="text-[10px] text-text-secondary font-medium leading-relaxed">Provide details for direct communication.</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
+                {error && (
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-[12px] font-bold">
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                  </div>
+                )}
 
-                <div className="flex gap-3 mt-8">
-                  <button onClick={() => setStep(2)} className="btn btn-secondary flex-1 font-bold text-sm">
-                    <ChevronLeft size={16} /> Back
+                <div className="flex justify-between pt-6 border-t border-slate-50">
+                  <button onClick={() => setStep(2)} className="h-11 px-8 flex items-center justify-center gap-2 border-2 border-slate-900 text-slate-900 font-bold text-[13px] rounded-xl hover:bg-slate-50 transition-all active:scale-95">
+                    <ChevronLeft size={16} />
+                    <span>Back</span>
                   </button>
                   <button 
                     onClick={handleSubmit} 
-                    className="btn btn-primary flex-1 font-bold text-sm" 
-                    disabled={loading}
+                    className="h-11 px-10 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed group" 
+                    disabled={loading || !declarationChecked}
                   >
-                    {loading ? 'Submitting...' : 'Submit'} 
-                    {!loading && <Send size={16} className="ml-1" />}
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>Submit Secure Report</span> 
+                        <Send size={16} className="group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </button>
                 </div>
               </motion.div>
@@ -327,55 +372,48 @@ const SubmitComplaint = () => {
                 key="step4"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center"
+                className="text-center py-4"
               >
-                <div className="w-14 h-14 rounded-full bg-success/10 text-success flex items-center justify-center mx-auto mb-5 border border-success/20">
-                  <CheckCircle size={28} />
+                <div className="w-16 h-16 rounded-full bg-blue-50 text-[#3b82f6] flex items-center justify-center mx-auto mb-6 ring-1 ring-blue-100 shadow-xl shadow-blue-500/10 animate-in zoom-in duration-500">
+                  <CheckCircle size={32} />
                 </div>
-                <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-2">Success</h2>
-                <p className="text-text-secondary text-xs font-medium mb-8">Report received and encrypted.</p>
+                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Success!</h2>
+                <p className="text-slate-500 text-sm font-medium mb-8 max-w-sm mx-auto leading-relaxed">Report encrypted. Save these credentials safely.</p>
 
-                <div className="space-y-3 mb-8">
-                  <div className="card !p-5 bg-bg-secondary/50 border-border-subtle">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-text-secondary mb-3 text-left border-b border-border-subtle pb-1.5 px-0.5">Credentials</p>
-                    
-                    <div className="flex justify-between items-center mb-4 group px-0.5">
-                      <div className="text-left">
-                        <p className="text-[9px] font-bold text-text-secondary mb-0.5 uppercase">Track ID</p>
-                        <p className="font-mono text-base font-bold text-primary">{result.trackingId}</p>
-                      </div>
-                      <button onClick={() => copyToClipboard(result.trackingId)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-text-secondary hover:text-text-primary">
-                        <Copy size={16} />
-                      </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  <div className="p-5 bg-slate-50 rounded-[32px] border border-slate-100 group">
+                    <div className="flex justify-between items-center mb-2 mx-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tracking ID</p>
+                      {copiedType === 'id' && <span className="text-[10px] font-bold text-blue-600 animate-bounce">Copied!</span>}
                     </div>
-
-                    <div className="flex justify-between items-center group px-0.5">
-                      <div className="text-left">
-                        <p className="text-[9px] font-bold text-text-secondary mb-0.5 uppercase">PIN</p>
-                        <p className="font-mono text-base font-bold text-success">{result.rawPin}</p>
-                      </div>
-                      <button onClick={() => copyToClipboard(result.rawPin)} className="p-2 rounded-lg hover:bg-white/5 transition-colors text-text-secondary hover:text-text-primary">
-                        <Copy size={16} />
+                    <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm transition-all group-hover:shadow-md">
+                      <span className="font-mono text-lg font-bold text-blue-600 tracking-wider transition-all">{result.trackingId}</span>
+                      <button onClick={() => copyToClipboard(result.trackingId, 'id')} className="p-2 text-slate-400 hover:text-blue-600 transition-all active:scale-90">
+                        {copiedType === 'id' ? <Check size={18} /> : <Copy size={18} />}
                       </button>
                     </div>
                   </div>
 
-                  <div className="card !p-4 flex items-center gap-4 bg-primary/5 border-primary/10">
-                    <div className="w-10 h-10 rounded-lg bg-bg-secondary flex items-center justify-center flex-shrink-0">
-                      <QrCode size={20} className="text-primary opacity-80" />
+                  <div className="p-5 bg-slate-50 rounded-[32px] border border-slate-100 group">
+                    <div className="flex justify-between items-center mb-2 mx-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Security PIN</p>
+                      {copiedType === 'pin' && <span className="text-[10px] font-bold text-emerald-600 animate-bounce">Copied!</span>}
                     </div>
-                    <div className="text-left">
-                      <p className="text-[10px] font-bold text-text-primary mb-0.5">Mobile Sync</p>
-                      <p className="text-[9px] text-text-secondary font-medium leading-relaxed">Save to your mobile vault.</p>
+                    <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm transition-all group-hover:shadow-md">
+                      <span className="font-mono text-lg font-bold text-emerald-600 tracking-wider transition-all">{result.rawPin}</span>
+                      <button onClick={() => copyToClipboard(result.rawPin, 'pin')} className="p-2 text-slate-400 hover:text-emerald-600 transition-all active:scale-90">
+                        {copiedType === 'pin' ? <Check size={18} /> : <Copy size={18} />}
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => window.location.href = '/track'} className="btn btn-primary w-full py-2.5 font-bold text-sm">
-                    Track Status <ArrowRight size={16} className="ml-1" />
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button onClick={() => window.location.href = '/track'} className="h-12 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm">
+                    <span>Track Status Now</span>
+                    <ArrowRight size={18} />
                   </button>
-                  <button onClick={() => window.location.href = '/'} className="text-[10px] font-bold text-text-secondary hover:text-text-primary transition-colors py-1.5 uppercase tracking-widest">
+                  <button onClick={() => window.location.href = '/'} className="h-12 px-8 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 font-bold rounded-xl transition-all flex items-center justify-center text-sm">
                     Return Home
                   </button>
                 </div>
@@ -383,11 +421,12 @@ const SubmitComplaint = () => {
             )}
           </AnimatePresence>
         </motion.div>
-
-        <p className="mt-8 text-center text-[10px] text-text-secondary font-bold uppercase tracking-widest max-w-xs mx-auto opacity-50">
-          Encrypted • Anonymous • Secure
-        </p>
-      </div>
+      </motion.div>
+ 
+      {/* Info Footer */}
+      <p className="mt-8 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.25em]">
+        Military Grade Encryption • Full Anonymity Active
+      </p>
     </div>
   );
 };
