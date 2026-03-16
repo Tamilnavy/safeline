@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
@@ -17,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const OrgAdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [complaints, setComplaints] = useState([]);
   const [investigators, setInvestigators] = useState([]);
   const [allTeam, setAllTeam] = useState([]);

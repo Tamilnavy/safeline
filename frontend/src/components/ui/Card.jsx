@@ -6,7 +6,7 @@ const Card = ({ children, className = '', title, subtitle }) => (
         {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
       </div>
     )}
-    <div className="relative">
+    <div className={`relative ${noPadding ? '' : 'p-8'}`}>
       {children}
     </div>
   </div>

@@ -103,7 +103,9 @@ const EmployeeDashboard = () => {
                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Filed {new Date(c.createdAt).toLocaleDateString()}</div>
                       </td>
                       <td className="px-8 py-5">
-                        <Badge variant={c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'success' : 'warning'}>{c.status}</Badge>
+                        <Badge variant={c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'success' : 'warning'}>
+                          {c.status?.replace(/_/g, ' ')}
+                        </Badge>
                       </td>
                       <td className="px-8 py-5 text-right">
                         <Link to="/track" state={{ trackingId: c.trackingId }} className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-indigo-600 transition-all decoration-none">
@@ -111,7 +113,7 @@ const EmployeeDashboard = () => {
                           <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </Link>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>

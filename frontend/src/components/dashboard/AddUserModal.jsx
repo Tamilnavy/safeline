@@ -12,7 +12,8 @@ const AddUserModal = ({
     { value: 'INTAKE_OFFICER', label: 'Intake Officer' },
     { value: 'HR_MANAGER', label: 'HR Manager' },
     { value: 'COMPLIANCE_OFFICER', label: 'Compliance Officer' },
-    { value: 'EXECUTIVE', label: 'Executive (Read-Only)' }
+    { value: 'EXECUTIVE', label: 'Executive (Read-Only)' },
+    { value: 'EMPLOYEE', label: 'Employee' }
   ],
   initialRole = 'INVESTIGATOR'
 }) => {

@@ -22,6 +22,9 @@ import SuperAdminDashboard from './SuperAdminDashboard';
 import InvestigatorDashboard from './InvestigatorDashboard';
 import EmployeeDashboard from './EmployeeDashboard';
 import OrgAdminDashboard from './OrgAdminDashboard';
+import InvestigationDetails from './InvestigationDetails';
+import SystemMonitoring from './SystemMonitoring';
+import SecurityLog from './SecurityLog';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
@@ -36,7 +39,8 @@ const DashboardLayout = () => {
     { label: 'My Cases', icon: FileText, path: '/dashboard/complaints', roles: ['EMPLOYEE'] },
     { label: 'Investigations', icon: ShieldCheck, path: '/dashboard/assigned', roles: ['INVESTIGATOR', 'ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
     { label: 'Registry', icon: Settings, path: '/dashboard/registry', roles: ['SUPER_ADMIN'] },
-    { label: 'Security Log', icon: Activity, path: '/dashboard/logs', roles: ['SUPER_ADMIN', 'ORG_ADMIN'] },
+    { label: 'Monitoring', icon: Activity, path: '/dashboard/monitoring', roles: ['SUPER_ADMIN'] },
+    { label: 'Security Log', icon: Shield, path: '/dashboard/logs', roles: ['SUPER_ADMIN', 'ORG_ADMIN'] },
     { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: null },
   ];
 
@@ -136,6 +140,7 @@ const DashboardLayout = () => {
               <Route path="/" element={<DashboardDispatcher user={user} />} />
               <Route path="/complaints" element={<EmployeeDashboard />} />
               <Route path="/assigned" element={<InvestigatorDashboard />} />
+              <Route path="/complaint/:id" element={<InvestigationDetails />} />
               <Route path="/org" element={<OrgAdminDashboard />} />
               <Route path="/registry" element={<SuperAdminDashboard />} />
               <Route path="/logs" element={<div className="card text-center py-20 text-slate-500">Access Restricted</div>} />

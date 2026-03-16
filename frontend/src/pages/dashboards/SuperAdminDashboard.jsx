@@ -17,7 +17,13 @@ const SuperAdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', domain: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    domain: '',
+    adminUsername: '',
+    adminEmail: '',
+    adminPassword: ''
+  });
   const [submitting, setSubmitting] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
 
@@ -45,7 +51,14 @@ const SuperAdminDashboard = () => {
     setSubmitting(true);
     try {
       await api.post('/tenants', formData);
-      setShowModal(false); setFormData({ name: '', domain: '' });
+      setShowModal(false); 
+      setFormData({ 
+        name: '', 
+        domain: '',
+        adminUsername: '',
+        adminEmail: '',
+        adminPassword: ''
+      });
       fetchData();
     } catch (err) { alert('Failed to create organization.'); }
     finally { setSubmitting(false); }

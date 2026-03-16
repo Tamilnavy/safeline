@@ -1,19 +1,23 @@
 package com.safeline.safeline.service;
 
 import com.safeline.safeline.dto.PlatformMetricsDTO;
-import com.safeline.safeline.repository.ComplaintRepository;
-import com.safeline.safeline.repository.TenantRepository;
-import com.safeline.safeline.repository.UserRepository;
-import com.safeline.safeline.repository.CategoryRepository;
-import com.safeline.safeline.repository.SLAPolicyRepository;
+import com.safeline.safeline.dto.TenantCreateRequest;
+import com.safeline.safeline.dto.TenantResponse;
+import com.safeline.safeline.dto.UserResponse;
+import com.safeline.safeline.model.Role;
+import com.safeline.safeline.model.User;
+import com.safeline.safeline.repository.*;
 import com.safeline.safeline.model.Tenant;
 import com.safeline.safeline.model.Category;
 import com.safeline.safeline.model.SLAPolicy;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,8 @@ public class TenantService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final SLAPolicyRepository slaPolicyRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // ------------------------------------------------
     // Get all tenants
@@ -33,7 +39,46 @@ public class TenantService {
     }
 
     // ------------------------------------------------
-    // Create tenant
+    // Create tenant with initial Admin
+    // ------------------------------------------------
+    @Transactional
+    public TenantResponse createTenantWithAdmin(TenantCreateRequest request) {
+        // 1. Create Tenant
+        Tenant tenant = new Tenant();
+        tenant.setName(request.getName());
+        tenant.setDomain(request.getDomain());
+        Tenant savedTenant = tenantRepository.save(tenant);
+
+        // 2. Seed default categories
+        seedDefaultCategories(savedTenant);
+
+        // 3. Create Admin User
+        User admin = new User();
+        admin.setUsername(request.getAdminUsername());
+        admin.setEmail(request.getAdminEmail());
+        admin.setPassword(passwordEncoder.encode(request.getAdminPassword()));
+        admin.setTenant(savedTenant);
+
+        Role adminRole = roleRepository.findByName("ORG_ADMIN")
+                .orElseThrow(() -> new RuntimeException("Default Admin Role (ORG_ADMIN) not found"));
+        admin.setRoles(Set.of(adminRole));
+        userRepository.save(admin);
+
+        // 4. Build Response
+        TenantResponse response = new TenantResponse();
+        response.setId(savedTenant.getId());
+        response.setName(savedTenant.getName());
+        response.setDomain(savedTenant.getDomain());
+        response.setActive(savedTenant.isActive());
+        response.setCreatedAt(savedTenant.getCreatedAt());
+        response.setAdminUsername(admin.getUsername());
+        response.setAdminEmail(admin.getEmail());
+
+        return response;
+    }
+
+    // ------------------------------------------------
+    // Create tenant (Old version - keep for now if needed, or deprecate)
     // ------------------------------------------------
     public Tenant createTenant(Tenant tenant) {
         Tenant savedTenant = tenantRepository.save(tenant);
@@ -81,7 +126,7 @@ public class TenantService {
     }
 
     // ------------------------------------------------
-    // Get tenant by id  ⭐ ADD THIS
+    // Get tenant by id  S
     // ------------------------------------------------
     public Tenant getTenantById(Long id) {
         return tenantRepository.findById(id)
@@ -89,7 +134,7 @@ public class TenantService {
     }
 
     // ------------------------------------------------
-    // Update tenant  ⭐ ADD THIS
+    // Update tenant   
     // ------------------------------------------------
     public Tenant updateTenant(Long id, Tenant tenantDetails) {
 
