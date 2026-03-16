@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, LogIn, LogOut, LayoutDashboard, Send, Search } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Navbar = () => {
@@ -11,46 +11,36 @@ const Navbar = () => {
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="glass sticky top-4 z-[100] mx-4 my-4 py-3 rounded-2xl border-white/10"
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-4 z-[100] mx-auto max-w-7xl px-6 w-full"
     >
-      <div className="container flex justify-between items-center px-6">
+      <div className="bg-white/70 backdrop-blur-2xl border border-white/50 rounded-2xl px-6 py-3.5 flex justify-between items-center text-slate-900 shadow-sm">
         <Link to="/" className="flex items-center gap-2 group decoration-transparent">
-          <div className="p-2 rounded-lg bg-primary-subtle group-hover:bg-primary/20 transition-colors">
-            <Shield size={22} className="text-primary" />
+          <div className="p-1.5 rounded-lg bg-indigo-50 group-hover:bg-indigo-100 transition-colors">
+            <Shield size={20} className="text-indigo-600" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white font-heading">SafeLine</span>
+          <span className="text-lg font-bold tracking-tight text-slate-900">SafeLine</span>
         </Link>
 
+        {/* Text-Only Links as requested */}
         <div className="flex items-center gap-8">
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/submit" className="flex items-center gap-2 text-secondary hover:text-white transition-colors text-sm font-medium decoration-transparent">
-              <Send size={14} /> Report
-            </Link>
-            <Link to="/track" className="flex items-center gap-2 text-secondary hover:text-white transition-colors text-sm font-medium decoration-transparent">
-              <Search size={14} /> Track
-            </Link>
+            <Link to="/" className="text-[13px] font-bold text-slate-500 hover:text-indigo-600 transition-colors decoration-transparent">Home</Link>
+            <Link to="/submit" className="text-[13px] font-bold text-slate-500 hover:text-indigo-600 transition-colors decoration-transparent">Report</Link>
+            <Link to="/track" className="text-[13px] font-bold text-slate-500 hover:text-indigo-600 transition-colors decoration-transparent">Track</Link>
           </div>
-
-          <div className="hidden md:block w-px h-5 border-l border-white/10"></div>
 
           <div className="flex items-center gap-3">
             {user ? (
-              <>
-                <Link to="/dashboard" className="btn btn-primary !py-2 !px-5 !text-xs !shadow-none">
-                  <LayoutDashboard size={14} /> Dashboard
-                </Link>
-                <button
-                  onClick={() => { logout(); navigate('/'); }}
-                  className="btn btn-ghost !p-2 rounded-xl text-secondary hover:text-danger hover:bg-danger/10 transition-all"
-                  title="Logout"
-                >
-                  <LogOut size={18} />
-                </button>
-              </>
+              <button
+                onClick={() => { logout(); navigate('/'); }}
+                className="h-9 px-5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-lg shadow-indigo-600/20 transition-all"
+              >
+                Logout
+              </button>
             ) : (
-              <Link to="/login" className="btn btn-primary !py-2 !px-6 !text-sm font-bold">
-                <LogIn size={16} /> Login
+              <Link to="/login" className="h-9 px-6 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-lg shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center">
+                Login
               </Link>
             )}
           </div>
