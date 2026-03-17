@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface ComplaintMessageRepository extends JpaRepository<ComplaintMessage, Long> {
     List<ComplaintMessage> findByComplaintIdOrderByCreatedAtAsc(Long complaintId);
+    List<ComplaintMessage> findByComplaintTenantIdOrderByCreatedAtDesc(Long tenantId);
+    List<ComplaintMessage> findAllByOrderByCreatedAtDesc();
 }

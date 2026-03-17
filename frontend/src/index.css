@@ -33,7 +33,7 @@
 @layer components {
   /* Layout */
   .app {
-    @apply min-h-screen flex flex-col bg-[#f8fafc];
+    @apply min-h-screen flex flex-col bg-background;
   }
 
   .sidebar-bg {
@@ -49,7 +49,7 @@
   }
 
   .nav-icon {
-    @apply flex-shrink-0 w-5 h-5 flex items-center justify-center;
+    @apply shrink-0 w-5 h-5 flex items-center justify-center;
   }
 
   .main-scroll-area {
@@ -102,5 +102,9 @@
 
   .table-row {
     @apply border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors;
+  }
+
+  .metrics-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6;
   }
 }

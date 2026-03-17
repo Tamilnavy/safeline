@@ -26,7 +26,7 @@ public class TenantController {
     // Get all tenants
     @GetMapping
     @PreAuthorize("hasAuthority('SUPER_ADMIN')")
-    public ResponseEntity<List<Tenant>> getAllTenants() {
+    public ResponseEntity<List<com.safeline.safeline.dto.TenantResponse>> getAllTenants() {
         return ResponseEntity.ok(tenantService.getAllTenants());
     }
 

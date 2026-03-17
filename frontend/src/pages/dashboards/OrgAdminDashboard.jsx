@@ -49,8 +49,12 @@ const OrgAdminDashboard = () => {
       setTotalPages(resp.data.totalPages || 0);
 
       const all = resp.data.content || [];
-      const pending = all.filter(c => c.status !== 'RESOLVED' && c.status !== 'CLOSED').length;
-      setStats({ total: resp.data.totalElements || 0, pending, resolved: (resp.data.totalElements || 0) - pending });
+      const pending = all.filter(c => !['RESOLVED', 'CLOSED', 'DISMISSED'].includes(c.status?.toUpperCase())).length;
+      setStats({ 
+        total: resp.data.totalElements || 0, 
+        pending, 
+        resolved: (resp.data.totalElements || 0) - pending 
+      });
     } catch (err) {
       console.error('Failed to fetch org complaints', err);
     } finally {
@@ -217,7 +221,7 @@ const OrgAdminDashboard = () => {
 
       <AnimatePresence>
         {selectedComplaint && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-6">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

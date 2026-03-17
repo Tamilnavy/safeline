@@ -30,12 +30,63 @@ public class TenantService {
     private final SLAPolicyRepository slaPolicyRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final jakarta.persistence.EntityManager entityManager;
 
     // ------------------------------------------------
-    // Get all tenants
+    // Get all tenants (mapped to Response with Admin details)
     // ------------------------------------------------
-    public List<Tenant> getAllTenants() {
-        return tenantRepository.findAll();
+    public List<TenantResponse> getAllTenants() {
+        return tenantRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private TenantResponse mapToResponse(Tenant tenant) {
+        TenantResponse response = new TenantResponse();
+        response.setId(tenant.getId());
+        response.setName(tenant.getName());
+        response.setDomain(tenant.getDomain());
+        response.setActive(tenant.isActive());
+        response.setCreatedAt(tenant.getCreatedAt());
+
+        System.out.println("DEBUG: Mapping tenant: " + tenant.getName() + " (ID: " + tenant.getId() + ")");
+
+        // Use a native query fallback to ensure we bypass any Hibernate filters for Super Admin view
+        try {
+            String sql = "SELECT u.username FROM users u JOIN user_roles ur ON u.id = ur.user_id " +
+                         "JOIN roles r ON ur.role_id = r.id " +
+                         "WHERE u.tenant_id = ?1 AND r.name = 'ORG_ADMIN' LIMIT 1";
+            
+            List<String> results = entityManager.createNativeQuery(sql)
+                    .setParameter(1, tenant.getId())
+                    .getResultList();
+
+            if (!results.isEmpty()) {
+                System.out.println("DEBUG: Found ORG_ADMIN: " + results.get(0));
+                response.setAdminUsername(results.get(0));
+            } else {
+                System.out.println("DEBUG: No ORG_ADMIN found, trying fallback...");
+                // Second fallback: any user for this tenant
+                String sqlAny = "SELECT username FROM users WHERE tenant_id = ?1 LIMIT 1";
+                List<String> anyResults = entityManager.createNativeQuery(sqlAny)
+                        .setParameter(1, tenant.getId())
+                        .getResultList();
+                
+                if (!anyResults.isEmpty()) {
+                    System.out.println("DEBUG: Fallback found user: " + anyResults.get(0));
+                    response.setAdminUsername(anyResults.get(0));
+                } else {
+                    System.out.println("DEBUG: No users found for tenant.");
+                    response.setAdminUsername("System Managed");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("DEBUG ERROR: Admin lookup failed for tenant " + tenant.getId() + ": " + e.getMessage());
+            e.printStackTrace();
+            response.setAdminUsername("Data Error");
+        }
+        
+        return response;
     }
 
     // ------------------------------------------------

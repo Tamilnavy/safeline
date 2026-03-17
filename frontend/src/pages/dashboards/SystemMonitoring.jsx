@@ -12,7 +12,8 @@ import {
   BarChart3,
   Server,
   Zap,
-  RefreshCw
+  RefreshCw,
+  CheckCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -163,7 +164,7 @@ const ResourceBar = ({ label, value, color }) => (
 const LogItem = ({ icon: Icon, color, text, time }) => (
   <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group cursor-default">
     <div className="flex items-center gap-4">
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}11`, color: color }}>
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}11`, color: color }}>
         <Icon size={16} />
       </div>
       <span className="text-sm font-medium text-text-primary">{text}</span>

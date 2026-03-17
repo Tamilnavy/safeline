@@ -8,6 +8,8 @@ import com.safeline.safeline.repository.ComplaintRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.safeline.safeline.security.TenantContext;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +26,14 @@ public class MessageService {
 
     public List<ComplaintMessage> getMessages(Long complaintId) {
         return messageRepository.findByComplaintIdOrderByCreatedAtAsc(complaintId);
+    }
+
+    public List<ComplaintMessage> getAllMessages() {
+        Long currentTenantId = TenantContext.getCurrentTenant();
+        if (currentTenantId != null) {
+            return messageRepository.findByComplaintTenantIdOrderByCreatedAtDesc(currentTenantId);
+        }
+        return messageRepository.findAllByOrderByCreatedAtDesc();
     }
 
     @Transactional

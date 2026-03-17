@@ -21,6 +21,11 @@ public class MessageController {
         return ResponseEntity.ok(messageService.getMessages(complaintId));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<ComplaintMessage>> getAllMessages() {
+        return ResponseEntity.ok(messageService.getAllMessages());
+    }
+
     @PostMapping("/{complaintId}")
     public ResponseEntity<ComplaintMessage> sendMessage(
             @PathVariable Long complaintId,

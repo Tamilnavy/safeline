@@ -1,4 +1,4 @@
-const Card = ({ children, className = '', title, subtitle }) => (
+const Card = ({ children, className = '', title, subtitle, noPadding = false }) => (
   <div className={`card ${className}`}>
     {(title || subtitle) && (
       <div className="mb-6 pb-4 border-b border-slate-100">

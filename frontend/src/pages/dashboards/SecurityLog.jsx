@@ -23,17 +23,18 @@ const SecurityLog = () => {
   const [filter, setFilter] = useState('ALL');
 
   useEffect(() => {
-    // Simulated security events for production feel
-    const mockLogs = [
-      { id: 1, event: 'ADMIN_LOGIN_SUCCESS', user: 'admin', ip: '192.168.1.104', type: 'AUTH', severity: 'INFO', timestamp: new Date().toISOString() },
-      { id: 2, event: 'TENANT_PROVISIONED', user: 'super_admin', ip: '10.0.0.42', type: 'ADMIN', severity: 'SUCCESS', timestamp: new Date(Date.now() - 3600000).toISOString() },
-      { id: 3, event: 'DB_BACKUP_INITIATED', user: 'system_cron', ip: '::1', type: 'SYSTEM', severity: 'INFO', timestamp: new Date(Date.now() - 7200000).toISOString() },
-      { id: 4, event: 'UNAUTHORIZED_API_ACCESS', user: 'unknown', ip: '45.12.33.1', type: 'SECURITY', severity: 'DANGER', timestamp: new Date(Date.now() - 86400000).toISOString() },
-      { id: 5, event: 'ENCRYPTION_KEY_ROTATED', user: 'security_officer', ip: '10.0.0.5', type: 'SECURITY', severity: 'WARNING', timestamp: new Date(Date.now() - 172800000).toISOString() }
-    ];
+    const fetchLogs = async () => {
+      try {
+        const resp = await api.get('/admin/security-logs');
+        setLogs(resp.data);
+      } catch (err) {
+        console.error('Failed to fetch security logs', err);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    setLogs(mockLogs);
-    setTimeout(() => setLoading(false), 600);
+    fetchLogs();
   }, []);
 
   const filteredLogs = filter === 'ALL' ? logs : logs.filter(l => l.severity === filter);
@@ -48,7 +49,7 @@ const SecurityLog = () => {
         <div className="flex items-center gap-3">
           <div className="relative group">
              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors group-focus-within:text-primary" />
-             <input type="text" placeholder="Search events..." className="input-field pl-10 !py-2 !text-xs !w-64" />
+             <input type="text" placeholder="Search events..." className="input-field pl-10 py-2! text-xs! w-64!" />
           </div>
         </div>
       </header>
@@ -65,7 +66,7 @@ const SecurityLog = () => {
          ))}
       </div>
 
-      <Card className="!p-0 overflow-hidden">
+      <Card className="p-0! overflow-hidden">
         {loading ? (
           <div className="py-20 text-center animate-pulse text-text-muted font-bold tracking-widest uppercase text-xs">Synchronizing Audit Records...</div>
         ) : (
@@ -82,7 +83,7 @@ const SecurityLog = () => {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredLogs.map(log => (
-                  <tr key={log.id} className="hover:bg-white/[0.02] transition-colors cursor-default">
+                  <tr key={log.id} className="hover:bg-white/2 transition-colors cursor-default">
                     <td className="px-8 py-5">
                        <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-lg bg-white/5 ${getSeverityColor(log.severity)}`}>
@@ -99,11 +100,11 @@ const SecurityLog = () => {
                           <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
                              <User size={10} className="text-text-muted" />
                           </div>
-                          <span className="text-xs font-bold text-text-secondary">{log.user}</span>
+                          <span className="text-xs font-bold text-text-secondary">{log.username}</span>
                        </div>
                     </td>
                     <td className="px-8 py-5">
-                       <span className="text-[11px] font-mono text-text-muted font-bold tracking-wider">{log.ip}</span>
+                       <span className="text-[11px] font-mono text-text-muted font-bold tracking-wider">{log.ipAddress}</span>
                     </td>
                     <td className="px-8 py-5">
                        <div className="flex items-center gap-2 text-xs font-medium text-text-secondary">
@@ -136,7 +137,7 @@ const SecurityLog = () => {
 };
 
 const SecondaryCard = ({ icon: Icon, title, value, subtitle }) => (
-  <div className="glass-card !p-5 flex items-center gap-5 border-white/5 hover:border-primary/20 transition-all group">
+  <div className="glass-card p-5! flex items-center gap-5 border-white/5 hover:border-primary/20 transition-all group">
      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-text-muted group-hover:bg-primary/10 group-hover:text-primary transition-all">
         <Icon size={20} />
      </div>

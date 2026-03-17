@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
+import Badge from '../../components/ui/Badge';
 import { 
-  Plus, Globe, Building, ShieldCheck, Users, Activity, X, UserPlus, AlertCircle, RefreshCw, Building2
+  Plus, Globe, Building, ShieldCheck, Shield, Users, Activity, X, UserPlus, AlertCircle, RefreshCw, Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -70,14 +71,8 @@ const SuperAdminDashboard = () => {
     catch (err) { alert('Failed to delete organization.'); }
   };
 
-  const openManageUsers = async (tenant) => {
+  const openManageUsers = (tenant) => {
     setManagingTenant(tenant);
-    setLoadingUsers(true); setTenantUsers([]);
-    try {
-      const resp = await api.get(`/tenants/${tenant.id}/users`);
-      setTenantUsers(resp.data);
-    } catch (err) { console.error('Failed to load users'); }
-    finally { setLoadingUsers(false); }
   };
 
   const handleSaveTenantUser = async (userData) => {
@@ -156,7 +151,7 @@ const SuperAdminDashboard = () => {
       {/* Add Tenant Modal */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-6">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -207,6 +202,43 @@ const SuperAdminDashboard = () => {
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">.safeline.io</span>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Admin Username</label>
+                    <input 
+                      type="text" 
+                      className="input-field h-12" 
+                      placeholder="admin" 
+                      value={formData.adminUsername} 
+                      onChange={(e) => setFormData({...formData, adminUsername: e.target.value})} 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Admin Email</label>
+                    <input 
+                      type="email" 
+                      className="input-field h-12" 
+                      placeholder="admin@email.com" 
+                      value={formData.adminEmail} 
+                      onChange={(e) => setFormData({...formData, adminEmail: e.target.value})} 
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Initial Password</label>
+                  <input 
+                    type="password" 
+                    className="input-field h-12" 
+                    placeholder="••••••••" 
+                    value={formData.adminPassword} 
+                    onChange={(e) => setFormData({...formData, adminPassword: e.target.value})} 
+                    required 
+                  />
+                </div>
                 
                 <div className="flex gap-4 pt-4">
                   <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary flex-1 h-12">Cancel</button>
@@ -223,7 +255,7 @@ const SuperAdminDashboard = () => {
       {/* Slide-out User Management */}
       <AnimatePresence>
         {managingTenant && (
-          <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="fixed inset-0 z-100 flex justify-end">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -251,46 +283,30 @@ const SuperAdminDashboard = () => {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">Current Members</h4>
-                
-                {loadingUsers ? (
-                  <div className="space-y-4">
-                    {[1,2,3].map(i => <div key={i} className="h-20 rounded-xl bg-slate-50 animate-pulse border border-slate-100" />)}
-                  </div>
-                ) : tenantUsers.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                    <Users size={40} className="mx-auto text-slate-200 mb-4" />
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">No users provisioned.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {tenantUsers.map(u => (
-                      <motion.div 
-                         key={u.id} 
-                         initial={{ opacity: 0, x: 20 }}
-                         animate={{ opacity: 1, x: 0 }}
-                         className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-100 transition-all hover:shadow-md"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex flex-col gap-1">
-                            <p className="font-bold text-slate-900 leading-none">{u.username}</p>
-                            <p className="text-xs text-slate-500 font-medium">{u.email}</p>
-                          </div>
-                          <Badge variant="primary">{u.role.replace(/_/g, ' ')}</Badge>
-                        </div>
-                      </motion.div>
-                    ))}
+              <div className="flex-1 space-y-6 overflow-y-auto pr-2 scrollbar-thin">
+                {managingTenant.adminUsername && (
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-100 transition-all group/admin">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center border border-slate-100 text-indigo-600 shadow-sm group-hover/admin:shadow-indigo-100/50 transition-all">
+                        <Shield size={22} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Root Organization Admin</p>
+                        <p className="text-lg font-bold text-slate-900 leading-tight">{managingTenant.adminUsername}</p>
+                        <p className="text-xs text-slate-500 font-medium">{managingTenant.adminEmail}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
+
+                <div className="flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-2xl">
+                  <Users size={32} className="text-slate-200 mb-4" />
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Sensitive Data Shield Active</p>
+                  <p className="text-[10px] text-slate-400 mt-2">All internal investigators and staff records are protected. Super Admin authority is restricted to administrative provisioning.</p>
+                </div>
               </div>
 
-              <div className="pt-8 border-t border-slate-100 mt-8">
-                <button className="btn btn-primary w-full h-12 shadow-lg shadow-indigo-600/20" onClick={() => setShowAddUser(true)}>
-                  <UserPlus size={18} className="mr-2" />
-                  <span className="font-bold">Enroll New Member</span>
-                </button>
-              </div>
+              {/* Actions removed as per user request to limit Super Admin role to initial provisioning */}
             </motion.div>
           </div>
         )}
@@ -302,12 +318,7 @@ const SuperAdminDashboard = () => {
         onSave={handleSaveTenantUser}
         title={`Add Member to ${managingTenant?.name}`}
         roles={[
-          { value: 'ORG_ADMIN', label: 'Org Admin' },
-          { value: 'INVESTIGATOR', label: 'Investigator' },
-          { value: 'INTAKE_OFFICER', label: 'Intake Officer' },
-          { value: 'HR_MANAGER', label: 'HR Manager' },
-          { value: 'COMPLIANCE_OFFICER', label: 'Compliance Officer' },
-          { value: 'EMPLOYEE', label: 'Employee' }
+          { value: 'ORG_ADMIN', label: 'Org Admin' }
         ]}
         initialRole="ORG_ADMIN"
       />
