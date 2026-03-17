@@ -219,7 +219,10 @@ public class ComplaintService {
     // ------------------------------------------------
     // GET ALL COMPLAINTS
     // ------------------------------------------------
-    public Page<Complaint> getAllComplaints(Long tenantId, Pageable pageable) {
+    public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, Pageable pageable) {
+        if (status != null) {
+            return complaintRepository.findByTenantIdAndStatus(tenantId, status, pageable);
+        }
         return complaintRepository.findByTenantId(tenantId, pageable);
     }
 
@@ -235,7 +238,10 @@ public class ComplaintService {
     // ------------------------------------------------
     // GET ASSIGNED COMPLAINTS (Investigator Workspace)
     // ------------------------------------------------
-    public Page<Complaint> getAssignedComplaints(Long investigatorId, Pageable pageable) {
+    public Page<Complaint> getAssignedComplaints(Long investigatorId, ComplaintStatus status, Pageable pageable) {
+        if (status != null) {
+            return complaintRepository.findByAssignedToIdAndStatus(investigatorId, status, pageable);
+        }
         return complaintRepository.findByAssignedToId(investigatorId, pageable);
     }
 

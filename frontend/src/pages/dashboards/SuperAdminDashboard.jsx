@@ -98,8 +98,8 @@ const SuperAdminDashboard = () => {
     >
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">Platform Overview</h1>
-          <p className="text-slate-500 text-sm font-medium">Global governance and infrastructure monitoring</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">Organization Registry</h1>
+          <p className="text-slate-500 text-sm font-medium">Global governance and tenant environment management</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -117,12 +117,7 @@ const SuperAdminDashboard = () => {
         </div>
       </header>
 
-      <div className="metrics-grid">
-        <Stat label="Global Tenants" value={metrics.totalTenants} icon={Building2} />
-        <Stat label="Platform Users" value={metrics.totalUsers} icon={Users} trend={12} />
-        <Stat label="Secure Reports" value={metrics.totalComplaints} icon={ShieldCheck} trend={5} />
-        <Stat label="Network Health" value="99.9%" icon={Activity} />
-      </div>
+      <div className="mb-4" />
 
       {error && (
         <motion.div 

@@ -50,10 +50,10 @@ const OrgAdminDashboard = () => {
 
       const all = resp.data.content || [];
       const pending = all.filter(c => !['RESOLVED', 'CLOSED', 'DISMISSED'].includes(c.status?.toUpperCase())).length;
-      setStats({ 
-        total: resp.data.totalElements || 0, 
-        pending, 
-        resolved: (resp.data.totalElements || 0) - pending 
+      setStats({
+        total: resp.data.totalElements || 0,
+        pending,
+        resolved: (resp.data.totalElements || 0) - pending
       });
     } catch (err) {
       console.error('Failed to fetch org complaints', err);
@@ -110,7 +110,7 @@ const OrgAdminDashboard = () => {
   const userRole = user?.role || 'STAFF';
 
   const getDashboardTitle = () => {
-    switch(userRole) {
+    switch (userRole) {
       case 'ORG_ADMIN': return 'Executive Hub';
       case 'INTAKE_OFFICER': return 'Fleet Operations';
       case 'EXECUTIVE': return 'Executive Suite';
@@ -144,18 +144,18 @@ const OrgAdminDashboard = () => {
 
       <div className="metrics-grid">
         <Stat label="Total Reports" value={stats.total} icon={FileText} />
-        <Stat label="Active Cases" value={stats.pending} icon={Clock} trend={-3} />
-        <Stat label="Resolved Cases" value={stats.resolved} icon={CheckCircle} trend={5} />
+        <Stat label="Active Cases" value={stats.pending} icon={Clock} />
+        <Stat label="Resolved Cases" value={stats.resolved} icon={CheckCircle} />
         <Stat label="Team Members" value={allTeam.length} icon={Users} />
       </div>
 
       <motion.div variants={itemVariants}>
-        <Card 
-          title="Case Management" 
+        <Card
+          title="Case Management"
           subtitle="Real-time listing of all organization-wide concerns and reports"
         >
           <div className="overflow-x-auto">
-            <ComplaintTable 
+            <ComplaintTable
               complaints={complaints}
               investigators={investigators}
               loading={loading}
@@ -206,13 +206,13 @@ const OrgAdminDashboard = () => {
         </motion.div>
       )}
 
-      <AddUserModal 
+      <AddUserModal
         isOpen={showAddUser}
         onClose={() => setShowAddUser(false)}
         onSave={handleSaveUser}
       />
 
-      <TriageModal 
+      <TriageModal
         isOpen={!!triageComplaint}
         onClose={() => setTriageComplaint(null)}
         complaint={triageComplaint}
@@ -222,14 +222,14 @@ const OrgAdminDashboard = () => {
       <AnimatePresence>
         {selectedComplaint && (
           <div className="fixed inset-0 z-100 flex items-center justify-center p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedComplaint(null)}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -239,10 +239,10 @@ const OrgAdminDashboard = () => {
               <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-600" />
               <div className="h-16 px-8 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center gap-4">
-                   <div className="flex items-center gap-2">
-                     <Badge variant={getStatusVariant(selectedComplaint.status)}>{selectedComplaint.status}</Badge>
-                     <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{selectedComplaint.trackingId}</span>
-                   </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={getStatusVariant(selectedComplaint.status)}>{selectedComplaint.status}</Badge>
+                    <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{selectedComplaint.trackingId}</span>
+                  </div>
                 </div>
                 <button onClick={() => setSelectedComplaint(null)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
                   <X size={20} />
@@ -279,7 +279,7 @@ const OrgAdminDashboard = () => {
                 </div>
 
                 <div className="flex-[1.2] flex flex-col min-h-0">
-                  { (userRole !== 'INTAKE_OFFICER' && userRole !== 'EXECUTIVE') ? (
+                  {(userRole !== 'INTAKE_OFFICER' && userRole !== 'EXECUTIVE') ? (
                     <div className="flex-1 min-h-0 flex flex-col bg-slate-50/30">
                       <div className="px-6 py-4 border-b border-slate-100 bg-white flex items-center gap-2 shadow-sm">
                         <MessageSquare size={16} className="text-indigo-600" />

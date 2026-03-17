@@ -1,6 +1,7 @@
 package com.safeline.safeline.repository;
 
 import com.safeline.safeline.model.Complaint;
+import com.safeline.safeline.model.ComplaintStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     Page<Complaint> findByReporterId(Long reporterId, Pageable pageable);
 
     Page<Complaint> findByTenantId(Long tenantId, Pageable pageable);
-
+    Page<Complaint> findByTenantIdAndStatus(Long tenantId, ComplaintStatus status, Pageable pageable);
     Page<Complaint> findByAssignedToId(Long investigatorId, Pageable pageable);
+    Page<Complaint> findByAssignedToIdAndStatus(Long investigatorId, ComplaintStatus status, Pageable pageable);
 }

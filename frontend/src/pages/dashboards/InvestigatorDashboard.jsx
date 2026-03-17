@@ -4,7 +4,7 @@ import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import Badge from '../../components/ui/Badge';
-import { 
+import {
   Clock, CheckCircle, ShieldAlert, FileText, X, MessageSquare, ChevronRight, Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +20,7 @@ const InvestigatorDashboard = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [stats, setStats] = useState({ total: 0, resolved: 0, pending: 0 });
   const [selectedCase, setSelectedCase] = useState(null);
+  const [investigators, setInvestigators] = useState([]);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const InvestigatorDashboard = () => {
   useEffect(() => {
     fetchData();
     fetchMetrics();
+    if (['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)) {
+      fetchInvestigators();
+    }
   }, [page, filter]);
 
   const fetchMetrics = async () => {
@@ -39,10 +43,22 @@ const InvestigatorDashboard = () => {
     }
   };
 
+  const fetchInvestigators = async () => {
+    try {
+      const resp = await api.get('/admin/users/investigators');
+      setInvestigators(resp.data);
+    } catch (err) {
+      console.error('Failed to fetch investigators');
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const endpoint = filter === 'ALL' ? '/complaints/assigned' : `/complaints/assigned?status=${filter}`;
+      const isExecutive = ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'].includes(userRole);
+      const baseEndpoint = isExecutive ? '/complaints/all' : '/complaints/assigned';
+
+      const endpoint = filter === 'ALL' ? baseEndpoint : `${baseEndpoint}?status=${filter}`;
       const resp = await api.get(`${endpoint}${endpoint.includes('?') ? '&' : '?'}page=${page}&size=10`);
       setComplaints(resp.data.content);
       setTotalPages(resp.data.totalPages);
@@ -63,8 +79,17 @@ const InvestigatorDashboard = () => {
     }
   };
 
+  const handleAssign = async (complaintId, investigatorId) => {
+    try {
+      await api.put(`/complaints/${complaintId}/assign?investigatorId=${investigatorId}`);
+      fetchData();
+    } catch (err) {
+      alert('Failed to assign investigator');
+    }
+  };
+
   const getDashboardTitle = () => {
-    switch(userRole) {
+    switch (userRole) {
       case 'HR_MANAGER': return 'Personnel Workspace';
       case 'COMPLIANCE_OFFICER': return 'Protocol Workspace';
       default: return 'Intelligence Workspace';
@@ -91,26 +116,28 @@ const InvestigatorDashboard = () => {
         </div>
       </header>
 
-      <div className="metrics-grid">
+      <div className="metrics-grid max-w-5xl mx-auto lg:grid-cols-3">
         <Stat label="Active Leads" value={stats.total} icon={FileText} />
-        <Stat label="Pending Triage" value={stats.pending} icon={Clock} trend={-12} />
-        <Stat label="Cases Finalized" value={stats.resolved} icon={CheckCircle} trend={8} />
-        <Stat label="Service Status" value="Optimal" icon={Activity} />
+        <Stat label="Pending Triage" value={stats.pending} icon={Clock} />
+        <Stat label="Cases Finalized" value={stats.resolved} icon={CheckCircle} />
       </div>
 
       <motion.div variants={itemVariants}>
-        <Card 
-          title="Case Inventory" 
+        <Card
+          title="Case Inventory"
           subtitle="Manage investigation workflow and update complaint status."
         >
           <div className="overflow-x-auto">
-            <ComplaintTable 
+            <ComplaintTable
               complaints={complaints}
               loading={loading}
               page={page}
               totalPages={totalPages}
               filterStatus={filter}
-              showAssignment={false}
+              showAssignment={['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)}
+              investigators={investigators}
+              userRole={userRole}
+              onAssign={handleAssign}
               onUpdateStatus={updateStatus}
               onPageChange={setPage}
               onFilterChange={(s) => { setFilter(s); setPage(0); }}
@@ -122,15 +149,15 @@ const InvestigatorDashboard = () => {
 
       <AnimatePresence>
         {selectedCase && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div 
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-6">
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedCase(null)}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -140,10 +167,10 @@ const InvestigatorDashboard = () => {
               <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-600" />
               <div className="h-16 px-8 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center gap-4">
-                   <div className="flex items-center gap-2">
-                     <Badge variant={getStatusVariant(selectedCase.status)}>{selectedCase.status}</Badge>
-                     <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{selectedCase.trackingId}</span>
-                   </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={getStatusVariant(selectedCase.status)}>{selectedCase.status}</Badge>
+                    <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{selectedCase.trackingId}</span>
+                  </div>
                 </div>
                 <button onClick={() => setSelectedCase(null)} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors">
                   <X size={20} />

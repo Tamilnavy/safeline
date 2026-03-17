@@ -25,6 +25,7 @@ import OrgAdminDashboard from './OrgAdminDashboard';
 import InvestigationDetails from './InvestigationDetails';
 import SystemMonitoring from './SystemMonitoring';
 import Messages from './Messages';
+import SuperAdminOverview from './SuperAdminOverview';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
@@ -35,12 +36,10 @@ const DashboardLayout = () => {
   if (!user) return <Navigate to="/login" />;
 
   const menuItems = [
-    { label: 'Overview', icon: LayoutDashboard, path: '/dashboard', roles: null },
-    { label: 'My Cases', icon: FileText, path: '/dashboard/complaints', roles: ['EMPLOYEE'] },
-    { label: 'Investigations', icon: ShieldCheck, path: '/dashboard/assigned', roles: ['INVESTIGATOR', 'ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
+    { label: 'Overview', icon: LayoutDashboard, path: (user.role === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), roles: ['SUPER_ADMIN', 'ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'INTAKE_OFFICER', 'EXECUTIVE'] },
+    { label: 'My Reports', icon: FileText, path: '/dashboard', roles: ['EMPLOYEE'] },
     { label: 'Registry', icon: Settings, path: '/dashboard/registry', roles: ['SUPER_ADMIN'] },
-    { label: 'Monitoring', icon: Activity, path: '/dashboard/monitoring', roles: ['SUPER_ADMIN'] },
-    { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: null },
+    { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: ['ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EMPLOYEE', 'INTAKE_OFFICER', 'EXECUTIVE'] },
   ];
 
   const filteredMenu = menuItems.filter(item => !item.roles || item.roles.includes(user.role));
@@ -137,6 +136,7 @@ const DashboardLayout = () => {
           >
             <Routes>
               <Route path="/" element={<DashboardDispatcher user={user} />} />
+              <Route path="/overview" element={user.role === 'SUPER_ADMIN' ? <SuperAdminOverview /> : <Navigate to="/dashboard" />} />
               <Route path="/complaints" element={<EmployeeDashboard />} />
               <Route path="/assigned" element={<InvestigatorDashboard />} />
               <Route path="/complaint/:id" element={<InvestigationDetails />} />
@@ -145,11 +145,7 @@ const DashboardLayout = () => {
                 path="/registry" 
                 element={user.role === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <Navigate to="/dashboard" />} 
               />
-              <Route 
-                path="/monitoring" 
-                element={user.role === 'SUPER_ADMIN' ? <SystemMonitoring /> : <Navigate to="/dashboard" />} 
-              />
-              <Route path="/messages" element={<Messages />} />
+              <Route path="/messages" element={user.role !== 'SUPER_ADMIN' ? <Messages /> : <Navigate to="/dashboard" />} />
             </Routes>
           </motion.div>
         </main>
@@ -160,7 +156,7 @@ const DashboardLayout = () => {
 
 const DashboardDispatcher = ({ user }) => {
   switch (user.role) {
-    case 'SUPER_ADMIN': return <SuperAdminDashboard />;
+    case 'SUPER_ADMIN': return <SuperAdminOverview />;
     case 'ORG_ADMIN': return <OrgAdminDashboard />;
     case 'INTAKE_OFFICER': return <OrgAdminDashboard />;
     case 'INVESTIGATOR':

@@ -35,8 +35,8 @@ const Messages = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="relative group">
-             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600" />
-             <input type="text" placeholder="Search messages..." className="input-field pl-10 py-2! text-xs! w-64!" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600" />
+            <input type="text" placeholder="Search messages..." className="input-field pl-10 py-2! text-xs! w-64!" />
           </div>
         </div>
       </header>
@@ -64,38 +64,38 @@ const Messages = () => {
                 ) : messages.map(msg => (
                   <tr key={msg.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-8 py-5">
-                       <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                             <User size={14} className="text-indigo-600" />
-                          </div>
-                          <div>
-                             <p className="text-xs font-bold text-slate-900 tracking-tight">{msg.sender ? msg.sender.username : 'Anonymous Reporter'}</p>
-                             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{msg.senderRole?.replace(/_/g, ' ')}</p>
-                          </div>
-                       </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+                          <User size={14} className="text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 tracking-tight">{msg.sender ? msg.sender.username : 'Anonymous Reporter'}</p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{msg.senderRole?.replace(/_/g, ' ')}</p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-8 py-5">
-                       <div className="flex items-center gap-2">
-                          <Shield size={14} className="text-slate-400" />
-                          <span className="text-xs font-bold text-indigo-600">{msg.complaint?.trackingId}</span>
-                       </div>
+                      <div className="flex items-center gap-2">
+                        <Shield size={14} className="text-slate-400" />
+                        <span className="text-xs font-bold text-indigo-600">{msg.complaint?.trackingId}</span>
+                      </div>
                     </td>
                     <td className="px-8 py-5 max-w-xs">
-                       <p className="text-sm text-slate-600 truncate font-medium">{msg.content}</p>
+                      <p className="text-sm text-slate-600 truncate font-medium">{msg.content}</p>
                     </td>
                     <td className="px-8 py-5">
-                       <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                          <Clock size={12} className="text-slate-400" />
-                          {new Date(msg.createdAt).toLocaleString()}
-                       </div>
+                      <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                        <Clock size={12} className="text-slate-400" />
+                        {new Date(msg.createdAt).toLocaleString()}
+                      </div>
                     </td>
                     <td className="px-8 py-5 text-right">
-                       <button 
-                         onClick={() => navigate(`/dashboard/complaint/${msg.complaint?.id}`)} 
-                         className="p-2 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors inline-block"
-                       >
-                         <ChevronRight size={16} />
-                       </button>
+                      <button
+                        onClick={() => navigate(`/dashboard/complaint/${msg.complaint?.id}`)}
+                        className="p-2 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors inline-block"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -29,11 +29,24 @@ public class MessageService {
     }
 
     public List<ComplaintMessage> getAllMessages() {
+        if (isSuperAdmin()) {
+            return messageRepository.findAllByOrderByCreatedAtDesc();
+        }
         Long currentTenantId = TenantContext.getCurrentTenant();
         if (currentTenantId != null) {
             return messageRepository.findByComplaintTenantIdOrderByCreatedAtDesc(currentTenantId);
         }
         return messageRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    private boolean isSuperAdmin() {
+        org.springframework.security.core.Authentication auth = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            return auth.getAuthorities().stream()
+                .anyMatch(a -> "SUPER_ADMIN".equals(a.getAuthority()) || "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+        }
+        return false;
     }
 
     @Transactional

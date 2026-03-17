@@ -18,8 +18,8 @@ const ComplaintTable = ({
   showAssignment = true,
   userRole = 'STAFF'
 }) => {
-  const statusStages = ['ALL', 'SUBMITTED', 'TRIAGED', 'INVESTIGATION', 'RESOLVED', 'CLOSED'];
-  const updateStages = ['SUBMITTED','TRIAGED','ASSIGNED','INVESTIGATION','WAITING_FOR_REPORTER','RESOLVED','CLOSED'];
+  const statusStages = ['ALL', 'SUBMITTED', 'TRIAGED', 'ASSIGNED', 'INVESTIGATION', 'RESOLVED', 'CLOSED'];
+  const updateStages = ['ASSIGNED', 'INVESTIGATION', 'WAITING_FOR_REPORTER', 'RESOLVED', 'CLOSED'];
 
   const getPriorityVariant = (priority) => {
     switch (priority) {
@@ -74,12 +74,12 @@ const ComplaintTable = ({
             <table className="w-full text-left">
               <thead>
                 <tr className="table-header">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Tracking ID</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Summary</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Priority</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
-                  {showAssignment && <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Owner</th>}
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Tracking ID</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Summary</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Priority</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
+                  {showAssignment && <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Owner</th>}
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
@@ -91,28 +91,28 @@ const ComplaintTable = ({
                   </tr>
                 ) : complaints.map(c => (
                   <tr key={c.id} className="table-row group">
-                    <td className="px-6 py-5 whitespace-nowrap">
+                    <td className="px-4 py-5 whitespace-nowrap">
                       <span className="text-indigo-600 font-bold text-sm tracking-tight">{c.trackingId}</span>
                       <div className="text-slate-400 text-[10px] mt-1 font-medium">{new Date(c.createdAt).toLocaleDateString()}</div>
                     </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-1 min-w-[200px]">
-                        <div className="font-bold text-slate-900 text-sm truncate max-w-[280px]">{c.title}</div>
+                    <td className="px-4 py-5">
+                      <div className="flex flex-col gap-1 min-w-[180px]">
+                        <div className="font-bold text-slate-900 text-sm truncate max-w-[240px]">{c.title}</div>
                         <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold opacity-70">
                           {c.categoryName || 'General Ethics'}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-4 py-5">
                       <Badge variant={getPriorityVariant(c.priority)}>{c.priority || 'NORMAL'}</Badge>
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-4 py-5">
                       <Badge variant={getStatusVariant(c.status)}>{c.status?.replace(/_/g, ' ')}</Badge>
                     </td>
                     {showAssignment && (
-                      <td className="px-6 py-5">
+                      <td className="px-4 py-5">
                         <select
-                          className="input-field !py-1 !px-2 !text-[11px] !w-auto min-w-[130px] shadow-sm"
+                          className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[130px] shadow-sm"
                           value={c.assignedToId || ""}
                           onChange={(e) => { if (e.target.value) onAssign(c.id, e.target.value); }}
                         >
@@ -123,11 +123,11 @@ const ComplaintTable = ({
                         </select>
                       </td>
                     )}
-                    <td className="px-6 py-5 text-right">
+                    <td className="px-4 py-5 text-right">
                       <div className="flex gap-3 justify-end items-center">
-                        {(userRole === 'ORG_ADMIN' || userRole === 'INVESTIGATOR') && (
+                        {(userRole === 'ORG_ADMIN' || userRole === 'INVESTIGATOR' || userRole === 'HR_MANAGER' || userRole === 'COMPLIANCE_OFFICER') && (
                           <select
-                            className="input-field !py-1 !px-2 !text-[11px] !w-auto min-w-[110px] shadow-sm"
+                            className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[110px] shadow-sm"
                             value={c.status}
                             onChange={(e) => onUpdateStatus(c.id, e.target.value)}
                           >
@@ -173,14 +173,14 @@ const ComplaintTable = ({
                 <button 
                   disabled={page === 0} 
                   onClick={() => onPageChange(page - 1)} 
-                  className="btn btn-secondary !py-1.5 !px-3 disabled:opacity-30"
+                  className="btn btn-secondary py-1.5! px-3! disabled:opacity-30"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <button 
                   disabled={page >= totalPages - 1} 
                   onClick={() => onPageChange(page + 1)} 
-                  className="btn btn-secondary !py-1.5 !px-3 disabled:opacity-30"
+                  className="btn btn-secondary py-1.5! px-3! disabled:opacity-30"
                 >
                   <ChevronRight size={16} />
                 </button>

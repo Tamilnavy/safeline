@@ -4,26 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0793c477-588d-4402-9a58-66ecbdc8663c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/safeline/safeline/controller/TenantController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/safeline/safeline/controller/TenantController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/safeline/safeline/service/TenantService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/safeline/safeline/service/TenantService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/safeline/safeline/controller/TenantController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/safeline/safeline/controller/TenantController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/safeline/safeline/service/TenantService.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/safeline/safeline/service/TenantService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/inputFiles.lst" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/dashboard/TenantTable.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/dashboard/TenantTable.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/ui/Card.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/ui/Card.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/ui/Stat.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/ui/Stat.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/dashboards/DashboardLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/dashboards/DashboardLayout.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/dashboards/OrgAdminDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/dashboards/OrgAdminDashboard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/dashboards/SuperAdminDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/dashboards/SuperAdminDashboard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/dashboards/SystemMonitoring.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/dashboards/SystemMonitoring.jsx" afterDir="false" />
-    </list>
+    <list default="true" id="0793c477-588d-4402-9a58-66ecbdc8663c" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -104,7 +85,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1773721380942</updated>
-      <workItem from="1773721384673" duration="4570000" />
+      <workItem from="1773721384673" duration="5167000" />
     </task>
     <servers />
   </component>

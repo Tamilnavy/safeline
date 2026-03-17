@@ -40,8 +40,10 @@ public class TenantFilterAspect {
         Session session = entityManager.unwrap(Session.class);
 
         if (isAuthenticated && !isSuperAdmin && tenantId != null) {
+            System.out.println("DEBUG: Enabling tenantFilter for ID: " + tenantId);
             session.enableFilter("tenantFilter").setParameter("tenantId", tenantId);
         } else {
+            System.out.println("DEBUG: Disabling tenantFilter (isAuthenticated=" + isAuthenticated + ", isSuperAdmin=" + isSuperAdmin + ", tenantId=" + tenantId + ")");
             session.disableFilter("tenantFilter");
         }
 

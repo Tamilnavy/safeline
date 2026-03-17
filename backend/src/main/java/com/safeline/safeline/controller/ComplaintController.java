@@ -47,10 +47,33 @@ public class ComplaintController {
     public ResponseEntity<List<Category>> getCategories(
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain) {
 
-        Tenant tenant = tenantRepository.findByDomain(domain != null ? domain : "default")
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        System.out.println("DEBUG: getCategories - Received Header X-Tenant-Id: [" + domain + "]");
+        
+        String tempDomain = domain;
+        if (domain == null || domain.isEmpty() || "undefined".equals(domain) || "null".equals(domain)) {
+            tempDomain = "default";
+            System.out.println("DEBUG: getCategories - Domain is null/empty/undefined. Falling back to: default");
+        }
+        
+        final String effectiveDomain = tempDomain;
 
-        return ResponseEntity.ok(categoryRepository.findByTenantId(tenant.getId()));
+        Tenant tenant = tenantRepository.findByDomain(effectiveDomain)
+                .orElseGet(() -> {
+                    System.out.println("DEBUG: getCategories - Tenant not found for domain [" + effectiveDomain + "], using default");
+                    return tenantRepository.findByDomain("default").orElse(null);
+                });
+
+        if (tenant == null) {
+            System.out.println("DEBUG: getCategories - Even default tenant not found!");
+            return ResponseEntity.ok(List.of());
+        }
+
+        System.out.println("DEBUG: getCategories - Final Resolved Tenant: " + tenant.getDomain() + " (ID: " + tenant.getId() + ")");
+
+        List<Category> categories = categoryRepository.findByTenantId(tenant.getId());
+        System.out.println("DEBUG: getCategories - Found " + categories.size() + " categories in database for tenant ID " + tenant.getId());
+        
+        return ResponseEntity.ok(categories);
     }
 
     // ------------------------------------------------
@@ -81,11 +104,6 @@ public class ComplaintController {
         Complaint complaint = new Complaint();
         complaint.setTitle(request.getTitle());
         complaint.setDescription(request.getDescription());
-
-        if (request.getCategoryId() != null) {
-            categoryRepository.findById(request.getCategoryId())
-                    .ifPresent(complaint::setCategory);
-        }
 
         complaint.setLocation(request.getLocation());
         complaint.setAnonymous(request.isAnonymous());
@@ -168,6 +186,7 @@ public class ComplaintController {
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'INTAKE_OFFICER', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE')")
     public ResponseEntity<Page<ComplaintResponse>> getAll(
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain,
+            @RequestParam(required = false) ComplaintStatus status,
             @org.springframework.security.core.annotation.AuthenticationPrincipal com.safeline.safeline.security.TenantAwareUserDetails principal,
             Pageable pageable) {
 
@@ -184,9 +203,9 @@ public class ComplaintController {
             return ResponseEntity.badRequest().build();
         }
         
-        System.out.println("DEBUG: ComplaintController.getAll - Resolved Tenant ID: " + tenantId);
+        System.out.println("DEBUG: ComplaintController.getAll - Resolved Tenant ID: " + tenantId + ", Status: " + status);
 
-        Page<Complaint> complaints = complaintService.getAllComplaints(tenantId, pageable);
+        Page<Complaint> complaints = complaintService.getAllComplaints(tenantId, status, pageable);
         System.out.println("DEBUG: ComplaintController.getAll - Result Count: " + complaints.getTotalElements());
         
         Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
@@ -229,10 +248,13 @@ public class ComplaintController {
     // ------------------------------------------------
     @GetMapping("/assigned")
     @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER')")
-    public ResponseEntity<Page<ComplaintResponse>> getAssigned(Authentication auth, Pageable pageable) {
+    public ResponseEntity<Page<ComplaintResponse>> getAssigned(
+            Authentication auth, 
+            @RequestParam(required = false) ComplaintStatus status,
+            Pageable pageable) {
         
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
-        Page<Complaint> complaints = complaintService.getAssignedComplaints(user.getId(), pageable);
+        Page<Complaint> complaints = complaintService.getAssignedComplaints(user.getId(), status, pageable);
         
         Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
         return ResponseEntity.ok(responsePage);
