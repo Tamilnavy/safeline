@@ -37,6 +37,7 @@ D:\safeline\backend\src\main\java\com\safeline\safeline\service\CategoryService.
 D:\safeline\backend\src\main\java\com\safeline\safeline\controller\ComplaintEvidenceController.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\repository\RoleRepository.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\repository\UserRepository.java
+D:\safeline\backend\src\main\java\com\safeline\safeline\service\ComplaintQueryService.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\controller\DebugController.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\security\JwtUtils.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\controller\UserController.java
@@ -47,6 +48,7 @@ D:\safeline\backend\src\main\java\com\safeline\safeline\dto\TrackResponse.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\security\TenantHeaderFilter.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\controller\CommunicationController.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\dto\TrackRequest.java
+D:\safeline\backend\src\main\java\com\safeline\safeline\service\ComplaintActionService.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\repository\SecurityLogRepository.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\dto\AuthResponse.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\dto\MessageRequest.java

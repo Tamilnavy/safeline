@@ -57,6 +57,7 @@ com\safeline\safeline\dto\CategoryResponse.class
 com\safeline\safeline\model\Tenant.class
 com\safeline\safeline\dto\PlatformMetricsDTO$PlatformMetricsDTOBuilder.class
 com\safeline\safeline\repository\SLAPolicyRepository.class
+com\safeline\safeline\service\ComplaintActionService.class
 com\safeline\safeline\model\ComplaintStatus.class
 com\safeline\safeline\config\SecurityConfig.class
 com\safeline\safeline\controller\TenantController.class
@@ -68,6 +69,7 @@ com\safeline\safeline\dto\UserRequest.class
 com\safeline\safeline\repository\ComplaintActivityLogRepository.class
 com\safeline\safeline\dto\TenantCreateRequest.class
 com\safeline\safeline\dto\PlatformMetricsDTO.class
+com\safeline\safeline\service\ComplaintQueryService.class
 com\safeline\safeline\service\SafelineUserDetailsService.class
 com\safeline\safeline\model\ComplaintEvidence.class
 com\safeline\safeline\dto\MessageRequest.class

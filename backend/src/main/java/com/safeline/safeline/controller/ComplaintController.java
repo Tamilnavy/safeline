@@ -9,6 +9,8 @@ import com.safeline.safeline.repository.CategoryRepository;
 import com.safeline.safeline.repository.TenantRepository;
 import com.safeline.safeline.repository.UserRepository;
 import com.safeline.safeline.service.ComplaintService;
+import com.safeline.safeline.service.ComplaintQueryService;
+import com.safeline.safeline.service.ComplaintActionService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +37,8 @@ import java.util.Map;
 public class ComplaintController {
 
     private final ComplaintService complaintService;
+    private final ComplaintQueryService complaintQueryService;
+    private final ComplaintActionService complaintActionService;
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -131,7 +135,7 @@ public class ComplaintController {
             @RequestParam String pin) {
 
         return ResponseEntity.ok(
-                complaintService.verifyTracking(trackingId, pin)
+                complaintQueryService.verifyTracking(trackingId, pin)
         );
     }
 
@@ -143,7 +147,7 @@ public class ComplaintController {
             @PathVariable String trackingId,
             @RequestParam String pin) {
 
-        Complaint c = complaintService.getPublicComplaint(trackingId, pin);
+        Complaint c = complaintQueryService.getPublicComplaint(trackingId, pin);
 
         ComplaintResponse res = new ComplaintResponse();
         res.setId(c.getId());
@@ -175,7 +179,7 @@ public class ComplaintController {
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
 
         return ResponseEntity.ok(
-                complaintService.getMyComplaints(user.getId(), pageable)
+                complaintQueryService.getMyComplaints(user.getId(), pageable)
         );
     }
 
@@ -206,7 +210,7 @@ public class ComplaintController {
         
         System.out.println("DEBUG: ComplaintController.getAll - Resolved Tenant ID: " + tenantId + ", Status: " + status);
 
-        Page<Complaint> complaints = complaintService.getAllComplaints(tenantId, status, category, pageable);
+        Page<Complaint> complaints = complaintQueryService.getAllComplaints(tenantId, status, category, pageable);
         System.out.println("DEBUG: ComplaintController.getAll - Result Count: " + complaints.getTotalElements());
         
         Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
@@ -260,7 +264,7 @@ public class ComplaintController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'INTAKE_OFFICER', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER')")
     public ResponseEntity<ComplaintResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(mapToResponse(complaintService.getById(id)));
+        return ResponseEntity.ok(mapToResponse(complaintQueryService.getById(id)));
     }
 
     // ------------------------------------------------
@@ -274,7 +278,7 @@ public class ComplaintController {
             Pageable pageable) {
         
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
-        Page<Complaint> complaints = complaintService.getAssignedComplaints(user.getId(), status, pageable);
+        Page<Complaint> complaints = complaintQueryService.getAssignedComplaints(user.getId(), status, pageable);
         
         Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
         return ResponseEntity.ok(responsePage);
@@ -292,7 +296,7 @@ public class ComplaintController {
             @RequestParam(required = false) ComplaintStatus status) {
 
         return ResponseEntity.ok(
-                mapToResponse(complaintService.triageComplaint(id, priority, classification, status))
+                mapToResponse(complaintActionService.triageComplaint(id, priority, classification, status))
         );
     }
 
@@ -306,7 +310,7 @@ public class ComplaintController {
             @RequestParam ComplaintStatus status) {
 
         return ResponseEntity.ok(
-                complaintService.updateStatus(id, status)
+                complaintActionService.updateStatus(id, status)
         );
     }
 
@@ -320,7 +324,7 @@ public class ComplaintController {
             @RequestParam Long investigatorId) {
 
         return ResponseEntity.ok(
-                complaintService.assignInvestigator(id, investigatorId)
+                complaintActionService.assignInvestigator(id, investigatorId)
         );
     }
 
@@ -358,12 +362,7 @@ public class ComplaintController {
         }
 
         // For metrics we use the full list, bypassing pagination
-        List<Complaint> all = complaintService.getAllComplaintsInternal(tenantId);
-
-        Map<String, Long> metrics = new HashMap<>();
-        metrics.put("total", (long) all.size());
-        metrics.put("resolved", all.stream().filter(c -> c.getStatus() == ComplaintStatus.RESOLVED).count());
-        metrics.put("pending", all.stream().filter(c -> c.getStatus() != ComplaintStatus.RESOLVED && c.getStatus() != ComplaintStatus.CLOSED).count());
+        Map<String, Long> metrics = complaintQueryService.getMetricsForTenant(tenantId);
 
         return ResponseEntity.ok(metrics);
     }

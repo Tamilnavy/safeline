@@ -5,12 +5,13 @@ import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import Badge from '../../components/ui/Badge';
 import {
-  Clock, CheckCircle, ShieldAlert, FileText, X, MessageSquare, ChevronRight, Activity
+  Clock, CheckCircle, ShieldAlert, FileText, ChevronRight, Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageBoard from '../../components/ui/MessageBoard';
 import ComplaintTable from '../../components/dashboard/ComplaintTable';
 import TriageModal from '../../components/dashboard/TriageModal';
+import ComplaintDetailsModal from '../../components/dashboard/ComplaintDetailsModal';
 import { useAuth } from '../../context/AuthContext';
 
 const InvestigatorDashboard = () => {
@@ -153,71 +154,13 @@ const InvestigatorDashboard = () => {
         onTriage={handleTriage}
       />
 
-      <AnimatePresence>
-        {selectedCase && (
-          <div className="fixed inset-0 z-100 flex items-center justify-center p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedCase(null)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-white relative w-full h-full max-w-6xl max-h-[85vh] overflow-hidden flex flex-col rounded-2xl shadow-2xl border border-slate-200"
-            >
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-600" />
-              <div className="h-16 px-8 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={getStatusVariant(selectedCase.status)}>{selectedCase.status}</Badge>
-                    <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{selectedCase.trackingId}</span>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedCase(null)} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="flex-1 flex min-h-0 bg-white">
-                <div className="flex-[0.7] p-10 border-r border-slate-100 overflow-y-auto">
-                  <div className="mb-10">
-                    <h3 className="text-2xl font-bold text-slate-900 leading-tight mb-4">{selectedCase.title}</h3>
-                    <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl shadow-inner">
-                      <p className="text-slate-600 font-medium leading-relaxed italic">"{selectedCase.description}"</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-8 bg-slate-50 p-6 rounded-xl border border-slate-100">
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Category</p>
-                      <p className="font-semibold text-slate-900">{selectedCase.categoryName || 'General Ethics'}</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Classification</p>
-                      <p className="font-bold text-indigo-600">{selectedCase.classification?.replace(/_/g, ' ') || 'STANDARD'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-[1.3] flex flex-col min-h-0 bg-slate-50/30">
-                  <div className="px-6 py-4 border-b border-slate-100 bg-white flex items-center gap-2 shadow-sm">
-                    <MessageSquare size={16} className="text-indigo-600" />
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-900">Secure Investigation Log</span>
-                  </div>
-                  <div className="flex-1 min-h-0">
-                    <MessageBoard complaintId={selectedCase.id} isStaff={true} />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <ComplaintDetailsModal 
+        isOpen={!!selectedCase}
+        onClose={() => setSelectedCase(null)}
+        complaint={selectedCase}
+        userRole={userRole}
+        getStatusVariant={getStatusVariant}
+      />
     </div>
   );
 };
