@@ -24,7 +24,7 @@ public class MessageController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE')")
     public ResponseEntity<List<ComplaintMessage>> getAllMessages() {
         return ResponseEntity.ok(messageService.getAllMessages());
     }

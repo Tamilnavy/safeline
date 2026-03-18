@@ -13,7 +13,6 @@ const EmployeeDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [summary, setSummary] = useState({ total: 0, pending: 0, resolved: 0 });
   const [selectedComplaint, setSelectedComplaint] = useState(null);
 
   useEffect(() => {
@@ -26,10 +25,6 @@ const EmployeeDashboard = () => {
       const resp = await api.get(`/complaints/my?page=${page}&size=5`);
       setComplaints(resp.data.content);
       setTotalPages(resp.data.totalPages);
-      
-      const total = resp.data.totalElements;
-      const pending = resp.data.content.filter(c => c.status !== 'RESOLVED' && c.status !== 'CLOSED').length;
-      setSummary({ total, pending, resolved: total - pending });
     } catch (err) {
       console.error('Failed to fetch personal history');
     } finally {
@@ -55,11 +50,7 @@ const EmployeeDashboard = () => {
         </Link>
       </header>
 
-      <div className="metrics-grid max-w-5xl mx-auto lg:grid-cols-3">
-        <Stat label="Total Submissions" value={summary.total} icon={FileText} />
-        <Stat label="Active Cases" value={summary.pending} icon={Clock} />
-        <Stat label="Resolved" value={summary.resolved} icon={ShieldCheck} />
-      </div>
+
 
       <motion.div variants={itemVariants}>
         <Card 

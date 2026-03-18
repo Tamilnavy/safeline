@@ -29,7 +29,8 @@ const OrgAdminDashboard = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [triageComplaint, setTriageComplaint] = useState(null);
   const [showAddUser, setShowAddUser] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const userRole = user?.role || 'STAFF';
+  const [filterStatus, setFilterStatus] = useState(userRole === 'INTAKE_OFFICER' ? 'SUBMITTED' : 'ALL');
 
   const tenantDomain = localStorage.getItem('tenantDomain') || 'Organization';
 
@@ -107,16 +108,16 @@ const OrgAdminDashboard = () => {
     }
   };
 
-  const userRole = user?.role || 'STAFF';
+  // userRole is now defined at the top for state initialization
 
   const getDashboardTitle = () => {
     switch (userRole) {
-      case 'ORG_ADMIN': return 'Executive Hub';
-      case 'INTAKE_OFFICER': return 'Fleet Operations';
-      case 'EXECUTIVE': return 'Executive Suite';
-      case 'HR_MANAGER': return 'Personnel Hub';
-      case 'COMPLIANCE_OFFICER': return 'Protocol Hub';
-      default: return 'Fleet Operational';
+      case 'ORG_ADMIN': return 'Command Center';
+      case 'INTAKE_OFFICER': return 'Triage Center';
+      case 'EXECUTIVE': return 'Oversight Console';
+      case 'HR_MANAGER': return 'Personnel Intelligence';
+      case 'COMPLIANCE_OFFICER': return 'Protocol Intelligence';
+      default: return 'Field Operations';
     }
   };
 
@@ -131,22 +132,32 @@ const OrgAdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">{getDashboardTitle()}</h1>
           <p className="text-slate-500 text-sm font-medium">
-            Management console for <span className="text-indigo-600 font-semibold">{tenantDomain}</span>
+            {userRole === 'INTAKE_OFFICER' ? 'Triage and prioritize incoming reports' :
+              userRole === 'EXECUTIVE' ? 'Oversight and monitoring console for organizational ethics' :
+                `Management console for ${tenantDomain}`}
           </p>
         </div>
-        {userRole === 'ORG_ADMIN' && (
-          <button className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20" onClick={() => setShowAddUser(true)}>
-            <UserPlus size={18} className="mr-2" />
-            <span>Add Team Member</span>
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          <div className="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 flex items-center gap-2 shadow-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Live System Connected</span>
+          </div>
+          {userRole === 'ORG_ADMIN' && (
+            <button className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20" onClick={() => setShowAddUser(true)}>
+              <UserPlus size={18} className="mr-2" />
+              <span>Add Team Member</span>
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="metrics-grid">
         <Stat label="Total Reports" value={stats.total} icon={FileText} />
         <Stat label="Active Cases" value={stats.pending} icon={Clock} />
         <Stat label="Resolved Cases" value={stats.resolved} icon={CheckCircle} />
-        <Stat label="Team Members" value={allTeam.length} icon={Users} />
+        {userRole === 'ORG_ADMIN' && (
+          <Stat label="Team Members" value={allTeam.length} icon={Users} />
+        )}
       </div>
 
       <motion.div variants={itemVariants}>
@@ -169,48 +180,11 @@ const OrgAdminDashboard = () => {
               onViewDetails={setSelectedComplaint}
               onTriage={setTriageComplaint}
               userRole={userRole}
-              showAssignment={userRole === 'ORG_ADMIN'}
+              showAssignment={['ORG_ADMIN', 'EXECUTIVE', 'INTAKE_OFFICER'].includes(userRole)}
             />
           </div>
         </Card>
       </motion.div>
-
-      {userRole === 'ORG_ADMIN' && (
-        <motion.div variants={itemVariants}>
-          <Card title="Team Directory" subtitle="Investigators and department staff">
-            <div className="table-container">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="table-header">
-                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Username</th>
-                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Email Authority</th>
-                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Access Protocol</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {allTeam.length === 0 ? (
-                    <tr><td colSpan="3" className="px-8 py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No team members enrolled yet.</td></tr>
-                  ) : allTeam.map(inv => (
-                    <tr key={inv.id} className="table-row group">
-                      <td className="px-8 py-5 text-sm font-bold text-slate-900 tracking-tight uppercase group-hover:text-indigo-600 transition-colors">{inv.username}</td>
-                      <td className="px-8 py-5 text-sm text-slate-500 font-medium">{inv.email}</td>
-                      <td className="px-8 py-5 text-right">
-                        <Badge variant="primary">{inv.role.replace(/_/g, ' ')}</Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </motion.div>
-      )}
-
-      <AddUserModal
-        isOpen={showAddUser}
-        onClose={() => setShowAddUser(false)}
-        onSave={handleSaveUser}
-      />
 
       <TriageModal
         isOpen={!!triageComplaint}

@@ -110,22 +110,28 @@ const ComplaintTable = ({
                       <Badge variant={getStatusVariant(c.status)}>{c.status?.replace(/_/g, ' ')}</Badge>
                     </td>
                     {showAssignment && (
-                      <td className="px-4 py-5">
-                        <select
-                          className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[130px] shadow-sm"
-                          value={c.assignedToId || ""}
-                          onChange={(e) => { if (e.target.value) onAssign(c.id, e.target.value); }}
-                        >
-                          <option value="">Unassigned</option>
-                          {investigators.map(inv => (
-                            <option key={inv.id} value={inv.id}>{inv.username}</option>
-                          ))}
-                        </select>
+                      <td className="px-4 py-5 font-medium">
+                        {(userRole === 'ORG_ADMIN') ? (
+                          <select
+                            className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[130px] shadow-sm"
+                            value={c.assignedToId || ""}
+                            onChange={(e) => { if (e.target.value) onAssign(c.id, e.target.value); }}
+                          >
+                            <option value="">Unassigned</option>
+                            {investigators.map(inv => (
+                              <option key={inv.id} value={inv.id}>{inv.username}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-slate-700">{c.assignedToUsername || 'Unassigned'}</span>
+                          </div>
+                        )}
                       </td>
                     )}
                     <td className="px-4 py-5 text-right">
                       <div className="flex gap-3 justify-end items-center">
-                        {(userRole === 'ORG_ADMIN' || userRole === 'INVESTIGATOR' || userRole === 'HR_MANAGER' || userRole === 'COMPLIANCE_OFFICER') && (
+                        {['ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER'].includes(userRole) && (
                           <select
                             className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[110px] shadow-sm"
                             value={c.status}

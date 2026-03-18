@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageBoard from '../../components/ui/MessageBoard';
 import ComplaintTable from '../../components/dashboard/ComplaintTable';
+import TriageModal from '../../components/dashboard/TriageModal';
 import { useAuth } from '../../context/AuthContext';
 
 const InvestigatorDashboard = () => {
@@ -18,8 +19,8 @@ const InvestigatorDashboard = () => {
   const [filter, setFilter] = useState('ALL');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [stats, setStats] = useState({ total: 0, resolved: 0, pending: 0 });
   const [selectedCase, setSelectedCase] = useState(null);
+  const [triageComplaint, setTriageComplaint] = useState(null);
   const [investigators, setInvestigators] = useState([]);
 
   const { user } = useAuth();
@@ -28,20 +29,12 @@ const InvestigatorDashboard = () => {
 
   useEffect(() => {
     fetchData();
-    fetchMetrics();
+    // Allow management roles to see investigator list for re-assignment if needed
     if (['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)) {
       fetchInvestigators();
     }
   }, [page, filter]);
 
-  const fetchMetrics = async () => {
-    try {
-      const resp = await api.get('/complaints/metrics');
-      setStats(resp.data);
-    } catch (err) {
-      console.error('Failed to fetch metrics');
-    }
-  };
 
   const fetchInvestigators = async () => {
     try {
@@ -55,11 +48,15 @@ const InvestigatorDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const isExecutive = ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'].includes(userRole);
-      const baseEndpoint = isExecutive ? '/complaints/all' : '/complaints/assigned';
+      // PER USER REQUEST: All specialized roles only see reports assigned to them.
+      const baseEndpoint = '/complaints/assigned';
 
-      const endpoint = filter === 'ALL' ? baseEndpoint : `${baseEndpoint}?status=${filter}`;
-      const resp = await api.get(`${endpoint}${endpoint.includes('?') ? '&' : '?'}page=${page}&size=10`);
+      const queryParams = [];
+      if (filter !== 'ALL') queryParams.push(`status=${filter}`);
+      queryParams.push(`page=${page}&size=10`);
+
+      const endpoint = `${baseEndpoint}?${queryParams.join('&')}`;
+      const resp = await api.get(endpoint);
       setComplaints(resp.data.content);
       setTotalPages(resp.data.totalPages);
     } catch (err) {
@@ -73,7 +70,6 @@ const InvestigatorDashboard = () => {
     try {
       await api.put(`/complaints/${id}/status?status=${status}`);
       fetchData();
-      fetchMetrics();
     } catch (err) {
       alert('Failed to update status');
     }
@@ -88,11 +84,23 @@ const InvestigatorDashboard = () => {
     }
   };
 
+  const handleTriage = async (id, data) => {
+    try {
+      await api.put(`/complaints/${id}/triage?priority=${data.priority}&classification=${data.classification}${data.status ? `&status=${data.status}` : ''}`);
+      fetchData();
+    } catch (err) {
+      alert('Failed to update triage details');
+    }
+  };
+
   const getDashboardTitle = () => {
     switch (userRole) {
-      case 'HR_MANAGER': return 'Personnel Workspace';
-      case 'COMPLIANCE_OFFICER': return 'Protocol Workspace';
-      default: return 'Intelligence Workspace';
+      case 'HR_MANAGER': return 'Personnel Intelligence';
+      case 'COMPLIANCE_OFFICER': return 'Protocol Intelligence';
+      case 'INTAKE_OFFICER': return 'Triage Intelligence';
+      case 'EXECUTIVE': return 'Oversight Intelligence';
+      case 'INVESTIGATOR': return 'Field Intelligence';
+      default: return 'Specialized Intelligence';
     }
   };
 
@@ -106,26 +114,16 @@ const InvestigatorDashboard = () => {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">{getDashboardTitle()}</h1>
-          <p className="text-slate-500 text-sm font-medium">Incident monitoring and response console</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 flex items-center gap-2 shadow-sm">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Live System Connected</span>
-          </div>
+          <p className="text-slate-500 text-sm font-medium">Personal assignments and case monitor</p>
         </div>
       </header>
 
-      <div className="metrics-grid max-w-5xl mx-auto lg:grid-cols-3">
-        <Stat label="Active Leads" value={stats.total} icon={FileText} />
-        <Stat label="Pending Triage" value={stats.pending} icon={Clock} />
-        <Stat label="Cases Finalized" value={stats.resolved} icon={CheckCircle} />
-      </div>
+
 
       <motion.div variants={itemVariants}>
         <Card
           title="Case Inventory"
-          subtitle="Manage investigation workflow and update complaint status."
+          subtitle="Reports explicitly assigned to you for investigation or oversight."
         >
           <div className="overflow-x-auto">
             <ComplaintTable
@@ -142,10 +140,18 @@ const InvestigatorDashboard = () => {
               onPageChange={setPage}
               onFilterChange={(s) => { setFilter(s); setPage(0); }}
               onViewDetails={setSelectedCase}
+              onTriage={setTriageComplaint}
             />
           </div>
         </Card>
       </motion.div>
+
+      <TriageModal
+        isOpen={!!triageComplaint}
+        onClose={() => setTriageComplaint(null)}
+        complaint={triageComplaint}
+        onTriage={handleTriage}
+      />
 
       <AnimatePresence>
         {selectedCase && (

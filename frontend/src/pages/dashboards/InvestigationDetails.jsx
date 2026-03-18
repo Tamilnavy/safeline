@@ -4,12 +4,12 @@ import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import MessageBoard from '../../components/ui/MessageBoard';
-import { 
-  ArrowLeft, 
-  Shield, 
-  Clock, 
-  FileText, 
-  MessageSquare, 
+import {
+  ArrowLeft,
+  Shield,
+  Clock,
+  FileText,
+  MessageSquare,
   AlertTriangle,
   CheckCircle,
   Activity,
@@ -75,7 +75,7 @@ const InvestigationDetails = () => {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-text-secondary hover:text-white hover:border-white/20 transition-all group"
           >
@@ -95,12 +95,12 @@ const InvestigationDetails = () => {
             <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Classification</span>
             <span className="text-sm font-bold text-primary">{complaint.classification?.replace(/_/g, ' ') || 'STANDARD'}</span>
           </div>
-          <select 
-            className="input-field !w-auto !py-2.5 !px-4 font-bold text-sm bg-primary/10 border-primary/20 hover:border-primary transition-colors cursor-pointer"
+          <select
+            className="input-field w-auto! py-2.5! px-4! font-bold text-sm bg-primary/10 border-primary/20 hover:border-primary transition-colors cursor-pointer"
             value={complaint.status}
             onChange={(e) => updateStatus(e.target.value)}
           >
-            {['SUBMITTED','TRIAGED','ASSIGNED','INVESTIGATION','WAITING_FOR_REPORTER','RESOLVED','CLOSED'].map(s => (
+            {['SUBMITTED', 'TRIAGED', 'ASSIGNED', 'INVESTIGATION', 'WAITING_FOR_REPORTER', 'RESOLVED', 'CLOSED'].map(s => (
               <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
             ))}
           </select>
@@ -118,7 +118,7 @@ const InvestigationDetails = () => {
                 </div>
                 <h4 className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Reporter Statement</h4>
                 <p className="text-text-primary text-base font-medium leading-relaxed italic opacity-90">
-                   "{complaint.description}"
+                  "{complaint.description}"
                 </p>
               </div>
 
@@ -146,7 +146,7 @@ const InvestigationDetails = () => {
             </div>
           </Card>
 
-          <div className="glass-card !p-0 overflow-hidden h-[600px] flex flex-col">
+          <div className="glass-card p-0! overflow-hidden h-[600px] flex flex-col">
             <div className="px-8 py-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />

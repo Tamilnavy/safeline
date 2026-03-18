@@ -123,6 +123,14 @@ public class ComplaintService {
     }
 
     // ------------------------------------------------
+    // GET COMPLAINT BY ID
+    // ------------------------------------------------
+    public Complaint getById(Long id) {
+        return complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+    }
+
+    // ------------------------------------------------
     // GET PUBLIC COMPLAINT (For Tracking)
     // ------------------------------------------------
     public Complaint getPublicComplaint(String trackingId, String pin) {
@@ -219,7 +227,14 @@ public class ComplaintService {
     // ------------------------------------------------
     // GET ALL COMPLAINTS
     // ------------------------------------------------
-    public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, Pageable pageable) {
+    public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, String categoryName, Pageable pageable) {
+        if (categoryName != null && !categoryName.isEmpty()) {
+            if (status != null) {
+                return complaintRepository.findByTenantIdAndStatusAndCategoryNameContainingIgnoreCase(tenantId, status, categoryName, pageable);
+            }
+            return complaintRepository.findByTenantIdAndCategoryNameContainingIgnoreCase(tenantId, categoryName, pageable);
+        }
+        
         if (status != null) {
             return complaintRepository.findByTenantIdAndStatus(tenantId, status, pageable);
         }

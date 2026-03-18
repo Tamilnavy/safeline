@@ -187,6 +187,7 @@ public class ComplaintController {
     public ResponseEntity<Page<ComplaintResponse>> getAll(
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain,
             @RequestParam(required = false) ComplaintStatus status,
+            @RequestParam(required = false) String category,
             @org.springframework.security.core.annotation.AuthenticationPrincipal com.safeline.safeline.security.TenantAwareUserDetails principal,
             Pageable pageable) {
 
@@ -205,7 +206,7 @@ public class ComplaintController {
         
         System.out.println("DEBUG: ComplaintController.getAll - Resolved Tenant ID: " + tenantId + ", Status: " + status);
 
-        Page<Complaint> complaints = complaintService.getAllComplaints(tenantId, status, pageable);
+        Page<Complaint> complaints = complaintService.getAllComplaints(tenantId, status, category, pageable);
         System.out.println("DEBUG: ComplaintController.getAll - Result Count: " + complaints.getTotalElements());
         
         Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
@@ -229,18 +230,37 @@ public class ComplaintController {
         res.setTrackingId(c.getTrackingId());
         res.setTitle(c.getTitle());
         res.setDescription(c.getDescription());
-        res.setStatus(c.getStatus().name());
+        res.setStatus(c.getStatus() != null ? c.getStatus().name() : "SUBMITTED");
         res.setCreatedAt(c.getCreatedAt());
         res.setCategoryName(c.getCategory() != null ? c.getCategory().getName() : "General");
         res.setLocation(c.getLocation());
         res.setPriority(c.getPriority() != null ? c.getPriority().name() : "NORMAL");
         res.setClassification(c.getClassification() != null ? c.getClassification().name() : "GENERAL");
         
-        if (c.getAssignedTo() != null) {
-            res.setAssignedToUsername(c.getAssignedTo().getUsername());
-            res.setAssignedToId(c.getAssignedTo().getId());
+        try {
+            if (c.getAssignedTo() != null) {
+                res.setAssignedToUsername(c.getAssignedTo().getUsername());
+                res.setAssignedToId(c.getAssignedTo().getId());
+                // Accessing Roles (Eager but still being safe)
+                if (c.getAssignedTo().getRoles() != null && !c.getAssignedTo().getRoles().isEmpty()) {
+                    res.setAssignedToRole(c.getAssignedTo().getRoles().iterator().next().getName());
+                } else {
+                    res.setAssignedToRole("STAFF");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Mapping Error for Assigned Staff: " + e.getMessage());
         }
         return res;
+    }
+
+    // ------------------------------------------------
+    // Get Single Complaint
+    // ------------------------------------------------
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'INTAKE_OFFICER', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER')")
+    public ResponseEntity<ComplaintResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(mapToResponse(complaintService.getById(id)));
     }
 
     // ------------------------------------------------

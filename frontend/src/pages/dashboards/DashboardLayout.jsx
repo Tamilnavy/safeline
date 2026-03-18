@@ -1,15 +1,16 @@
 import { Link, useNavigate, useLocation, Navigate, Routes, Route } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  FileText, 
-  LogOut, 
-  ShieldCheck, 
+import {
+  LayoutDashboard,
+  MessageSquare,
+  FileText,
+  LogOut,
+  ShieldCheck,
   ChevronRight,
   ChevronLeft,
   Menu,
   User,
+  Users,
   Settings,
   Activity,
   Shield
@@ -25,6 +26,8 @@ import OrgAdminDashboard from './OrgAdminDashboard';
 import InvestigationDetails from './InvestigationDetails';
 import SystemMonitoring from './SystemMonitoring';
 import Messages from './Messages';
+import TeamWorkload from './TeamWorkload';
+import TeamDirectory from './TeamDirectory';
 import SuperAdminOverview from './SuperAdminOverview';
 
 const DashboardLayout = () => {
@@ -39,7 +42,9 @@ const DashboardLayout = () => {
     { label: 'Overview', icon: LayoutDashboard, path: (user.role === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), roles: ['SUPER_ADMIN', 'ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'INTAKE_OFFICER', 'EXECUTIVE'] },
     { label: 'My Reports', icon: FileText, path: '/dashboard', roles: ['EMPLOYEE'] },
     { label: 'Registry', icon: Settings, path: '/dashboard/registry', roles: ['SUPER_ADMIN'] },
-    { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: ['ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EMPLOYEE', 'INTAKE_OFFICER', 'EXECUTIVE'] },
+    { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: ['ORG_ADMIN'] },
+    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', roles: ['ORG_ADMIN'] },
+    { label: 'Team Directory', icon: Users, path: '/dashboard/team', roles: ['ORG_ADMIN'] },
   ];
 
   const filteredMenu = menuItems.filter(item => !item.roles || item.roles.includes(user.role));
@@ -52,7 +57,7 @@ const DashboardLayout = () => {
   return (
     <div className="flex bg-[#f8fafc] min-h-screen">
       {/* Sidebar */}
-      <motion.aside 
+      <motion.aside
         initial={false}
         animate={{ width: sidebarOpen ? 256 : 80 }}
         className="sidebar-bg z-50 sticky top-0 h-screen transition-all shadow-sm"
@@ -73,9 +78,9 @@ const DashboardLayout = () => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             return (
-              <Link 
-                key={item.path} 
-                to={item.path} 
+              <Link
+                key={item.path}
+                to={item.path}
                 className={`nav-link ${isActive ? 'active' : ''}`}
               >
                 <div className="nav-icon">
@@ -88,7 +93,7 @@ const DashboardLayout = () => {
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          <button 
+          <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
           >
@@ -102,7 +107,7 @@ const DashboardLayout = () => {
       <div className="flex-1 flex flex-col min-h-screen min-w-0">
         <header className="h-16 flex items-center justify-between px-8 border-b border-slate-200 sticky top-0 z-40 bg-white/80 backdrop-blur-md">
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <button 
+            <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-1.5 -ml-2 rounded-lg hover:bg-slate-100 transition-colors mr-2"
             >
@@ -114,7 +119,7 @@ const DashboardLayout = () => {
               {location.pathname.split('/').pop()?.replace(/-/g, ' ') || 'Overview'}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="text-right hidden sm:block">
@@ -129,7 +134,7 @@ const DashboardLayout = () => {
         </header>
 
         <main className="flex-1 main-scroll-area">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="page-container"
@@ -141,11 +146,13 @@ const DashboardLayout = () => {
               <Route path="/assigned" element={<InvestigatorDashboard />} />
               <Route path="/complaint/:id" element={<InvestigationDetails />} />
               <Route path="/org" element={<OrgAdminDashboard />} />
-              <Route 
-                path="/registry" 
-                element={user.role === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <Navigate to="/dashboard" />} 
+              <Route
+                path="/registry"
+                element={user.role === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <Navigate to="/dashboard" />}
               />
               <Route path="/messages" element={user.role !== 'SUPER_ADMIN' ? <Messages /> : <Navigate to="/dashboard" />} />
+              <Route path="/workload" element={['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE'].includes(user.role) ? <TeamWorkload /> : <Navigate to="/dashboard" />} />
+              <Route path="/team" element={['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE'].includes(user.role) ? <TeamDirectory /> : <Navigate to="/dashboard" />} />
             </Routes>
           </motion.div>
         </main>
@@ -158,15 +165,14 @@ const DashboardDispatcher = ({ user }) => {
   switch (user.role) {
     case 'SUPER_ADMIN': return <SuperAdminOverview />;
     case 'ORG_ADMIN': return <OrgAdminDashboard />;
-    case 'INTAKE_OFFICER': return <OrgAdminDashboard />;
+    case 'INTAKE_OFFICER':
     case 'INVESTIGATOR':
     case 'HR_MANAGER':
     case 'COMPLIANCE_OFFICER':
+    case 'EXECUTIVE':
       return <InvestigatorDashboard />;
     case 'EMPLOYEE':
       return <EmployeeDashboard />;
-    case 'EXECUTIVE':
-      return <OrgAdminDashboard />;
     default:
       return <div className="card p-12 text-center text-danger font-bold">Unrecognized role: {user.role}</div>;
   }

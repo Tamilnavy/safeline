@@ -22,7 +22,6 @@ public class ComplaintMessage {
     @Column(nullable = false)
     private String senderRole; // e.g., "REPORTER", "INVESTIGATOR"
 
-    @com.fasterxml.jackson.annotation.JsonIgnore
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
