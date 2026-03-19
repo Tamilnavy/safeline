@@ -100,8 +100,9 @@ public class TenantService {
         tenant.setDomain(request.getDomain());
         Tenant savedTenant = tenantRepository.save(tenant);
 
-        // 2. Seed default categories
+        // 2. Seed default categories and roles
         seedDefaultCategories(savedTenant);
+        seedDefaultRoles(savedTenant);
 
         // 3. Create Admin User
         User admin = new User();
@@ -110,8 +111,8 @@ public class TenantService {
         admin.setPassword(passwordEncoder.encode(request.getAdminPassword()));
         admin.setTenant(savedTenant);
 
-        Role adminRole = roleRepository.findByName("ORG_ADMIN")
-                .orElseThrow(() -> new RuntimeException("Default Admin Role (ORG_ADMIN) not found"));
+        Role adminRole = roleRepository.findByNameAndTenantId("ORG_ADMIN", savedTenant.getId())
+                .orElseThrow(() -> new RuntimeException("Default Admin Role (ORG_ADMIN) not found for tenant"));
         admin.setRoles(Set.of(adminRole));
         userRepository.save(admin);
 
@@ -138,6 +139,18 @@ public class TenantService {
         seedDefaultCategories(savedTenant);
         
         return savedTenant;
+    }
+
+    private void seedDefaultRoles(Tenant tenant) {
+        List.of("EMPLOYEE", "ORG_ADMIN")
+            .forEach(name -> {
+                if (roleRepository.findByNameAndTenantId(name, tenant.getId()).isEmpty()) {
+                    Role r = new Role();
+                    r.setName(name);
+                    r.setTenant(tenant);
+                    roleRepository.save(r);
+                }
+            });
     }
 
     private void seedDefaultCategories(Tenant tenant) {

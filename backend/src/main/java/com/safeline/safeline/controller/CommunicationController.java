@@ -38,7 +38,7 @@ public class CommunicationController {
     // --- STAFF ENDPOINTS (Authenticated) ---
 
     @PostMapping("/send-staff/{complaintId}")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ComplaintMessage> sendAsStaff(
             @PathVariable Long complaintId,
             @RequestBody String content,
@@ -49,7 +49,7 @@ public class CommunicationController {
     }
 
     @GetMapping("/messages-staff/{complaintId}")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ComplaintMessage>> getAsStaff(@PathVariable Long complaintId, Authentication auth) {
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
         return ResponseEntity.ok(communicationService.getMessagesForStaff(complaintId, user));

@@ -75,20 +75,33 @@ public class UserService {
                     .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + effectiveTenantId));
             user.setTenant(tenant);
 
-            System.out.println("DEBUG: Looking for role '" + request.getRoleName() + "' for tenant domain: " + tenant.getDomain());
-            Role role = roleRepository.findByName(request.getRoleName())
+            System.out.println("DEBUG: Looking for role '" + request.getRoleName() + "' for tenant ID: " + effectiveTenantId);
+            
+            List<Role> roles = roleRepository.findByName(request.getRoleName());
+            Role role = roles.stream()
                     .filter(r -> {
-                        if (r.getTenant() == null) return true; // Global
+                        if (r.getTenant() == null) return true; // Global role
                         Long roleTenantId = r.getTenant().getId();
                         boolean isAllowed = roleTenantId.equals(effectiveTenantId) || "default".equals(r.getTenant().getDomain());
-                        System.out.println("DEBUG: Role '" + r.getName() + "' (TenantID: " + roleTenantId + ") check: " + isAllowed);
+                        System.out.println("DEBUG: Role '" + r.getName() + "' (ID: " + r.getId() + ", TenantID: " + roleTenantId + ") check: " + isAllowed);
                         return isAllowed;
                     })
-                    .orElseThrow(() -> new RuntimeException("Role '" + request.getRoleName() + "' is not available for this organization"));
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Role '" + request.getRoleName() + "' is not available for this organization. (Found " + roles.size() + " total roles with this name)"));
             
+            // NEW: Enforce 1-to-1 constraint for Custom Levels
+            if (!java.util.List.of("ORG_ADMIN", "EMPLOYEE", "SUPER_ADMIN").contains(role.getName())) {
+                boolean occupied = userRepository.isRoleOccupied(effectiveTenantId, role.getId());
+                System.out.println("DEBUG: Role '" + role.getName() + "' (ID: " + role.getId() + ") occupancy check for Tenant " + effectiveTenantId + ": " + occupied);
+                
+                if (occupied) {
+                    throw new RuntimeException("CRITICAL: This level (" + role.getName() + ") is already assigned to a team member in your organization. You cannot assign it to someone else.");
+                }
+            }
+
             user.setRoles(Set.of(role));
             User saved = userRepository.save(user);
-            System.out.println("DEBUG: User created successfully. ID: " + saved.getId());
+            System.out.println("DEBUG: User '" + saved.getUsername() + "' saved with Role ID: " + role.getId());
 
             UserResponse response = new UserResponse();
             response.setId(saved.getId());

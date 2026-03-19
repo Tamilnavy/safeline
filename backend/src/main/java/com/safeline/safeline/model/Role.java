@@ -9,7 +9,9 @@ import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
 
 @Entity
-@Table(name = "roles")
+@Table(name = "roles", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"name", "tenant_id"})
+})
 @lombok.Getter
 @lombok.Setter
 @lombok.EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -20,7 +22,7 @@ public class Role {
     @lombok.EqualsAndHashCode.Include
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     @lombok.ToString.Exclude

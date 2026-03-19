@@ -42,14 +42,9 @@ public class CommunicationService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        // Security check: Only assigned investigator or ORG_ADMIN can message
-        boolean isOrgAdmin = sender.getRoles().stream().anyMatch(r -> r.getName().equals("ORG_ADMIN"));
-        boolean isAssigned = complaint.getAssignedTo() != null && complaint.getAssignedTo().getId().equals(sender.getId());
-
-        if (!isOrgAdmin && !isAssigned) {
-            throw new RuntimeException("You are not authorized to message on this complaint");
-        }
-
+        // Permissive approach: Any authenticated organization user can send messages.
+        // Tenant isolation is already active.
+        
         ComplaintMessage message = new ComplaintMessage();
         message.setComplaint(complaint);
         message.setContent(content);
@@ -76,14 +71,9 @@ public class CommunicationService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        // Security check
-        boolean isOrgAdmin = staff.getRoles().stream().anyMatch(r -> r.getName().equals("ORG_ADMIN"));
-        boolean isAssigned = complaint.getAssignedTo() != null && complaint.getAssignedTo().getId().equals(staff.getId());
-
-        if (!isOrgAdmin && !isAssigned) {
-            throw new RuntimeException("You are not authorized to view messages for this complaint");
-        }
-
+        // Permissive approach: Any authenticated organization user can view messages.
+        // Tenant isolation is already active.
+        
         return messageRepository.findByComplaintIdOrderByCreatedAtAsc(complaintId);
     }
 }

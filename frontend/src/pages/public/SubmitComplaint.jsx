@@ -40,6 +40,11 @@ const SubmitComplaint = () => {
 
   useEffect(() => {
     fetchCategories();
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      setFormData(prev => ({ ...prev, isAnonymous: false }));
+    }
   }, []);
 
   const fetchCategories = async () => {
@@ -63,7 +68,7 @@ const SubmitComplaint = () => {
       const data = new FormData();
       data.append('request', JSON.stringify({
         ...formData,
-        anonymous: true 
+        anonymous: formData.isAnonymous 
       }));
 
       files.forEach(file => {
@@ -97,7 +102,7 @@ const SubmitComplaint = () => {
       {/* Background Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-500/5 rounded-full blur-[120px] -z-10" />
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100, damping: 15 }}
@@ -108,16 +113,14 @@ const SubmitComplaint = () => {
           <div className="flex justify-between items-center max-w-lg mx-auto px-4 relative z-10">
             {steps.map((s, idx) => (
               <div key={s.id} className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                  step === s.id ? 'bg-[#3b82f6]/20 text-[#3b82f6] border-2 border-[#3b82f6] shadow-lg shadow-blue-500/20' : 
-                  step > s.id ? 'bg-[#3b82f6] text-white' : 
-                  'bg-slate-700/50 text-slate-400 border border-slate-600/30'
-                }`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${step === s.id ? 'bg-[#3b82f6]/20 text-[#3b82f6] border-2 border-[#3b82f6] shadow-lg shadow-blue-500/20' :
+                    step > s.id ? 'bg-[#3b82f6] text-white' :
+                      'bg-slate-700/50 text-slate-400 border border-slate-600/30'
+                  }`}>
                   {step > s.id ? <Check size={14} strokeWidth={4} /> : s.id}
                 </div>
-                <span className={`text-[11px] font-bold tracking-tight transition-colors hidden sm:block ${
-                  step === s.id ? 'text-white' : 'text-slate-500'
-                }`}>
+                <span className={`text-[11px] font-bold tracking-tight transition-colors hidden sm:block ${step === s.id ? 'text-white' : 'text-slate-500'
+                  }`}>
                   {s.label}
                 </span>
                 {idx < steps.length - 1 && (
@@ -147,27 +150,27 @@ const SubmitComplaint = () => {
                 <div className="flex items-center gap-4 mb-2">
                   <h2 className="text-2xl font-bold text-slate-900 tracking-tight">What happened?</h2>
                 </div>
-                
+
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[13px] font-bold text-slate-700 ml-1">Complaint Title *</label>
-                    <input 
-                      type="text" 
-                      className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm" 
-                      placeholder="Brief summary of the issue" 
-                      value={formData.title} 
-                      onChange={(e) => setFormData({...formData, title: e.target.value})} 
+                    <input
+                      type="text"
+                      className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm"
+                      placeholder="Brief summary of the issue"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[13px] font-bold text-slate-700 ml-1">Category *</label>
                       <div className="relative">
-                        <select 
-                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer shadow-sm" 
-                          value={formData.categoryId} 
-                          onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                        <select
+                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
+                          value={formData.categoryId}
+                          onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                         >
                           <option value="">Select a category...</option>
                           {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
@@ -179,12 +182,12 @@ const SubmitComplaint = () => {
                     <div className="space-y-2">
                       <label className="text-[13px] font-bold text-slate-700 ml-1">Location / Platform</label>
                       <div className="relative">
-                        <input 
-                          type="text" 
-                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm" 
-                          placeholder="e.g. 5th Floor office, etc." 
-                          value={formData.location} 
-                          onChange={(e) => setFormData({...formData, location: e.target.value})} 
+                        <input
+                          type="text"
+                          className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-sm"
+                          placeholder="e.g. 5th Floor office, etc."
+                          value={formData.location}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         />
                         <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
@@ -193,9 +196,9 @@ const SubmitComplaint = () => {
                 </div>
 
                 <div className="flex justify-end pt-6 border-t border-slate-50">
-                  <button 
-                    onClick={() => setStep(2)} 
-                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group" 
+                  <button
+                    onClick={() => setStep(2)}
+                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group"
                     disabled={!formData.title || !formData.categoryId}
                   >
                     <span>Next Step</span>
@@ -228,14 +231,14 @@ const SubmitComplaint = () => {
                         {formData.description.length} / 2000
                       </span>
                     </div>
-                    <textarea 
-                      className="w-full min-h-[110px] px-7 py-5 bg-white border border-slate-200/60 rounded-[28px] focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 leading-relaxed shadow-sm hover:shadow-md" 
-                      placeholder="Please provide specifics: who, what, when, where, and why. Be factual." 
-                      value={formData.description} 
-                      onChange={(e) => setFormData({...formData, description: e.target.value})} 
+                    <textarea
+                      className="w-full min-h-[110px] px-7 py-5 bg-white border border-slate-200/60 rounded-[28px] focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-400 leading-relaxed shadow-sm hover:shadow-md"
+                      placeholder="Please provide specifics: who, what, when, where, and why. Be factual."
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
                   </div>
-                  
+
                   <div className="space-y-4 pt-4 border-t border-slate-50">
                     <div className="flex items-center gap-3 mb-1">
                       <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#3b82f6]">
@@ -243,14 +246,14 @@ const SubmitComplaint = () => {
                       </div>
                       <h3 className="text-lg font-bold text-slate-900">Evidence Map</h3>
                     </div>
-                    
+
                     <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
                       Upload any documents, screenshots, or files that support your report. If you are reporting anonymously, <span className="font-bold text-slate-800">ensure your name is not within the files themselves.</span>
                     </p>
 
-                    <motion.div 
+                    <motion.div
                       whileHover={{ scale: 1.002, backgroundColor: '#fcfdff' }}
-                      className="border-2 border-dashed border-slate-200 p-8 text-center rounded-[24px] bg-slate-50/30 cursor-pointer group transition-all relative overflow-hidden" 
+                      className="border-2 border-dashed border-slate-200 p-8 text-center rounded-[24px] bg-slate-50/30 cursor-pointer group transition-all relative overflow-hidden"
                       onClick={() => document.getElementById('file-input').click()}
                     >
                       <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-all duration-300 ring-1 ring-slate-100">
@@ -262,9 +265,9 @@ const SubmitComplaint = () => {
                       <p className="text-[11px] text-slate-400 font-medium tracking-tight mt-1">
                         PDF, PNG, JPG or DOCX (max. 15MB)
                       </p>
-                      
+
                       <input id="file-input" type="file" multiple hidden onChange={handleFileChange} />
-                      
+
                       {files.length > 0 && (
                         <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#3b82f6] text-white text-[11px] font-bold shadow-lg shadow-blue-500/20 animate-in zoom-in">
                           <CheckCircle size={14} />
@@ -280,9 +283,9 @@ const SubmitComplaint = () => {
                     <ChevronLeft size={16} />
                     <span>Back</span>
                   </button>
-                  <button 
-                    onClick={() => setStep(3)} 
-                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 group" 
+                  <button
+                    onClick={() => setStep(3)}
+                    className="h-11 px-8 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 group"
                     disabled={!formData.description}
                   >
                     <span>Last Step</span>
@@ -301,29 +304,50 @@ const SubmitComplaint = () => {
                 className="space-y-8"
               >
                 <div className="space-y-8 pt-4">
-                  {/* High-Fidelity Anonymity Confirmation */}
-                  <div className="p-6 rounded-[32px] bg-[#f8faff] border border-blue-100 flex items-start gap-4 shadow-sm mx-1">
-                    <div className="w-8 h-8 rounded-lg bg-[#9333ea] flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/20">
-                      <CheckCircle size={20} className="text-white" strokeWidth={3} />
+                  {/* Identity / Anonymity Section */}
+                  <div 
+                    className={`p-6 rounded-[32px] border flex items-start gap-4 shadow-sm mx-1 transition-all duration-300 ${
+                      formData.isAnonymous ? 'bg-[#f8faff] border-blue-100' : 'bg-emerald-50 border-emerald-100'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg ${
+                      formData.isAnonymous ? 'bg-[#9333ea] shadow-purple-500/20' : 'bg-emerald-600 shadow-emerald-500/20'
+                    }`}>
+                      {formData.isAnonymous ? <ShieldCheck size={20} className="text-white" strokeWidth={3} /> : <Check size={20} className="text-white" strokeWidth={3} />}
                     </div>
-                    <div>
-                      <h4 className="text-[15px] font-bold text-slate-900 mb-1">Submit Anonymously</h4>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-1">
+                        <h4 className="text-[15px] font-bold text-slate-900">
+                          {formData.isAnonymous ? 'Submit Anonymously' : 'Submit as Identified Reporter'}
+                        </h4>
+                        
+                        {/* Toggle - Only show if logged in */}
+                        {localStorage.getItem('token') && (
+                          <div 
+                            className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${formData.isAnonymous ? 'bg-slate-300' : 'bg-emerald-500'}`}
+                            onClick={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})}
+                          >
+                            <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${formData.isAnonymous ? 'left-1' : 'right-1'}`} />
+                          </div>
+                        )}
+                      </div>
                       <p className="text-[12px] text-slate-500 font-medium leading-[1.6]">
-                        If checked, your employer will absolutely <span className="font-bold text-slate-700">not</span> know who submitted this report. You will still receive a Tracking ID to communicate securely without revealing your identity.
+                        {formData.isAnonymous 
+                          ? "Your identity will be strictly hidden. Your employer will not know who submitted this report."
+                          : `You are submitting as a logged-in member. Your identity will be visible to investigators.`}
                       </p>
                     </div>
                   </div>
 
                   <h3 className="text-xl font-bold text-slate-900 ml-2 pt-2">Declaration</h3>
-                  
+
                   {/* High-Fidelity Declaration Box - Fixed Alignment */}
-                  <div 
+                  <div
                     className="p-6 rounded-[32px] bg-white border border-slate-200 flex items-start gap-5 cursor-pointer group hover:border-blue-400 transition-all duration-300 shadow-sm mx-1"
                     onClick={() => setDeclarationChecked(!declarationChecked)}
                   >
-                    <div className={`mt-0.5 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-500 ${
-                      declarationChecked ? 'bg-[#3b82f6] border-[#3b82f6]' : 'bg-white border-slate-300 group-hover:border-blue-500'
-                    }`}>
+                    <div className={`mt-0.5 w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-500 ${declarationChecked ? 'bg-[#3b82f6] border-[#3b82f6]' : 'bg-white border-slate-300 group-hover:border-blue-500'
+                      }`}>
                       {declarationChecked && <CheckCircle size={18} className="text-white" strokeWidth={3} />}
                     </div>
                     <div className="space-y-1.5">
@@ -349,16 +373,16 @@ const SubmitComplaint = () => {
                     <ChevronLeft size={16} />
                     <span>Back</span>
                   </button>
-                  <button 
-                    onClick={handleSubmit} 
-                    className="h-11 px-10 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed group" 
+                  <button
+                    onClick={handleSubmit}
+                    className="h-11 px-10 bg-[#3b82f6] hover:bg-blue-600 text-white text-[13px] font-bold rounded-xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed group"
                     disabled={loading || !declarationChecked}
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        <span>Submit Secure Report</span> 
+                        <span>Submit Secure Report</span>
                         <Send size={16} className="group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
@@ -422,7 +446,7 @@ const SubmitComplaint = () => {
           </AnimatePresence>
         </motion.div>
       </motion.div>
- 
+
       {/* Info Footer */}
       <p className="mt-8 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.25em]">
         Military Grade Encryption • Full Anonymity Active

@@ -61,9 +61,12 @@ public class AuthController {
         AuthResponse response = new AuthResponse();
         response.setToken(token);
         response.setUsername(userDetails.getUsername());
-        response.setRole(
-                userDetails.getAuthorities().iterator().next().getAuthority()
-        );
+        
+        String role = "USER";
+        if (!userDetails.getAuthorities().isEmpty()) {
+            role = userDetails.getAuthorities().iterator().next().getAuthority();
+        }
+        response.setRole(role);
 
         if (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails tenantUser) {
             Long tenantId = tenantUser.getTenantId();

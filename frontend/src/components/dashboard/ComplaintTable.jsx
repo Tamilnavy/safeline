@@ -77,6 +77,7 @@ const ComplaintTable = ({
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Tracking ID</th>
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Summary</th>
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Priority</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Reporter</th>
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
                   {showAssignment && <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Owner</th>}
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
@@ -107,6 +108,14 @@ const ComplaintTable = ({
                       <Badge variant={getPriorityVariant(c.priority)}>{c.priority || 'NORMAL'}</Badge>
                     </td>
                     <td className="px-4 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-800">
+                          {(c.reporterUsername && c.reporterUsername !== 'Public User') ? c.reporterUsername : 'Anonymous'}
+                        </span>
+                        {(c.reporterUsername && c.reporterUsername !== 'Public User') && <span className="text-[9px] text-indigo-500 font-bold uppercase tracking-tighter">Identified</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-5">
                       <Badge variant={getStatusVariant(c.status)}>{c.status?.replace(/_/g, ' ')}</Badge>
                     </td>
                     {showAssignment && (
@@ -131,7 +140,7 @@ const ComplaintTable = ({
                     )}
                     <td className="px-4 py-5 text-right">
                       <div className="flex gap-3 justify-end items-center">
-                        {['ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER'].includes(userRole) && (
+                        {userRole !== 'EMPLOYEE' && userRole !== 'USER' && (
                           <select
                             className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[110px] shadow-sm"
                             value={c.status}

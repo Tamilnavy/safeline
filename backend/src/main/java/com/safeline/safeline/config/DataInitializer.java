@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -36,16 +37,13 @@ public class DataInitializer implements CommandLineRunner {
                 });
 
         // 2. Roles
-        if (roleRepository.count() == 0) {
-            createRole("SUPER_ADMIN", defaultTenant);
-            createRole("ORG_ADMIN", defaultTenant);
-            createRole("INTAKE_OFFICER", defaultTenant);
-            createRole("INVESTIGATOR", defaultTenant);
-            createRole("HR_MANAGER", defaultTenant);
-            createRole("COMPLIANCE_OFFICER", defaultTenant);
-            createRole("EXECUTIVE", defaultTenant);
-            createRole("EMPLOYEE", defaultTenant);
-        }
+        // 2. Roles for default tenant
+        List.of("SUPER_ADMIN", "ORG_ADMIN", "EMPLOYEE")
+            .forEach(name -> {
+                if (roleRepository.findByNameAndTenantId(name, defaultTenant.getId()).isEmpty()) {
+                    createRole(name, defaultTenant);
+                }
+            });
 
         if (userRepository.findByUsername("admin").isEmpty()) {
             User admin = new User();
@@ -53,7 +51,9 @@ public class DataInitializer implements CommandLineRunner {
             admin.setEmail("admin@safeline.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setTenant(defaultTenant);
-            admin.setRoles(Set.of(roleRepository.findAll().stream().filter(r -> r.getName().equals("SUPER_ADMIN")).findFirst().get()));
+            Role superAdmin = roleRepository.findByNameAndTenantId("SUPER_ADMIN", defaultTenant.getId())
+                    .orElseThrow(() -> new RuntimeException("SUPER_ADMIN role not found"));
+            admin.setRoles(Set.of(superAdmin));
             userRepository.save(admin);
         }
 
@@ -67,37 +67,7 @@ public class DataInitializer implements CommandLineRunner {
             }
         });
 
-        // 4. Dummy Security Logs
-        if (securityLogRepository.count() == 0) {
-            createSecurityLog("ADMIN_LOGIN_SUCCESS", "admin", "192.168.1.104", "AUTH", "INFO", defaultTenant, LocalDateTime.now().minusHours(1));
-            createSecurityLog("TENANT_PROVISIONED", "super_admin", "10.0.0.42", "ADMIN", "SUCCESS", defaultTenant, LocalDateTime.now().minusHours(2));
-            createSecurityLog("DB_BACKUP_INITIATED", "system_cron", "::1", "SYSTEM", "INFO", defaultTenant, LocalDateTime.now().minusDays(1));
-            createSecurityLog("UNAUTHORIZED_API_ACCESS", "unknown", "45.12.33.1", "SECURITY", "DANGER", defaultTenant, LocalDateTime.now().minusDays(2));
-            createSecurityLog("ENCRYPTION_KEY_ROTATED", "security_officer", "10.0.0.5", "SECURITY", "WARNING", defaultTenant, LocalDateTime.now().minusDays(3));
-        }
-
-        // 5. Dummy Complaints & Messages
-        if (complaintRepository.count() == 0) {
-            Category compliance = categoryRepository.findByTenantId(defaultTenant.getId()).stream()
-                    .filter(c -> c.getName().toLowerCase().contains("compliance")).findFirst().orElse(null);
-            
-            if (compliance != null) {
-                Complaint c = new Complaint();
-                c.setTitle("Potential Nepotism in HR");
-                c.setDescription("Recent hiring rounds seem to favor relatives of management.");
-                c.setCategory(compliance);
-                c.setTenant(defaultTenant);
-                c.setStatus(ComplaintStatus.ASSIGNED);
-                c.setPriority(Priority.HIGH);
-                c.setClassification(Classification.HR_MATTERS);
-                c.setTrackingId("SL-1001-XYZ");
-                c.setCreatedAt(LocalDateTime.now().minusDays(5));
-                Complaint savedComplaint = complaintRepository.save(c);
-
-                createMessage("We have received your concern and an investigator will be assigned soon.", "SYSTEM", savedComplaint, null);
-                createMessage("I am looking into the recruitment logs for the last quarter.", "INVESTIGATOR", savedComplaint, null);
-            }
-        }
+        System.out.println("DEBUG: DATA INITIALIZATION COMPLETE.");
     }
 
     private void saveCategoryWithSLA(String name, String desc, Tenant tenant, int slaDays) {

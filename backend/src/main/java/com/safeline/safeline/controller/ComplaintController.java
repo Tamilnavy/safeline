@@ -110,7 +110,7 @@ public class ComplaintController {
         complaint.setDescription(request.getDescription());
 
         complaint.setLocation(request.getLocation());
-        complaint.setAnonymous(request.isAnonymous());
+        complaint.setAnonymous(reporter != null ? false : request.isAnonymous());
         complaint.setTenant(tenant);
         complaint.setReporter(reporter);
 
@@ -187,7 +187,6 @@ public class ComplaintController {
     // Get All Complaints (Tenant level)
     // ------------------------------------------------
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'INTAKE_OFFICER', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE')")
     public ResponseEntity<Page<ComplaintResponse>> getAll(
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain,
             @RequestParam(required = false) ComplaintStatus status,
@@ -210,13 +209,22 @@ public class ComplaintController {
         
         System.out.println("DEBUG: ComplaintController.getAll - Resolved Tenant ID: " + tenantId + ", Status: " + status);
 
-        Page<Complaint> complaints = complaintQueryService.getAllComplaints(tenantId, status, category, pageable);
-        System.out.println("DEBUG: ComplaintController.getAll - Result Count: " + complaints.getTotalElements());
-        
+        Page<Complaint> complaints;
+        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = currentAuth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN") || a.getAuthority().equals("ORG_ADMIN"));
+
+        if (isAdmin) {
+            complaints = complaintQueryService.getAllComplaints(tenantId, status, category, pageable);
+        } else {
+            // Non-admins (Custom Roles/Officers) see ONLY assigned complaints
+            User user = userRepository.findByUsername(currentAuth.getName()).orElseThrow();
+            complaints = complaintQueryService.getAssignedComplaints(user.getId(), status, pageable);
+        }
+
         Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
 
         // EXECUTIVE ROLE: Remove individual case details dynamically if not metrics endpoint
-        Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
         if (currentAuth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("EXECUTIVE"))) {
             responsePage.forEach(res -> {
                 res.setTitle("REDACTED (Oversight Mode)");
@@ -241,6 +249,10 @@ public class ComplaintController {
         res.setPriority(c.getPriority() != null ? c.getPriority().name() : "NORMAL");
         res.setClassification(c.getClassification() != null ? c.getClassification().name() : "GENERAL");
         
+        // Reporter visibility
+        res.setAnonymous(c.isAnonymous());
+        res.setReporterUsername(c.getReporter() != null ? c.getReporter().getUsername() : "Public User");
+        
         try {
             if (c.getAssignedTo() != null) {
                 res.setAssignedToUsername(c.getAssignedTo().getUsername());
@@ -262,16 +274,26 @@ public class ComplaintController {
     // Get Single Complaint
     // ------------------------------------------------
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'INTAKE_OFFICER', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER')")
     public ResponseEntity<ComplaintResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(mapToResponse(complaintQueryService.getById(id)));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByUsername(auth.getName()).orElseThrow();
+        Complaint complaint = complaintQueryService.getById(id);
+
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN") || a.getAuthority().equals("ORG_ADMIN"));
+
+        // Enforcement: If not admin, must be assigned
+        if (!isAdmin && (complaint.getAssignedTo() == null || !complaint.getAssignedTo().getId().equals(currentUser.getId()))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(mapToResponse(complaint));
     }
 
     // ------------------------------------------------
     // Get Assigned Complaints (Investigator Workspace)
     // ------------------------------------------------
     @GetMapping("/assigned")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER')")
     public ResponseEntity<Page<ComplaintResponse>> getAssigned(
             Authentication auth, 
             @RequestParam(required = false) ComplaintStatus status,
@@ -304,7 +326,7 @@ public class ComplaintController {
     // Update Complaint Status
     // ------------------------------------------------
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long id,
             @RequestParam ComplaintStatus status) {
@@ -318,7 +340,7 @@ public class ComplaintController {
     // Assign Investigator
     // ------------------------------------------------
     @PutMapping("/{id}/assign")
-    @PreAuthorize("hasAuthority('ORG_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN')")
     public ResponseEntity<?> assign(
             @PathVariable Long id,
             @RequestParam Long investigatorId) {

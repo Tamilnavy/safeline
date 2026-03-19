@@ -29,7 +29,7 @@ public class UserController {
 
 
     @GetMapping("/investigators")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'INTAKE_OFFICER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN')")
     public ResponseEntity<List<UserResponse>> getInvestigators() {
         org.springframework.security.core.Authentication auth = 
             org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -43,7 +43,7 @@ public class UserController {
             return ResponseEntity.status(403).build();
         }
 
-        List<User> users = userRepository.findByRoleNamesForTenant(List.of("INVESTIGATOR", "INTAKE_OFFICER", "ORG_ADMIN"), tenantId);
+        List<User> users = userRepository.findPotentialInvestigatorsForTenant(tenantId);
         List<UserResponse> response = users.stream().map(u -> {
             UserResponse res = new UserResponse();
             res.setId(u.getId());
@@ -58,7 +58,7 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'INTAKE_OFFICER', 'EXECUTIVE')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         org.springframework.security.core.Authentication auth = 
             org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();

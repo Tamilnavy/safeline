@@ -39,12 +39,12 @@ const DashboardLayout = () => {
   if (!user) return <Navigate to="/login" />;
 
   const menuItems = [
-    { label: 'Overview', icon: LayoutDashboard, path: (user.role === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), roles: ['SUPER_ADMIN', 'ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'INTAKE_OFFICER', 'EXECUTIVE'] },
+    { label: 'Overview', icon: LayoutDashboard, path: (user.role === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), roles: null }, // Available to all staff
     { label: 'My Reports', icon: FileText, path: '/dashboard', roles: ['EMPLOYEE'] },
     { label: 'Registry', icon: Settings, path: '/dashboard/registry', roles: ['SUPER_ADMIN'] },
-    { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: ['ORG_ADMIN'] },
-    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', roles: ['ORG_ADMIN'] },
-    { label: 'Team Directory', icon: Users, path: '/dashboard/team', roles: ['ORG_ADMIN'] },
+    { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
+    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', roles: ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
+    { label: 'Team Directory', icon: Users, path: '/dashboard/team', roles: ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
   ];
 
   const filteredMenu = menuItems.filter(item => !item.roles || item.roles.includes(user.role));
@@ -174,7 +174,8 @@ const DashboardDispatcher = ({ user }) => {
     case 'EMPLOYEE':
       return <EmployeeDashboard />;
     default:
-      return <div className="card p-12 text-center text-danger font-bold">Unrecognized role: {user.role}</div>;
+      // Any custom Level (like l1, l2) defaults to the Investigator Workspace
+      return <InvestigatorDashboard />;
   }
 };
 

@@ -42,6 +42,7 @@ D:\safeline\backend\src\main\java\com\safeline\safeline\controller\DebugControll
 D:\safeline\backend\src\main\java\com\safeline\safeline\security\JwtUtils.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\controller\UserController.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\model\package-info.java
+D:\safeline\backend\src\main\java\com\safeline\safeline\controller\RoleController.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\model\ComplaintStatus.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\security\TenantAwareUserDetails.java
 D:\safeline\backend\src\main\java\com\safeline\safeline\dto\TrackResponse.java

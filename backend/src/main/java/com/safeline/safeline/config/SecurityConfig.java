@@ -60,46 +60,11 @@ public class SecurityConfig {
 
                         // ADMIN APIs
                         .requestMatchers("/api/tenants/**").hasAuthority("SUPER_ADMIN")
-                        .requestMatchers("/api/admin/**", "/api/complaints/all").hasAnyAuthority(
-                                "SUPER_ADMIN",
-                                "ORG_ADMIN",
-                                "INTAKE_OFFICER",
-                                "INVESTIGATOR",
-                                "HR_MANAGER",
-                                "COMPLIANCE_OFFICER",
-                                "EXECUTIVE"
-                        )
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("SUPER_ADMIN", "ORG_ADMIN")
 
-                        // INVESTIGATOR / CASE MANAGEMENT
-                        .requestMatchers(
-                                "/api/investigator/**",
-                                "/api/complaints/assigned",
-                                "/api/complaints/*/status",
-                                "/api/complaints/*/assign",
-                                "/api/complaints/*/triage"
-                        ).hasAnyAuthority(
-                                "SUPER_ADMIN",
-                                "ORG_ADMIN",
-                                "INTAKE_OFFICER",
-                                "INVESTIGATOR",
-                                "HR_MANAGER",
-                                "COMPLIANCE_OFFICER"
-                        )
-
-                        // EXECUTIVE / ANALYTICS (Read-Only)
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/complaints/metrics")
-                        .hasAnyAuthority("SUPER_ADMIN", "ORG_ADMIN", "EXECUTIVE", "HR_MANAGER", "COMPLIANCE_OFFICER", "INVESTIGATOR")
-
-                        // COMMUNICATION + EVIDENCE
-                        .requestMatchers("/api/communication/**", "/api/evidence/**")
-                        .hasAnyAuthority(
-                                "SUPER_ADMIN",
-                                "ORG_ADMIN",
-                                "INTAKE_OFFICER",
-                                "INVESTIGATOR",
-                                "HR_MANAGER",
-                                "COMPLIANCE_OFFICER"
-                        )
+                        // COMPLAINTS & DATA ACCESS (Visibility handled in controllers)
+                        .requestMatchers("/api/complaints/**").authenticated()
+                        .requestMatchers("/api/communication/**", "/api/evidence/**").authenticated()
 
                         // ANY OTHER API
                         .anyRequest().authenticated()

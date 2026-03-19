@@ -23,4 +23,8 @@ public class ComplaintResponse {
     private String assignedToRole;
     private Long assignedToId;
 
+    // Reporter visibility
+    private boolean anonymous;
+    private String reporterUsername;
+
 }

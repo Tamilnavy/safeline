@@ -68,8 +68,8 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeade
   const safeMessages = Array.isArray(messages) ? messages : [];
 
   return (
-    <div 
-      className={`flex flex-col h-full bg-white overflow-hidden ${minimal ? '' : 'border border-slate-100 rounded-2xl shadow-sm'}`} 
+    <div
+      className={`flex flex-col h-full bg-white overflow-hidden ${minimal ? '' : 'border border-slate-100 rounded-2xl shadow-sm'}`}
       style={{ height: '100%', maxHeight: '500px' }}
     >
       {showHeader && (
@@ -101,8 +101,8 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeade
               <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                 <div className={`
                   max-w-[85%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed
-                  ${isMe 
-                    ? 'bg-indigo-600 text-white rounded-br-sm shadow-lg shadow-indigo-600/10' 
+                  ${isMe
+                    ? 'bg-indigo-600 text-white rounded-br-sm shadow-lg shadow-indigo-600/10'
                     : 'bg-slate-100 text-slate-900 rounded-bl-sm border border-slate-200'}
                 `}>
                   {m.content}
@@ -120,17 +120,17 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeade
       </div>
 
       <form onSubmit={handleSend} className="p-4 bg-slate-50/50 border-t border-slate-100 flex gap-2">
-        <input 
-          type="text" 
-          className="flex-1 h-11 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-medium text-slate-900" 
-          placeholder="Type your message..." 
+        <input
+          type="text"
+          className="flex-1 h-11 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-medium text-slate-900"
+          placeholder="Type your message..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           disabled={loading}
         />
-        <button 
-          type="submit" 
-          className="w-11 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" 
+        <button
+          type="submit"
+          className="w-11 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading || !content.trim()}
         >
           {loading ? (

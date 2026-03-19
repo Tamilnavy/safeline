@@ -26,6 +26,7 @@ com\safeline\safeline\dto\CategoryRequest.class
 com\safeline\safeline\repository\TenantRepository.class
 com\safeline\safeline\model\Permission.class
 com\safeline\safeline\repository\ComplaintRepository.class
+com\safeline\safeline\controller\RoleController.class
 com\safeline\safeline\config\TenantFilterConfig.class
 com\safeline\safeline\controller\SecurityLogController.class
 com\safeline\safeline\service\EncryptionService.class

@@ -12,10 +12,12 @@ import Badge from '../../components/ui/Badge';
 
 // Modular Components
 import AddUserModal from '../../components/dashboard/AddUserModal';
+import RoleManager from '../../components/dashboard/RoleManager';
 import ComplaintTable from '../../components/dashboard/ComplaintTable';
 import TriageModal from '../../components/dashboard/TriageModal';
 import ComplaintDetailsModal from '../../components/dashboard/ComplaintDetailsModal';
 import { useAuth } from '../../context/AuthContext';
+import { ShieldAlert, Settings } from 'lucide-react';
 
 const OrgAdminDashboard = () => {
   const { user } = useAuth();
@@ -30,6 +32,8 @@ const OrgAdminDashboard = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [triageComplaint, setTriageComplaint] = useState(null);
   const [showAddUser, setShowAddUser] = useState(false);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [showRoleManager, setShowRoleManager] = useState(false);
   const userRole = user?.role || 'STAFF';
   const [filterStatus, setFilterStatus] = useState(userRole === 'INTAKE_OFFICER' ? 'SUBMITTED' : 'ALL');
 
@@ -144,10 +148,26 @@ const OrgAdminDashboard = () => {
             <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Live System Connected</span>
           </div>
           {userRole === 'ORG_ADMIN' && (
-            <button className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20" onClick={() => setShowAddUser(true)}>
-              <UserPlus size={18} className="mr-2" />
-              <span>Add Team Member</span>
-            </button>
+            <div className="flex items-center gap-3">
+               <button 
+                className="btn bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 h-11 px-5 shadow-sm flex items-center gap-2"
+                onClick={() => setShowAddEmployee(true)}
+              >
+                <UserPlus size={18} />
+                <span>Add Employee</span>
+              </button>
+              <button 
+                className="btn bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 h-11 px-5 shadow-sm flex items-center gap-2"
+                onClick={() => setShowRoleManager(true)}
+              >
+                <Settings size={18} />
+                <span>Manage Levels</span>
+              </button>
+              <button className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20" onClick={() => setShowAddUser(true)}>
+                <Users size={18} className="mr-2" />
+                <span>Assign Staff</span>
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -201,6 +221,26 @@ const OrgAdminDashboard = () => {
         userRole={userRole}
         getStatusVariant={getStatusVariant}
         getPriorityVariant={getPriorityVariant}
+      />
+
+      <AddUserModal 
+        isOpen={showAddUser}
+        onClose={() => setShowAddUser(false)}
+        onSave={handleSaveUser}
+        title="Assign Staff to Level"
+      />
+
+      <AddUserModal 
+        isOpen={showAddEmployee}
+        onClose={() => setShowAddEmployee(false)}
+        onSave={handleSaveUser}
+        title="Enroll Employee"
+        fixedRole="EMPLOYEE"
+      />
+
+      <RoleManager 
+        isOpen={showRoleManager}
+        onClose={() => setShowRoleManager(false)}
       />
     </div>
   );
