@@ -18,19 +18,19 @@ public class MessageController {
     }
 
     @GetMapping("/{complaintId}")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EMPLOYEE', 'INTAKE_OFFICER')")
+    @PreAuthorize("hasAnyAuthority('LEVEL_1', 'LEVEL_2', 'LEVEL_3')")
     public ResponseEntity<List<ComplaintMessage>> getMessages(@PathVariable Long complaintId) {
         return ResponseEntity.ok(messageService.getMessages(complaintId));
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'LEVEL_1', 'LEVEL_2')")
     public ResponseEntity<List<ComplaintMessage>> getAllMessages() {
         return ResponseEntity.ok(messageService.getAllMessages());
     }
 
     @PostMapping("/{complaintId}")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EMPLOYEE', 'INTAKE_OFFICER')")
+    @PreAuthorize("hasAnyAuthority('LEVEL_1', 'LEVEL_2', 'LEVEL_3')")
     public ResponseEntity<ComplaintMessage> sendMessage(
             @PathVariable Long complaintId,
             @RequestBody String content,

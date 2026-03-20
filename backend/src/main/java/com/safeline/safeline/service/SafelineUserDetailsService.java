@@ -29,18 +29,10 @@ public class SafelineUserDetailsService implements UserDetailsService {
                 user.getPassword(),
                 user.isEnabled(),
                 true, true, true,
-                user.getRoles().stream()
-                        .flatMap(role -> {
-                            java.util.Set<org.springframework.security.core.GrantedAuthority> authorities = new java.util.HashSet<>();
-                            authorities.add(new SimpleGrantedAuthority(role.getName()));
-                            if (role.getPermissions() != null) {
-                                role.getPermissions().forEach(p -> 
-                                    authorities.add(new SimpleGrantedAuthority("PERMISSION_" + p.getName()))
-                                );
-                            }
-                            return authorities.stream();
-                        })
-                        .collect(Collectors.toSet()),
+                java.util.stream.Stream.of(
+                        new SimpleGrantedAuthority(user.getHierarchyLevel()),
+                        new SimpleGrantedAuthority(user.getAccessRole())
+                ).collect(Collectors.toSet()),
                 user.getTenant() != null ? user.getTenant().getId() : null
         );
     }

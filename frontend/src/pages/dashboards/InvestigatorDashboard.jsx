@@ -135,8 +135,8 @@ const InvestigatorDashboard = () => {
               filterStatus={filter}
               showAssignment={['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)}
               investigators={investigators}
-              userRole={userRole}
-              onAssign={handleAssign}
+               userLevel={user?.hierarchyLevel}
+               onAssign={handleAssign}
               onUpdateStatus={updateStatus}
               onPageChange={setPage}
               onFilterChange={(s) => { setFilter(s); setPage(0); }}
@@ -168,8 +168,8 @@ const InvestigatorDashboard = () => {
 const getStatusVariant = (status) => {
   switch (status) {
     case 'RESOLVED': case 'CLOSED': return 'success';
-    case 'SUBMITTED': case 'TRIAGED': return 'warning';
-    case 'INVESTIGATION': case 'ASSIGNED': return 'primary';
+    case 'ASSIGNED': case 'IN_PROGRESS': return 'primary';
+    case 'ON_HOLD': return 'warning';
     case 'REOPENED': return 'danger';
     default: return 'warning';
   }

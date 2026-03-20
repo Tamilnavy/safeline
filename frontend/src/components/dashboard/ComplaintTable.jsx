@@ -1,12 +1,15 @@
-import { MessageSquare, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
+import { useLevels } from '../../context/LevelContext';
+
+import { useState } from 'react';
+import { MessageSquare, ChevronLeft, ChevronRight, Pencil, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Badge from '../ui/Badge';
 
-const ComplaintTable = ({ 
-  complaints, 
-  investigators = [], 
-  onAssign, 
-  onUpdateStatus, 
+const ComplaintTable = ({
+  complaints,
+  investigators = [],
+  onAssign,
+  onUpdateStatus,
   onViewDetails,
   onTriage,
   loading,
@@ -16,10 +19,56 @@ const ComplaintTable = ({
   filterStatus,
   onFilterChange,
   showAssignment = true,
-  userRole = 'STAFF'
+  userLevel = 'LEVEL_3'
 }) => {
-  const statusStages = ['ALL', 'SUBMITTED', 'TRIAGED', 'ASSIGNED', 'INVESTIGATION', 'RESOLVED', 'CLOSED'];
-  const updateStages = ['ASSIGNED', 'INVESTIGATION', 'WAITING_FOR_REPORTER', 'RESOLVED', 'CLOSED'];
+  const { levels, getLevelName } = useLevels();
+  const statusStages = ['ALL', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
+  const updateStages = ['ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
+
+  // Track which complaint row has its owner dropdown open
+  const [editingOwnerId, setEditingOwnerId] = useState(null);
+  // Track open role popover
+  const [editingRoleId, setEditingRoleId] = useState(null);
+  const [activeRoleLevel, setActiveRoleLevel] = useState(null);
+  const [rolePopupStyle, setRolePopupStyle] = useState({});
+  // Track which complaint row has its status dropdown open
+  const [editingStatusId, setEditingStatusId] = useState(null);
+  const [popupStyle, setPopupStyle] = useState({});
+
+  const toggleRolePopup = (e, complaint, inv) => {
+    e.stopPropagation();
+    if (editingRoleId === complaint.id) {
+      setEditingRoleId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRolePopupStyle({
+      position: 'fixed',
+      top: rect.bottom + 4,
+      left: rect.left,
+      zIndex: 201,
+      width: 'max-content'
+    });
+    setEditingRoleId(complaint.id);
+    setActiveRoleLevel(inv ? inv.hierarchyLevel : null);
+  };
+
+  const toggleStatusPopup = (e, id) => {
+    e.stopPropagation();
+    if (editingStatusId === id) {
+      setEditingStatusId(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopupStyle({
+      position: 'fixed',
+      top: rect.bottom + 6,
+      right: window.innerWidth - rect.right,
+      zIndex: 201,
+      width: 'max-content'
+    });
+    setEditingStatusId(id);
+  };
 
   const getPriorityVariant = (priority) => {
     switch (priority) {
@@ -36,14 +85,50 @@ const ComplaintTable = ({
     switch (status) {
       case 'RESOLVED':
       case 'CLOSED': return 'success';
+      case 'ON_HOLD':
       case 'SUBMITTED':
       case 'TRIAGED': return 'warning';
+      case 'IN_PROGRESS':
       case 'INVESTIGATION':
       case 'ASSIGNED': return 'primary';
       case 'REOPENED': return 'danger';
       default: return 'warning';
     }
   };
+
+  // Extract the specific investigator assigned to a complaint
+  const getAssignedInvestigator = (complaint) => {
+    if (!complaint.assignedToUsername) return null;
+    return investigators.find(i => i.username === complaint.assignedToUsername || i.id === complaint.assignedToId);
+  };
+
+  // Explicitly return the Role (Hierarchy Level) instead of the user's name
+  const getRoleLabel = (complaint) => {
+    const inv = getAssignedInvestigator(complaint);
+    if (!inv || !inv.hierarchyLevel) return 'Hierarchy';
+    return getLevelName(inv.hierarchyLevel);
+  };
+
+  const handleAssignUser = (complaintId, assignId) => {
+    if (assignId && onAssign) {
+      onAssign(complaintId, assignId);
+    }
+    setEditingRoleId(null);
+  };
+
+  // Group investigators by their hierarchy level for the dropdown
+  const groupedInvestigators = (() => {
+    const groups = {};
+    investigators.forEach(inv => {
+      const level = (inv.hierarchyLevel || 'UNASSIGNED').toString().trim().toUpperCase();
+      if (!groups[level]) groups[level] = [];
+      groups[level].push(inv);
+    });
+    return groups;
+  })();
+
+  // Dynamic level order based on context + system levels
+  const levelOrder = ['SUPER_ADMIN', ...levels.map(l => l.id.toUpperCase()), 'UNASSIGNED'];
 
   return (
     <div className="flex flex-col gap-6">
@@ -53,9 +138,9 @@ const ComplaintTable = ({
           <button
             key={s}
             onClick={() => onFilterChange(s)}
-            className={`btn transition-all ${
-              filterStatus === s 
-                ? 'btn-primary' 
+            className={`btn transition-all whitespace-nowrap ${
+              filterStatus === s
+                ? 'btn-primary'
                 : 'btn-secondary text-xs py-1.5'
             }`}
           >
@@ -74,28 +159,30 @@ const ComplaintTable = ({
             <table className="w-full text-left">
               <thead>
                 <tr className="table-header">
-                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Tracking ID</th>
-                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Summary</th>
-                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Priority</th>
-                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Reporter</th>
-                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
-                  {showAssignment && <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Owner</th>}
-                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Tracking ID</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Summary</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Reporter</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Status</th>
+                  {showAssignment && <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Role</th>}
+                  <th className="px-2 py-4 text-xs font-bold text-slate-500 tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
                 {complaints.length === 0 ? (
                   <tr>
-                    <td colSpan={showAssignment ? 6 : 5} className="py-24 text-center text-slate-500 font-medium">
+                    <td colSpan={showAssignment ? 7 : 6} className="py-24 text-center text-slate-500 font-medium">
                       No matching records found.
                     </td>
                   </tr>
                 ) : complaints.map(c => (
                   <tr key={c.id} className="table-row group">
+                    {/* Tracking ID */}
                     <td className="px-4 py-5 whitespace-nowrap">
                       <span className="text-indigo-600 font-bold text-sm tracking-tight">{c.trackingId}</span>
                       <div className="text-slate-400 text-[10px] mt-1 font-medium">{new Date(c.createdAt).toLocaleDateString()}</div>
                     </td>
+
+                    {/* Summary */}
                     <td className="px-4 py-5">
                       <div className="flex flex-col gap-1 min-w-[180px]">
                         <div className="font-bold text-slate-900 text-sm truncate max-w-[240px]">{c.title}</div>
@@ -104,75 +191,180 @@ const ComplaintTable = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-5">
-                      <Badge variant={getPriorityVariant(c.priority)}>{c.priority || 'NORMAL'}</Badge>
-                    </td>
+
+                    {/* Reporter */}
                     <td className="px-4 py-5">
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-slate-800">
                           {(c.reporterUsername && c.reporterUsername !== 'Public User') ? c.reporterUsername : 'Anonymous'}
                         </span>
-                        {(c.reporterUsername && c.reporterUsername !== 'Public User') && <span className="text-[9px] text-indigo-500 font-bold uppercase tracking-tighter">Identified</span>}
+                        {(c.reporterUsername && c.reporterUsername !== 'Public User') &&
+                          <span className="text-[9px] text-indigo-500 font-bold uppercase tracking-tighter">Identified</span>}
                       </div>
                     </td>
+
+                    {/* Status */}
                     <td className="px-4 py-5">
                       <Badge variant={getStatusVariant(c.status)}>{c.status?.replace(/_/g, ' ')}</Badge>
                     </td>
+
+                    {/* Owner — cascading custom popover */}
                     {showAssignment && (
-                      <td className="px-4 py-5 font-medium">
-                        {(userRole === 'ORG_ADMIN') ? (
-                          <select
-                            className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[130px] shadow-sm"
-                            value={c.assignedToId || ""}
-                            onChange={(e) => { if (e.target.value) onAssign(c.id, e.target.value); }}
-                          >
-                            <option value="">Unassigned</option>
-                            {investigators.map(inv => (
-                              <option key={inv.id} value={inv.id}>{inv.username}</option>
-                            ))}
-                          </select>
+                      <td className="px-4 py-5">
+                        {['SUPER_ADMIN', 'LEVEL_1'].includes(userLevel) ? (
+                          <div className="relative">
+                            <button
+                              onClick={(e) => toggleRolePopup(e, c, getAssignedInvestigator(c))}
+                              className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border shadow-sm transition-all focus:outline-none min-w-[140px] ${
+                                getRoleLabel(c) === 'Hierarchy' 
+                                  ? 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-white hover:border-slate-300' 
+                                  : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                              } ${editingRoleId === c.id ? 'ring-2 ring-indigo-500/20 border-indigo-300' : ''}`}
+                            >
+                              <span className="text-[11px] font-bold tracking-wide truncate max-w-[220px]">
+                                {editingRoleId === c.id && activeRoleLevel 
+                                  ? (getLevelName(activeRoleLevel))
+                                  : (getAssignedInvestigator(c) 
+                                      ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
+                                      : getRoleLabel(c))}
+                              </span>
+                              <ChevronRight size={14} className={`flex-shrink-0 transition-transform ${editingRoleId === c.id ? 'rotate-90' : ''}`} />
+                            </button>
+
+                            {editingRoleId === c.id && (
+                              <>
+                                <div className="fixed inset-0 z-[200]" onClick={(e) => { e.stopPropagation(); setEditingRoleId(null); }} />
+                                <div style={rolePopupStyle} className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in zoom-in-95 duration-150">
+                                  {activeRoleLevel ? (
+                                    /* Cascaded Employee List */
+                                    <div className="flex flex-col space-y-1">
+                                      <button 
+                                        onClick={(e) => { e.stopPropagation(); setActiveRoleLevel(null); }}
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-50 text-slate-500 font-semibold text-[10px] uppercase tracking-wider hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                                      >
+                                        <ChevronLeft size={12} />
+                                        Back
+                                      </button>
+                                      <div className="max-h-[220px] overflow-y-auto space-y-1">
+                                        {(groupedInvestigators[activeRoleLevel] || []).length === 0 ? (
+                                          <div className="px-3 py-2 text-sm text-slate-400 font-medium italic">No employees.</div>
+                                        ) : (
+                                          groupedInvestigators[activeRoleLevel].map(inv => (
+                                            <button
+                                              key={inv.id}
+                                              onClick={() => handleAssignUser(c.id, inv.id)}
+                                              className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${
+                                                getAssignedInvestigator(c)?.id === inv.id 
+                                                  ? 'bg-indigo-50 text-indigo-600 font-semibold' 
+                                                  : 'text-slate-600 font-medium'
+                                              }`}
+                                            >
+                                              {inv.fullName || inv.username} - ({inv.employeeId || inv.username})
+                                            </button>
+                                          ))
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    /* Root Levels List */
+                                    <div className="flex flex-col space-y-1">
+                                      {levelOrder.map(lvl => {
+                                        const normalizedLvl = lvl.toString().trim().toUpperCase();
+                                        const levelName = getLevelName(lvl);
+                                        const count = (groupedInvestigators[normalizedLvl] || []).length;
+                                        return (
+                                          <button
+                                            key={lvl}
+                                            disabled={count === 0}
+                                            onClick={(e) => { e.stopPropagation(); setActiveRoleLevel(lvl); }}
+                                            className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent group/level"
+                                          >
+                                            <span className="font-medium text-slate-600 group-disabled/level:text-slate-400">{levelName}</span>
+                                            <span className="ml-4 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold group-hover:bg-white">{count}</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold text-slate-700">{c.assignedToUsername || 'Unassigned'}</span>
+                          <div className="bg-slate-100 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 inline-flex min-w-[140px]">
+                             <span className="text-[11px] font-bold text-slate-700">
+                               {getAssignedInvestigator(c) 
+                                 ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
+                                 : getRoleLabel(c)}
+                             </span>
                           </div>
                         )}
                       </td>
                     )}
-                    <td className="px-4 py-5 text-right">
-                      <div className="flex gap-3 justify-end items-center">
-                        {userRole !== 'EMPLOYEE' && userRole !== 'USER' && (
-                          <select
-                            className="input-field py-1! px-2! text-[11px]! w-auto! min-w-[110px] shadow-sm"
-                            value={c.status}
-                            onChange={(e) => onUpdateStatus(c.id, e.target.value)}
-                          >
-                            {updateStages.map(s => (
-                              <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                            ))}
-                          </select>
+
+                    {/* Actions */}
+                    <td className="px-2 py-5 text-right">
+                      <div className="flex gap-1.5 justify-end items-center">
+
+                        {/* Status — click opens popup */}
+                        {userLevel !== 'LEVEL_3' && (
+                          <div className="relative">
+                            <button
+                              onClick={(e) => toggleStatusPopup(e, c.id)}
+                              className="p-2 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-indigo-500 transition-colors border border-transparent hover:border-slate-200"
+                              title="Update status"
+                            >
+                              <Pencil size={15} />
+                            </button>
+
+                            {/* Popup */}
+                            {editingStatusId === c.id && (
+                              <>
+                                {/* Backdrop */}
+                                <div
+                                  className="fixed inset-0 z-[200]"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingStatusId(null);
+                                  }}
+                                />
+                                {/* Floating panel */}
+                                <div 
+                                  style={popupStyle}
+                                  className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in slide-in-from-top-2 duration-200 space-y-1"
+                                >
+                                  {updateStages.map(s => (
+                                    <button
+                                      key={s}
+                                      onClick={() => {
+                                        onUpdateStatus(c.id, s);
+                                        setEditingStatusId(null);
+                                      }}
+                                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${
+                                        c.status === s 
+                                          ? 'bg-indigo-50 text-indigo-600 font-bold' 
+                                          : 'text-slate-600 font-medium'
+                                      }`}
+                                    >
+                                      {s.replace(/_/g, ' ')}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         )}
 
-                        <div className="flex gap-2">
-                          {(userRole === 'ORG_ADMIN' || userRole === 'INTAKE_OFFICER') && (
-                            <button 
-                              onClick={() => onTriage?.(c)}
-                              className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-colors border border-transparent hover:border-amber-100 shadow-sm" 
-                              title="Triage Case"
-                            >
-                              <ShieldAlert size={16} />
-                            </button>
-                          )}
-                          
-                          <motion.button 
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => onViewDetails(c)}
-                            className="p-2 rounded-lg text-indigo-600 transition-all border border-slate-200 hover:border-indigo-200 bg-white hover:bg-indigo-50 shadow-sm" 
-                            title="Open Investigation Console"
-                          >
-                            <MessageSquare size={16} />
-                          </motion.button>
-                        </div>
+                        {/* View details button */}
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => onViewDetails(c)}
+                          className="p-2 rounded-lg text-indigo-600 transition-all border border-slate-200 hover:border-indigo-200 bg-white hover:bg-indigo-50 shadow-sm"
+                          title="Open Investigation Console"
+                        >
+                          <MessageSquare size={16} />
+                        </motion.button>
                       </div>
                     </td>
                   </tr>
@@ -185,16 +377,16 @@ const ComplaintTable = ({
             <div className="flex justify-between items-center py-4 px-2 border-t border-slate-200 mt-4">
               <p className="text-slate-500 font-medium text-xs">Page {page + 1} of {totalPages}</p>
               <div className="flex gap-2">
-                <button 
-                  disabled={page === 0} 
-                  onClick={() => onPageChange(page - 1)} 
+                <button
+                  disabled={page === 0}
+                  onClick={() => onPageChange(page - 1)}
                   className="btn btn-secondary py-1.5! px-3! disabled:opacity-30"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <button 
-                  disabled={page >= totalPages - 1} 
-                  onClick={() => onPageChange(page + 1)} 
+                <button
+                  disabled={page >= totalPages - 1}
+                  onClick={() => onPageChange(page + 1)}
                   className="btn btn-secondary py-1.5! px-3! disabled:opacity-30"
                 >
                   <ChevronRight size={16} />

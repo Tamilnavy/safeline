@@ -19,7 +19,7 @@ public class SecurityLogController {
     private final SecurityLogService securityLogService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ORG_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'LEVEL_1')")
     public ResponseEntity<List<SecurityLog>> getSecurityLogs() {
         return ResponseEntity.ok(securityLogService.getSecurityLogs());
     }

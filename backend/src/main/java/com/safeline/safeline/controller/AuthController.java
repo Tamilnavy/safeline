@@ -62,11 +62,10 @@ public class AuthController {
         response.setToken(token);
         response.setUsername(userDetails.getUsername());
         
-        String role = "USER";
-        if (!userDetails.getAuthorities().isEmpty()) {
-            role = userDetails.getAuthorities().iterator().next().getAuthority();
-        }
-        response.setRole(role);
+        userRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
+            response.setHierarchyLevel(u.getHierarchyLevel());
+            response.setAccessRole(u.getAccessRole());
+        });
 
         if (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails tenantUser) {
             Long tenantId = tenantUser.getTenantId();
@@ -152,9 +151,10 @@ public class AuthController {
             AuthResponse response = new AuthResponse();
             response.setToken(token);
             response.setUsername(userDetails.getUsername());
-            response.setRole(
-                    userDetails.getAuthorities().iterator().next().getAuthority()
-            );
+            userRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
+                response.setHierarchyLevel(u.getHierarchyLevel());
+                response.setAccessRole(u.getAccessRole());
+            });
 
             if (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails) {
                 response.setTenantId(

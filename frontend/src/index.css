@@ -16,6 +16,10 @@
     --muted-foreground: 215.4 16.3% 46.9%;
   }
 
+  html {
+    zoom: 0.9;
+  }
+
   * {
     @apply border-slate-200;
   }

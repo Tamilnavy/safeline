@@ -80,7 +80,8 @@ public class TenantController {
             res.setId(u.getId());
             res.setUsername(u.getUsername());
             res.setEmail(u.getEmail());
-            res.setRole(u.getRoles().isEmpty() ? "N/A" : u.getRoles().iterator().next().getName());
+            res.setHierarchyLevel(u.getHierarchyLevel());
+            res.setAccessRole(u.getAccessRole());
             res.setTenantId(u.getTenant() != null ? u.getTenant().getId() : null);
             return res;
         }).toList();

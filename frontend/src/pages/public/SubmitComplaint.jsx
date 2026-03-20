@@ -12,6 +12,7 @@ import {
   FileText,
   MapPin,
   Tag,
+  Users,
   ChevronRight,
   ChevronLeft,
   AlertCircle,
@@ -29,7 +30,8 @@ const SubmitComplaint = () => {
     description: '',
     categoryId: '',
     location: '',
-    isAnonymous: true
+    isAnonymous: true,
+    assignToRole: ''
   });
   const [declarationChecked, setDeclarationChecked] = useState(false);
   const [files, setFiles] = useState([]);
@@ -68,7 +70,8 @@ const SubmitComplaint = () => {
       const data = new FormData();
       data.append('request', JSON.stringify({
         ...formData,
-        anonymous: formData.isAnonymous 
+        anonymous: formData.isAnonymous,
+        assignToRole: formData.assignToRole || null
       }));
 
       files.forEach(file => {
@@ -191,6 +194,23 @@ const SubmitComplaint = () => {
                         />
                         <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Assign To Role */}
+                  <div className="space-y-2">
+                    <label className="text-[13px] font-bold text-slate-700 ml-1">Assign To Role</label>
+                    <div className="relative">
+                      <select
+                        className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
+                        value={formData.assignToRole}
+                        onChange={(e) => setFormData({ ...formData, assignToRole: e.target.value })}
+                      >
+                        <option value="">Select who handles this...</option>
+                        <option value="HR">HR — Human Resources / Management</option>
+                        <option value="ADMIN">Admin — Organisation Administrator</option>
+                      </select>
+                      <Users className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                     </div>
                   </div>
                 </div>

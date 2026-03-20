@@ -13,7 +13,7 @@ const Stat = ({ label, value, icon: Icon, trend }) => (
     </div>
 
     <div className="space-y-1">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{label}</p>
+      <p className="text-[10px] font-black text-slate-400 tracking-[0.2em] mb-1">{label}</p>
       <p className="text-3xl font-black text-slate-900 tracking-tighter">{value}</p>
     </div>
 

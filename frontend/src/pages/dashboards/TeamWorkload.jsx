@@ -4,10 +4,12 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import { User, Activity, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLevels } from '../../context/LevelContext';
 
 const TeamWorkload = () => {
   const [allReports, setAllReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { getLevelName } = useLevels();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,7 +77,7 @@ const TeamWorkload = () => {
                               {report.assignedToUsername || <span className="text-danger/60 italic font-black">AWAITING ASSIGNMENT</span>}
                             </p>
                             {report.assignedToRole && (
-                              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] opacity-80">{report.assignedToRole.replace(/_/g, ' ')}</p>
+                              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] opacity-80">{getLevelName(report.assignedToRole)}</p>
                             )}
                           </div>
                         </div>

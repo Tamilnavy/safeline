@@ -3,8 +3,6 @@ package com.safeline.safeline.service;
 import com.safeline.safeline.dto.PlatformMetricsDTO;
 import com.safeline.safeline.dto.TenantCreateRequest;
 import com.safeline.safeline.dto.TenantResponse;
-import com.safeline.safeline.dto.UserResponse;
-import com.safeline.safeline.model.Role;
 import com.safeline.safeline.model.User;
 import com.safeline.safeline.repository.*;
 import com.safeline.safeline.model.Tenant;
@@ -28,7 +26,6 @@ public class TenantService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final SLAPolicyRepository slaPolicyRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final jakarta.persistence.EntityManager entityManager;
 
@@ -100,9 +97,8 @@ public class TenantService {
         tenant.setDomain(request.getDomain());
         Tenant savedTenant = tenantRepository.save(tenant);
 
-        // 2. Seed default categories and roles
+        // 2. Seed default categories
         seedDefaultCategories(savedTenant);
-        seedDefaultRoles(savedTenant);
 
         // 3. Create Admin User
         User admin = new User();
@@ -111,9 +107,8 @@ public class TenantService {
         admin.setPassword(passwordEncoder.encode(request.getAdminPassword()));
         admin.setTenant(savedTenant);
 
-        Role adminRole = roleRepository.findByNameAndTenantId("ORG_ADMIN", savedTenant.getId())
-                .orElseThrow(() -> new RuntimeException("Default Admin Role (ORG_ADMIN) not found for tenant"));
-        admin.setRoles(Set.of(adminRole));
+        admin.setHierarchyLevel("LEVEL_1");
+        admin.setAccessRole("ROLE_2");
         userRepository.save(admin);
 
         // 4. Build Response
@@ -141,17 +136,7 @@ public class TenantService {
         return savedTenant;
     }
 
-    private void seedDefaultRoles(Tenant tenant) {
-        List.of("EMPLOYEE", "ORG_ADMIN")
-            .forEach(name -> {
-                if (roleRepository.findByNameAndTenantId(name, tenant.getId()).isEmpty()) {
-                    Role r = new Role();
-                    r.setName(name);
-                    r.setTenant(tenant);
-                    roleRepository.save(r);
-                }
-            });
-    }
+    // Removed legacy role seeder
 
     private void seedDefaultCategories(Tenant tenant) {
         saveCategoryWithSLA("Ethics & Compliance", "Bribery, corruption, fraud", tenant, 7);

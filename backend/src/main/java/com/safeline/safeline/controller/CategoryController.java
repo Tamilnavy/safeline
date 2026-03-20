@@ -32,7 +32,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('LEVEL_1')")
     public ResponseEntity<CategoryResponse> create(
             @RequestBody CategoryRequest request,
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain) {
@@ -44,7 +44,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('LEVEL_1')")
     public ResponseEntity<CategoryResponse> update(
             @PathVariable Long id,
             @RequestBody CategoryRequest request) {
@@ -53,7 +53,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('LEVEL_1')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();

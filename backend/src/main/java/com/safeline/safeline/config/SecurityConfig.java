@@ -60,7 +60,7 @@ public class SecurityConfig {
 
                         // ADMIN APIs
                         .requestMatchers("/api/tenants/**").hasAuthority("SUPER_ADMIN")
-                        .requestMatchers("/api/admin/**").hasAnyAuthority("SUPER_ADMIN", "ORG_ADMIN")
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("SUPER_ADMIN", "LEVEL_1")
 
                         // COMPLAINTS & DATA ACCESS (Visibility handled in controllers)
                         .requestMatchers("/api/complaints/**").authenticated()

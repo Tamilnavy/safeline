@@ -29,7 +29,7 @@ public class UserController {
 
 
     @GetMapping("/investigators")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'LEVEL_1')")
     public ResponseEntity<List<UserResponse>> getInvestigators() {
         org.springframework.security.core.Authentication auth = 
             org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -48,9 +48,11 @@ public class UserController {
             UserResponse res = new UserResponse();
             res.setId(u.getId());
             res.setUsername(u.getUsername());
+            res.setFullName(u.getFullName());
+            res.setEmployeeId(u.getEmployeeId());
             res.setEmail(u.getEmail());
-            String roleName = u.getRoles().isEmpty() ? "USER" : u.getRoles().iterator().next().getName();
-            res.setRole(roleName);
+            res.setHierarchyLevel(u.getHierarchyLevel());
+            res.setAccessRole(u.getAccessRole());
             res.setTenantId(u.getTenant().getId());
             return res;
         }).toList();
@@ -58,7 +60,7 @@ public class UserController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'LEVEL_1')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         org.springframework.security.core.Authentication auth = 
             org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -78,9 +80,11 @@ public class UserController {
             UserResponse res = new UserResponse();
             res.setId(u.getId());
             res.setUsername(u.getUsername());
+            res.setFullName(u.getFullName());
+            res.setEmployeeId(u.getEmployeeId());
             res.setEmail(u.getEmail());
-            String roleName = u.getRoles().isEmpty() ? "USER" : u.getRoles().iterator().next().getName();
-            res.setRole(roleName);
+            res.setHierarchyLevel(u.getHierarchyLevel());
+            res.setAccessRole(u.getAccessRole());
             res.setTenantId(u.getTenant().getId());
             return res;
         }).toList();
@@ -88,7 +92,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ORG_ADMIN')")
+    @PreAuthorize("hasAuthority('LEVEL_1')")
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
         return ResponseEntity.ok(userService.createUser(request));
     }

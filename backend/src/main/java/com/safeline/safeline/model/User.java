@@ -28,6 +28,12 @@ public class User {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "employee_id")
+    private String employeeId;
+
     @Column(nullable = false)
     private String password;
 
@@ -40,15 +46,11 @@ public class User {
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
-    @lombok.ToString.Exclude
-    @lombok.EqualsAndHashCode.Exclude
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
+    @Column(nullable = false)
+    private String hierarchyLevel = "LEVEL_3";
+
+    @Column(nullable = false)
+    private String accessRole = "ROLE_1";
 
     private boolean enabled = true;
 

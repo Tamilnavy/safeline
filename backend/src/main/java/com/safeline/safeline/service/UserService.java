@@ -2,10 +2,8 @@ package com.safeline.safeline.service;
 
 import com.safeline.safeline.dto.UserRequest;
 import com.safeline.safeline.dto.UserResponse;
-import com.safeline.safeline.model.Role;
 import com.safeline.safeline.model.Tenant;
 import com.safeline.safeline.model.User;
-import com.safeline.safeline.repository.RoleRepository;
 import com.safeline.safeline.repository.TenantRepository;
 import com.safeline.safeline.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,26 +18,45 @@ import java.util.Set;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private String normalizeEmployeeId(String id) {
+        if (id == null) return null;
+        id = id.trim().toUpperCase();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?<!\\d)(\\d+)(?!\\d)").matcher(id);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            String num = m.group(1);
+            if (num.length() == 1) {
+                num = "00" + num;
+            } else if (num.length() == 2) {
+                num = "0" + num;
+            }
+            m.appendReplacement(sb, num);
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
     public UserResponse createUser(UserRequest request) {
         try {
-            System.out.println("DEBUG: Starting createUser for username: " + request.getUsername());
-            
-            if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-                throw new RuntimeException("Username '" + request.getUsername() + "' already exists");
+            if (request.getEmployeeId() == null || request.getEmployeeId().isEmpty()) {
+                throw new IllegalArgumentException("Employee ID is required");
             }
+            // Normalize employee ID to prevent logical duplicates like EMP-001 and EMP-1
+            String normalizedId = normalizeEmployeeId(request.getEmployeeId());
+            request.setEmployeeId(normalizedId);
 
             if (request.getEmail() != null && userRepository.findByEmail(request.getEmail()).isPresent()) {
-                throw new RuntimeException("Email '" + request.getEmail() + "' is already in use");
+                throw new IllegalArgumentException("Email '" + request.getEmail() + "' is already in use");
             }
 
             User user = new User();
-            user.setUsername(request.getUsername());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
             user.setEmail(request.getEmail());
+            user.setFullName(request.getFullName());
+            user.setEmployeeId(request.getEmployeeId());
 
             // Determine tenant context
             Long tenantId = request.getTenantId();
@@ -53,7 +70,7 @@ public class UserService {
                 
                 // ORG_ADMIN or INTAKE_OFFICER or any tenant staff should only create users in their own tenant
                 boolean isTenantStaff = auth.getAuthorities().stream().anyMatch(a -> 
-                    List.of("ORG_ADMIN", "INTAKE_OFFICER", "INVESTIGATOR").contains(a.getAuthority())
+                    List.of("LEVEL_1", "LEVEL_2", "LEVEL_3").contains(a.getAuthority())
                 );
                 
                 if (isTenantStaff) {
@@ -67,47 +84,41 @@ public class UserService {
 
             if (tenantId == null) {
                 System.out.println("CRITICAL: tenantId is NULL in createUser!");
-                throw new RuntimeException("Required tenant context is missing");
+                throw new IllegalArgumentException("Required tenant context is missing");
             }
 
             final Long effectiveTenantId = tenantId;
-            Tenant tenant = tenantRepository.findById(effectiveTenantId)
-                    .orElseThrow(() -> new RuntimeException("Tenant not found with ID: " + effectiveTenantId));
-            user.setTenant(tenant);
 
-            System.out.println("DEBUG: Looking for role '" + request.getRoleName() + "' for tenant ID: " + effectiveTenantId);
-            
-            List<Role> roles = roleRepository.findByName(request.getRoleName());
-            Role role = roles.stream()
-                    .filter(r -> {
-                        if (r.getTenant() == null) return true; // Global role
-                        Long roleTenantId = r.getTenant().getId();
-                        boolean isAllowed = roleTenantId.equals(effectiveTenantId) || "default".equals(r.getTenant().getDomain());
-                        System.out.println("DEBUG: Role '" + r.getName() + "' (ID: " + r.getId() + ", TenantID: " + roleTenantId + ") check: " + isAllowed);
-                        return isAllowed;
-                    })
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Role '" + request.getRoleName() + "' is not available for this organization. (Found " + roles.size() + " total roles with this name)"));
-            
-            // NEW: Enforce 1-to-1 constraint for Custom Levels
-            if (!java.util.List.of("ORG_ADMIN", "EMPLOYEE", "SUPER_ADMIN").contains(role.getName())) {
-                boolean occupied = userRepository.isRoleOccupied(effectiveTenantId, role.getId());
-                System.out.println("DEBUG: Role '" + role.getName() + "' (ID: " + role.getId() + ") occupancy check for Tenant " + effectiveTenantId + ": " + occupied);
-                
-                if (occupied) {
-                    throw new RuntimeException("CRITICAL: This level (" + role.getName() + ") is already assigned to a team member in your organization. You cannot assign it to someone else.");
-                }
+            // Validate Employee ID uniqueness within Tenant
+            if (userRepository.findByEmployeeIdAndTenantId(request.getEmployeeId(), effectiveTenantId).isPresent()) {
+                throw new IllegalArgumentException("Employee ID '" + request.getEmployeeId() + "' already exists in this organization.");
             }
 
-            user.setRoles(Set.of(role));
+            // Map employee ID securely to the unique Login Handle (username)
+            String loginHandle = request.getEmployeeId();
+            if (userRepository.findByUsername(loginHandle).isPresent()) {
+                throw new IllegalArgumentException("Employee ID '" + request.getEmployeeId() + "' is already registered globally.");
+            }
+            user.setUsername(loginHandle);
+
+            Tenant tenant = tenantRepository.findById(effectiveTenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + effectiveTenantId));
+            user.setTenant(tenant);
+
+            user.setHierarchyLevel(request.getHierarchyLevel());
+            user.setAccessRole(request.getAccessRole());
+            
             User saved = userRepository.save(user);
-            System.out.println("DEBUG: User '" + saved.getUsername() + "' saved with Role ID: " + role.getId());
+            System.out.println("DEBUG: User '" + saved.getUsername() + "' saved with Hierarchy: " + saved.getHierarchyLevel());
 
             UserResponse response = new UserResponse();
             response.setId(saved.getId());
             response.setUsername(saved.getUsername());
+            response.setFullName(saved.getFullName());
+            response.setEmployeeId(saved.getEmployeeId());
             response.setEmail(saved.getEmail());
-            response.setRole(role.getName());
+            response.setHierarchyLevel(saved.getHierarchyLevel());
+            response.setAccessRole(saved.getAccessRole());
             response.setTenantId(tenant.getId());
 
             return response;

@@ -78,9 +78,9 @@ const EmployeeDashboard = () => {
               <table className="w-full text-left">
                 <thead>
                   <tr className="table-header">
-                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Ref ID</th>
-                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Operational Logs</th>
-                    <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Stage</th>
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 tracking-widest">Ref ID</th>
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 tracking-widest">Operational Logs</th>
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 tracking-widest">Stage</th>
                     <th className="px-8 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
@@ -97,8 +97,8 @@ const EmployeeDashboard = () => {
                         <span className="text-indigo-600 font-bold text-xs tracking-tighter">{c.trackingId}</span>
                       </td>
                       <td className="px-8 py-5">
-                        <div className="font-bold text-slate-900 mb-1 tracking-tight text-sm group-hover:text-indigo-600 transition-colors uppercase">{c.title}</div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Filed {new Date(c.createdAt).toLocaleDateString()}</div>
+                        <div className="font-bold text-slate-900 mb-1 tracking-tight text-sm group-hover:text-indigo-600 transition-colors">{c.title}</div>
+                        <div className="text-[10px] text-slate-400 font-bold tracking-widest">Filed {new Date(c.createdAt).toLocaleDateString()}</div>
                       </td>
                       <td className="px-8 py-5">
                         <Badge variant={c.status === 'RESOLVED' || c.status === 'CLOSED' ? 'success' : 'warning'}>

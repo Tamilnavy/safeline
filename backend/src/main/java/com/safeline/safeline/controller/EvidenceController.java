@@ -24,13 +24,13 @@ public class EvidenceController {
     private final FileStorageService fileStorageService;
 
     @GetMapping("/complaint/{complaintId}")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR')")
+    @PreAuthorize("hasAnyAuthority('LEVEL_1', 'LEVEL_2')")
     public ResponseEntity<List<ComplaintEvidence>> getEvidence(@PathVariable Long complaintId) {
         return ResponseEntity.ok(evidenceRepository.findByComplaintId(complaintId));
     }
 
     @GetMapping("/download/{id}")
-    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'INVESTIGATOR')")
+    @PreAuthorize("hasAnyAuthority('LEVEL_1', 'LEVEL_2')")
     public ResponseEntity<Resource> download(@PathVariable Long id) {
         ComplaintEvidence evidence = evidenceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evidence not found"));

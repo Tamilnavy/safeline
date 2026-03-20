@@ -42,7 +42,7 @@ const ComplaintDetailsModal = ({
                   <Badge variant={getStatusVariant ? getStatusVariant(complaint.status) : 'warning'}>
                     {complaint.status?.replace(/_/g, ' ')}
                   </Badge>
-                  <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{complaint.trackingId}</span>
+                  <span className="text-[10px] font-bold text-slate-400 tracking-widest">{complaint.trackingId}</span>
                 </div>
               </div>
               <button onClick={onClose} className="p-2 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors">
@@ -53,7 +53,7 @@ const ComplaintDetailsModal = ({
             <div className="flex-1 flex min-h-0 bg-white">
               <div className="flex-[0.8] p-10 border-r border-slate-100 overflow-y-auto">
                 <div className="mb-10">
-                  <h3 className="text-2xl font-bold text-slate-900 leading-tight mb-4 uppercase">{complaint.title}</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 leading-tight mb-4">{complaint.title}</h3>
                   <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl shadow-inner">
                     <p className="text-slate-600 font-medium leading-relaxed italic">"{complaint.description}"</p>
                   </div>
@@ -61,23 +61,23 @@ const ComplaintDetailsModal = ({
 
                 <div className="grid grid-cols-2 gap-8 bg-slate-50 p-6 rounded-xl border border-slate-100">
                   <div className="space-y-1.5">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Category</p>
+                    <p className="text-[10px] font-bold text-slate-500 tracking-widest">Category</p>
                     <p className="font-semibold text-slate-900">{complaint.categoryName || (isEmployee ? 'General Ethics' : 'General')}</p>
                   </div>
                   {!isEmployee && (
                     <div className="space-y-1.5">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Classification</p>
+                      <p className="text-[10px] font-bold text-slate-500 tracking-widest">Classification</p>
                       <p className="font-bold text-indigo-600">{complaint.classification?.replace(/_/g, ' ') || 'GENERAL'}</p>
                     </div>
                   )}
                   {getPriorityVariant && !isEmployee && (
                      <div className="space-y-1.5">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Priority</p>
+                        <p className="text-[10px] font-bold text-slate-500 tracking-widest">Priority</p>
                         <Badge variant={getPriorityVariant(complaint.priority)}>{complaint.priority || 'NORMAL'}</Badge>
                      </div>
                   )}
                   <div className="space-y-1.5">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{isEmployee ? 'Submission Date' : 'Received'}</p>
+                    <p className="text-[10px] font-bold text-slate-500 tracking-widest">{isEmployee ? 'Submission Date' : 'Received'}</p>
                     <p className="font-bold text-slate-900">{new Date(complaint.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
@@ -88,7 +88,7 @@ const ComplaintDetailsModal = ({
                   <>
                     <div className="px-6 py-4 border-b border-slate-100 bg-white flex items-center gap-2 shadow-sm">
                       <MessageSquare size={16} className="text-indigo-600" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-slate-900">
+                      <span className="text-xs font-bold tracking-widest text-slate-900">
                         {isEmployee ? 'Secure Communication Log' : 'Secure Investigation Log'}
                       </span>
                     </div>

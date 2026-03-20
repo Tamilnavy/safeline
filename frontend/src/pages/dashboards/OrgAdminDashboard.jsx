@@ -4,7 +4,7 @@ import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import {
-  FileText, Clock, CheckCircle, Users, UserPlus, MessageSquare, ChevronRight
+  FileText, Clock, CheckCircle, Users, UserPlus, MessageSquare, ChevronRight, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageBoard from '../../components/ui/MessageBoard';
@@ -12,12 +12,11 @@ import Badge from '../../components/ui/Badge';
 
 // Modular Components
 import AddUserModal from '../../components/dashboard/AddUserModal';
-import RoleManager from '../../components/dashboard/RoleManager';
+import ManageLevelsModal from '../../components/dashboard/ManageLevelsModal';
 import ComplaintTable from '../../components/dashboard/ComplaintTable';
 import TriageModal from '../../components/dashboard/TriageModal';
 import ComplaintDetailsModal from '../../components/dashboard/ComplaintDetailsModal';
 import { useAuth } from '../../context/AuthContext';
-import { ShieldAlert, Settings } from 'lucide-react';
 
 const OrgAdminDashboard = () => {
   const { user } = useAuth();
@@ -31,11 +30,10 @@ const OrgAdminDashboard = () => {
   const [stats, setStats] = useState({ total: 0, pending: 0, resolved: 0 });
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [triageComplaint, setTriageComplaint] = useState(null);
-  const [showAddUser, setShowAddUser] = useState(false);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
-  const [showRoleManager, setShowRoleManager] = useState(false);
-  const userRole = user?.role || 'STAFF';
-  const [filterStatus, setFilterStatus] = useState(userRole === 'INTAKE_OFFICER' ? 'SUBMITTED' : 'ALL');
+  const [showManageLevels, setShowManageLevels] = useState(false);
+  const userLevel = user?.hierarchyLevel || 'LEVEL_3';
+  const [filterStatus, setFilterStatus] = useState(userLevel === 'LEVEL_2' ? 'ASSIGNED' : 'ALL');
 
   const tenantDomain = localStorage.getItem('tenantDomain') || 'Organization';
 
@@ -116,12 +114,9 @@ const OrgAdminDashboard = () => {
   // userRole is now defined at the top for state initialization
 
   const getDashboardTitle = () => {
-    switch (userRole) {
-      case 'ORG_ADMIN': return 'Command Center';
-      case 'INTAKE_OFFICER': return 'Triage Center';
-      case 'EXECUTIVE': return 'Oversight Console';
-      case 'HR_MANAGER': return 'Personnel Intelligence';
-      case 'COMPLIANCE_OFFICER': return 'Protocol Intelligence';
+    switch (userLevel) {
+      case 'LEVEL_1': return 'Command Center';
+      case 'LEVEL_2': return 'Triage / Oversight Center';
       default: return 'Field Operations';
     }
   };
@@ -137,35 +132,30 @@ const OrgAdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">{getDashboardTitle()}</h1>
           <p className="text-slate-500 text-sm font-medium">
-            {userRole === 'INTAKE_OFFICER' ? 'Triage and prioritize incoming reports' :
-              userRole === 'EXECUTIVE' ? 'Oversight and monitoring console for organizational ethics' :
+            {userLevel === 'LEVEL_2' ? 'Triage and prioritize incoming reports and oversight' :
                 `Management console for ${tenantDomain}`}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 flex items-center gap-2 shadow-sm">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Live System Connected</span>
+            <span className="text-[10px] font-bold text-emerald-700 tracking-widest">Live System Connected</span>
           </div>
-          {userRole === 'ORG_ADMIN' && (
+          {userLevel === 'LEVEL_1' && (
             <div className="flex items-center gap-3">
-               <button 
-                className="btn bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 h-11 px-5 shadow-sm flex items-center gap-2"
+              <button
+                className="h-11 px-5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm"
+                onClick={() => setShowManageLevels(true)}
+              >
+                <Settings size={18} className="text-slate-400" />
+                <span>Manage Levels</span>
+              </button>
+              <button
+                className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20 flex items-center gap-2"
                 onClick={() => setShowAddEmployee(true)}
               >
                 <UserPlus size={18} />
                 <span>Add Employee</span>
-              </button>
-              <button 
-                className="btn bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 h-11 px-5 shadow-sm flex items-center gap-2"
-                onClick={() => setShowRoleManager(true)}
-              >
-                <Settings size={18} />
-                <span>Manage Levels</span>
-              </button>
-              <button className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20" onClick={() => setShowAddUser(true)}>
-                <Users size={18} className="mr-2" />
-                <span>Assign Staff</span>
               </button>
             </div>
           )}
@@ -176,7 +166,7 @@ const OrgAdminDashboard = () => {
         <Stat label="Total Reports" value={stats.total} icon={FileText} />
         <Stat label="Active Cases" value={stats.pending} icon={Clock} />
         <Stat label="Resolved Cases" value={stats.resolved} icon={CheckCircle} />
-        {userRole === 'ORG_ADMIN' && (
+        {userLevel === 'LEVEL_1' && (
           <Stat label="Team Members" value={allTeam.length} icon={Users} />
         )}
       </div>
@@ -200,8 +190,8 @@ const OrgAdminDashboard = () => {
               onFilterChange={(s) => { setFilterStatus(s); setPage(0); }}
               onViewDetails={setSelectedComplaint}
               onTriage={setTriageComplaint}
-              userRole={userRole}
-              showAssignment={['ORG_ADMIN', 'EXECUTIVE', 'INTAKE_OFFICER'].includes(userRole)}
+              userLevel={userLevel}
+              showAssignment={['LEVEL_1', 'LEVEL_2'].includes(userLevel)}
             />
           </div>
         </Card>
@@ -218,29 +208,21 @@ const OrgAdminDashboard = () => {
         isOpen={!!selectedComplaint}
         onClose={() => setSelectedComplaint(null)}
         complaint={selectedComplaint}
-        userRole={userRole}
+        userLevel={userLevel}
         getStatusVariant={getStatusVariant}
         getPriorityVariant={getPriorityVariant}
       />
 
-      <AddUserModal 
-        isOpen={showAddUser}
-        onClose={() => setShowAddUser(false)}
-        onSave={handleSaveUser}
-        title="Assign Staff to Level"
-      />
-
-      <AddUserModal 
+      <AddUserModal
         isOpen={showAddEmployee}
         onClose={() => setShowAddEmployee(false)}
         onSave={handleSaveUser}
-        title="Enroll Employee"
-        fixedRole="EMPLOYEE"
+        title="Add Employee"
       />
 
-      <RoleManager 
-        isOpen={showRoleManager}
-        onClose={() => setShowRoleManager(false)}
+      <ManageLevelsModal
+        isOpen={showManageLevels}
+        onClose={() => setShowManageLevels(false)}
       />
     </div>
   );
@@ -249,7 +231,9 @@ const OrgAdminDashboard = () => {
 const getStatusVariant = (status) => {
   switch (status) {
     case 'RESOLVED': case 'CLOSED': return 'success';
+    case 'ON_HOLD':
     case 'SUBMITTED': case 'TRIAGED': return 'warning';
+    case 'IN_PROGRESS':
     case 'INVESTIGATION': case 'ASSIGNED': return 'primary';
     case 'REOPENED': return 'danger';
     default: return 'warning';

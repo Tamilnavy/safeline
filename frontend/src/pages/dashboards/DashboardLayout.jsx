@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLevels } from '../../context/LevelContext';
 
 // Dashboard Components
 import SuperAdminDashboard from './SuperAdminDashboard';
@@ -32,6 +33,7 @@ import SuperAdminOverview from './SuperAdminOverview';
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
+  const { getLevelName } = useLevels();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -39,15 +41,30 @@ const DashboardLayout = () => {
   if (!user) return <Navigate to="/login" />;
 
   const menuItems = [
-    { label: 'Overview', icon: LayoutDashboard, path: (user.role === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), roles: null }, // Available to all staff
-    { label: 'My Reports', icon: FileText, path: '/dashboard', roles: ['EMPLOYEE'] },
-    { label: 'Registry', icon: Settings, path: '/dashboard/registry', roles: ['SUPER_ADMIN'] },
-    { label: 'Messages', icon: MessageSquare, path: '/dashboard/messages', roles: ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
-    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', roles: ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
-    { label: 'Team Directory', icon: Users, path: '/dashboard/team', roles: ['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER'] },
+    { label: 'Overview', icon: LayoutDashboard, path: (user.hierarchyLevel === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), hierarchyLevels: null, accessRoles: null },
+    { label: 'My Reports', icon: FileText, path: '/dashboard', hierarchyLevels: ['LEVEL_3'], accessRoles: null },
+    { label: 'Registry', icon: Settings, path: '/dashboard/registry', hierarchyLevels: ['SUPER_ADMIN'], accessRoles: null },
+    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', hierarchyLevels: ['LEVEL_1', 'LEVEL_2'], accessRoles: null },
+    { label: 'Team Directory', icon: Users, path: '/dashboard/team', hierarchyLevels: ['LEVEL_1', 'LEVEL_2'], accessRoles: null },
   ];
 
-  const filteredMenu = menuItems.filter(item => !item.roles || item.roles.includes(user.role));
+  // Filter menu: if accessRole is set, use it; otherwise fall back to hierarchyLevel filter
+  const filteredMenu = menuItems.filter(item => {
+    if (!item.hierarchyLevels && !item.accessRoles) return true; // available to all
+    if (user.accessRole) {
+      if (item.accessRoles && item.accessRoles.includes(user.accessRole)) return true;
+    }
+    return !item.hierarchyLevels || item.hierarchyLevels.includes(user.hierarchyLevel);
+  });
+
+
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'ROLE_1': return 'Basic Access';
+      case 'ROLE_2': return 'Extended Access';
+      default: return role?.replace(/_/g, ' ') || '';
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -123,8 +140,10 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-slate-900 leading-tight">{user.username}</p>
-                <p className="text-[10px] text-slate-500 font-bold tracking-wider uppercase">{user.role?.replace(/_/g, ' ')}</p>
+                <p className="text-sm font-semibold text-slate-900 leading-tight">{(user.fullName || user.username)}</p>
+                <p className="text-[9px] text-slate-500 font-bold tracking-widest mt-0.5">
+                  {(user.fullName || user.username)} - {getLevelName(user.hierarchyLevel)}
+                </p>
               </div>
               <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center group-hover:border-indigo-500 transition-colors shadow-sm">
                 <User size={18} className="text-slate-600 group-hover:text-indigo-600 transition-colors" />
@@ -141,18 +160,17 @@ const DashboardLayout = () => {
           >
             <Routes>
               <Route path="/" element={<DashboardDispatcher user={user} />} />
-              <Route path="/overview" element={user.role === 'SUPER_ADMIN' ? <SuperAdminOverview /> : <Navigate to="/dashboard" />} />
+              <Route path="/overview" element={user.hierarchyLevel === 'SUPER_ADMIN' ? <SuperAdminOverview /> : <Navigate to="/dashboard" />} />
               <Route path="/complaints" element={<EmployeeDashboard />} />
               <Route path="/assigned" element={<InvestigatorDashboard />} />
               <Route path="/complaint/:id" element={<InvestigationDetails />} />
               <Route path="/org" element={<OrgAdminDashboard />} />
               <Route
                 path="/registry"
-                element={user.role === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <Navigate to="/dashboard" />}
+                element={user.hierarchyLevel === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <Navigate to="/dashboard" />}
               />
-              <Route path="/messages" element={user.role !== 'SUPER_ADMIN' ? <Messages /> : <Navigate to="/dashboard" />} />
-              <Route path="/workload" element={['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE'].includes(user.role) ? <TeamWorkload /> : <Navigate to="/dashboard" />} />
-              <Route path="/team" element={['ORG_ADMIN', 'HR_MANAGER', 'COMPLIANCE_OFFICER', 'EXECUTIVE'].includes(user.role) ? <TeamDirectory /> : <Navigate to="/dashboard" />} />
+              <Route path="/workload" element={['LEVEL_1', 'LEVEL_2'].includes(user.hierarchyLevel) ? <TeamWorkload /> : <Navigate to="/dashboard" />} />
+              <Route path="/team" element={['LEVEL_1', 'LEVEL_2'].includes(user.hierarchyLevel) ? <TeamDirectory /> : <Navigate to="/dashboard" />} />
             </Routes>
           </motion.div>
         </main>
@@ -162,21 +180,10 @@ const DashboardLayout = () => {
 };
 
 const DashboardDispatcher = ({ user }) => {
-  switch (user.role) {
-    case 'SUPER_ADMIN': return <SuperAdminOverview />;
-    case 'ORG_ADMIN': return <OrgAdminDashboard />;
-    case 'INTAKE_OFFICER':
-    case 'INVESTIGATOR':
-    case 'HR_MANAGER':
-    case 'COMPLIANCE_OFFICER':
-    case 'EXECUTIVE':
-      return <InvestigatorDashboard />;
-    case 'EMPLOYEE':
-      return <EmployeeDashboard />;
-    default:
-      // Any custom Level (like l1, l2) defaults to the Investigator Workspace
-      return <InvestigatorDashboard />;
-  }
+  if (user.hierarchyLevel === 'SUPER_ADMIN') return <SuperAdminOverview />;
+  if (user.hierarchyLevel === 'LEVEL_1') return <OrgAdminDashboard />;
+  if (user.hierarchyLevel === 'LEVEL_2') return <InvestigatorDashboard />;
+  return <EmployeeDashboard />;
 };
 
 export default DashboardLayout;

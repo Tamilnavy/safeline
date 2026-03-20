@@ -3,14 +3,17 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext'
+import { LevelProvider } from './context/LevelContext'
 import { BrowserRouter } from 'react-router-dom'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <LevelProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </LevelProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )
