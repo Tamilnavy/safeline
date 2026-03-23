@@ -86,7 +86,7 @@ const InvestigationDetails = () => {
               <Badge variant={getStatusVariant(complaint.status)}>{complaint.status?.replace(/_/g, ' ')}</Badge>
               <span className="text-xs font-mono text-text-muted tracking-widest font-bold">{complaint.trackingId}</span>
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight uppercase">{complaint.title}</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">{complaint.title}</h1>
           </div>
         </div>
 
@@ -112,45 +112,42 @@ const InvestigationDetails = () => {
         <div className="lg:col-span-8 space-y-8">
           <Card title="Case Intelligence" subtitle="Detailed information and reporter statement.">
             <div className="space-y-6">
-              <div className="p-6 rounded-2xl bg-white/5 border border-white/10 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <FileText size={48} />
-                </div>
-                <h4 className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-3">Reporter Statement</h4>
-                <p className="text-text-primary text-base font-medium leading-relaxed italic opacity-90">
+              <div className="p-6 rounded-2xl bg-slate-50/50 border border-slate-200 relative overflow-hidden">
+                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Reporter Statement</h4>
+                <p className="text-slate-800 text-base font-medium leading-relaxed italic">
                   "{complaint.description}"
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
                     <Shield size={20} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black text-text-muted uppercase tracking-widest mb-0.5">Category</p>
-                    <p className="text-sm font-bold text-white">{complaint.categoryName || 'Uncategorized'}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Category</p>
+                    <p className="text-sm font-bold text-slate-900">{complaint.categoryName || 'Uncategorized'}</p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center text-success">
+                <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                     <CheckCircle size={20} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black text-text-muted uppercase tracking-widest mb-0.5">Reported On</p>
-                    <p className="text-sm font-bold text-white">{new Date(complaint.createdAt).toLocaleDateString()}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Reported On</p>
+                    <p className="text-sm font-bold text-slate-900">{new Date(complaint.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
             </div>
           </Card>
 
-          <div className="glass-card p-0! overflow-hidden h-[600px] flex flex-col">
-            <div className="px-8 py-5 border-b border-white/5 bg-white/5 flex items-center justify-between">
+          <div className="card p-0! overflow-hidden h-[600px] flex flex-col shadow-md border-slate-200">
+            <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-white">Secure Communication Log</h3>
+                <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-900">Secure Communication Log</h3>
               </div>
               <Badge variant="primary">SECURE CHANNEL</Badge>
             </div>
@@ -162,41 +159,41 @@ const InvestigationDetails = () => {
 
         {/* Right Column: Timeline & Meta */}
         <div className="lg:col-span-4 space-y-8">
-          <Card title="Activity Audit" subtitle="Full trail of system and staff actions.">
-            <div className="space-y-6 relative before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-px before:bg-white/5">
-              {activities.map((act, i) => (
-                <div key={i} className="relative pl-8">
-                  <div className="absolute left-1 top-1.5 w-3 h-3 rounded-full bg-bg-surface border-2 border-primary z-10 shadow-[0_0_8px_var(--primary)]" />
-                  <div>
-                    <p className="text-xs font-bold text-white mb-1 uppercase tracking-tight">{act.action.replace(/_/g, ' ')}</p>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase opacity-60">
-                      <Clock size={12} />
-                      {new Date(act.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+          <Card title="Case Progress" subtitle="Detailed timeline of all system actions.">
+            <div className="max-h-[420px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-200">
+              <div className="space-y-6 relative before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+                {activities.map((act, i) => (
+                  <div key={i} className="relative pl-8">
+                    <div className="absolute left-1 top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 z-10 shadow-sm" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-800 mb-1 uppercase tracking-tight">{act.action.replace(/_/g, ' ')}</p>
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                        <Clock size={12} />
+                        {new Date(act.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </Card>
 
           <Card title="Administrative" subtitle="Case metadata and ownership.">
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Assigned To</span>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assigned To</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                    <User size={12} className="text-primary" />
+                  <div className="w-5 h-5 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <User size={12} className="text-indigo-600" />
                   </div>
-                  <span className="text-xs font-bold text-white">{complaint.assignedToUsername || 'Unassigned'}</span>
+                  <span className="text-xs font-bold text-slate-800">
+                    {complaint.assignedToFullName ? `${complaint.assignedToFullName} (${complaint.assignedToEmployeeId || complaint.assignedToUsername})` : 'Unassigned'}
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Priority</span>
-                <Badge variant={getPriorityVariant(complaint.priority)}>{complaint.priority || 'NORMAL'}</Badge>
-              </div>
               <div className="flex items-center justify-between py-2">
-                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Evidence</span>
-                <span className="text-xs font-bold text-white">{complaint.evidenceCount || 0} Files</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Evidence</span>
+                <span className="text-xs font-bold text-slate-900">{complaint.evidenceCount || 0} Files</span>
               </div>
             </div>
           </Card>

@@ -5,7 +5,7 @@ import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import Badge from '../../components/ui/Badge';
 import {
-  Clock, CheckCircle, ShieldAlert, FileText, ChevronRight, Activity
+  Clock, CheckCircle, ShieldAlert, FileText, ChevronRight, Activity, Search, ArrowUpDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageBoard from '../../components/ui/MessageBoard';
@@ -18,6 +18,8 @@ const InvestigatorDashboard = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt,desc');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
@@ -27,6 +29,8 @@ const InvestigatorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const userRole = user?.role || 'INVESTIGATOR';
+  
+  const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
 
   useEffect(() => {
     fetchData();
@@ -34,7 +38,7 @@ const InvestigatorDashboard = () => {
     if (['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)) {
       fetchInvestigators();
     }
-  }, [page, filter]);
+  }, [page, filter, searchTerm, sortBy]);
 
 
   const fetchInvestigators = async () => {
@@ -54,6 +58,8 @@ const InvestigatorDashboard = () => {
 
       const queryParams = [];
       if (filter !== 'ALL') queryParams.push(`status=${filter}`);
+      if (searchTerm.trim() !== '') queryParams.push(`search=${encodeURIComponent(searchTerm.trim())}`);
+      queryParams.push(`sort=${sortBy}`);
       queryParams.push(`page=${page}&size=10`);
 
       const endpoint = `${baseEndpoint}?${queryParams.join('&')}`;
@@ -66,6 +72,17 @@ const InvestigatorDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Debounced Search implementation
+  const [searchInput, setSearchInput] = useState('');
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setSearchTerm(searchInput);
+      setPage(0);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchInput]);
 
   const updateStatus = async (id, status) => {
     try {
@@ -111,7 +128,7 @@ const InvestigatorDashboard = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-slide-up">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">{getDashboardTitle()}</h1>
@@ -119,14 +136,26 @@ const InvestigatorDashboard = () => {
         </div>
       </header>
 
-
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col mb-4">
+         <div className="relative w-full sm:max-w-md">
+           <input
+             type="text"
+             placeholder="Search tracking ID, Title, or Reporter..."
+             className="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+             value={searchInput}
+             onChange={(e) => setSearchInput(e.target.value)}
+           />
+           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+         </div>
+      </div>
 
       <motion.div variants={itemVariants}>
         <Card
           title="Case Inventory"
           subtitle="Reports explicitly assigned to you for investigation or oversight."
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto table-container border-none shadow-none p-0!">
             <ComplaintTable
               complaints={complaints}
               loading={loading}
@@ -135,13 +164,16 @@ const InvestigatorDashboard = () => {
               filterStatus={filter}
               showAssignment={['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)}
               investigators={investigators}
-               userLevel={user?.hierarchyLevel}
-               onAssign={handleAssign}
+              userLevel={user?.hierarchyLevel}
+              userAccessRole={user?.accessRole}
+              onAssign={handleAssign}
               onUpdateStatus={updateStatus}
               onPageChange={setPage}
               onFilterChange={(s) => { setFilter(s); setPage(0); }}
               onViewDetails={setSelectedCase}
               onTriage={setTriageComplaint}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
             />
           </div>
         </Card>

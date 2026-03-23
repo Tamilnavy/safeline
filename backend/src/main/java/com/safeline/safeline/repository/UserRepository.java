@@ -13,4 +13,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     java.util.List<User> findPotentialInvestigatorsForTenant(Long tenantId);
     
     java.util.List<User> findByTenantId(Long tenantId);
+    long countByHierarchyLevelAndTenantId(String hierarchyLevel, Long tenantId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT u.hierarchyLevel FROM User u WHERE u.tenant.id = :tenantId")
+    java.util.List<String> findUniqueHierarchyLevelsForTenant(@org.springframework.data.repository.query.Param("tenantId") Long tenantId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE User u SET u.hierarchyLevel = :newId WHERE u.tenant.id = :tenantId AND u.hierarchyLevel = :oldId")
+    int migrateLegacyLevelIds(@org.springframework.data.repository.query.Param("tenantId") Long tenantId, @org.springframework.data.repository.query.Param("oldId") String oldId, @org.springframework.data.repository.query.Param("newId") String newId);
 }

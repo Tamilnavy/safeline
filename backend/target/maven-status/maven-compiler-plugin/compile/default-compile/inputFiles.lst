@@ -28,6 +28,7 @@ C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\controller\Tena
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\dto\TenantResponse.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\model\package-info.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\dto\CategoryRequest.java
+C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\repository\HierarchyLevelRepository.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\dto\PlatformMetricsDTO.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\SafelineApplication.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\service\UserService.java
@@ -55,13 +56,16 @@ C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\dto\UserRequest
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\security\TenantAwareUserDetails.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\service\MessageService.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\dto\MessageRequest.java
+C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\model\HierarchyLevel.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\repository\SLAPolicyRepository.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\dto\AuthRequest.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\service\ComplaintService.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\service\SecurityLogService.java
+C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\controller\HierarchyLevelController.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\dto\TrackRequest.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\controller\SecurityLogController.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\model\SecurityLog.java
+C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\service\HierarchyLevelService.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\security\TenantContext.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\service\ComplaintActionService.java
 C:\safeline\safeline\backend\src\main\java\com\safeline\safeline\repository\UserRepository.java

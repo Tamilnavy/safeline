@@ -49,7 +49,12 @@ public class CommunicationService {
         message.setComplaint(complaint);
         message.setContent(content);
         message.setSender(sender);
-        message.setSenderRole("STAFF");
+        
+        if (complaint.getReporter() != null && complaint.getReporter().getId().equals(sender.getId())) {
+            message.setSenderRole("REPORTER");
+        } else {
+            message.setSenderRole("STAFF");
+        }
         
         return messageRepository.save(message);
     }

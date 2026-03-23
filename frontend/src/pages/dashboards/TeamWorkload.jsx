@@ -9,7 +9,7 @@ import { useLevels } from '../../context/LevelContext';
 const TeamWorkload = () => {
   const [allReports, setAllReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { getLevelName } = useLevels();
+  const { getLevelName, getLevelNumber } = useLevels();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,7 +63,7 @@ const TeamWorkload = () => {
                     >
                       <td className="px-8 py-5">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors uppercase">{report.title}</span>
+                          <span className="text-sm font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">{report.title}</span>
                           <span className="text-[10px] text-slate-400 font-bold tracking-wider">{report.trackingId}</span>
                         </div>
                       </td>
@@ -73,11 +73,20 @@ const TeamWorkload = () => {
                             {report.assignedToUsername ? <User size={16} /> : <AlertTriangle size={16} />}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900 tracking-tighter uppercase">
-                              {report.assignedToUsername || <span className="text-danger/60 italic font-black">AWAITING ASSIGNMENT</span>}
+                            <p className="text-sm font-bold text-slate-900">
+                              {report.assignedToUsername ? (
+                                <>
+                                  {report.assignedToEmployeeId ? `${report.assignedToEmployeeId} - ` : ''}
+                                  {report.assignedToFullName || report.assignedToUsername}
+                                </>
+                              ) : (
+                                <span className="text-danger/60 italic font-black uppercase text-[10px] tracking-widest">Awaiting Assignment</span>
+                              )}
                             </p>
                             {report.assignedToRole && (
-                              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] opacity-80">{getLevelName(report.assignedToRole)}</p>
+                              <p className="text-[10px] font-bold text-indigo-500/80">
+                                Level {getLevelNumber(report.assignedToRole)} - {getLevelName(report.assignedToRole)}
+                              </p>
                             )}
                           </div>
                         </div>

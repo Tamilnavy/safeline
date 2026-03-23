@@ -1,7 +1,7 @@
 import { useLevels } from '../../context/LevelContext';
 
 import { useState } from 'react';
-import { MessageSquare, ChevronLeft, ChevronRight, Pencil, X } from 'lucide-react';
+import { MessageSquare, ChevronLeft, ChevronRight, Pencil, X, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Badge from '../ui/Badge';
 
@@ -19,11 +19,14 @@ const ComplaintTable = ({
   filterStatus,
   onFilterChange,
   showAssignment = true,
-  userLevel = 'LEVEL_3'
+  userLevel = 'LEVEL_3',
+  userAccessRole,
+  sortBy,
+  onSortChange
 }) => {
-  const { levels, getLevelName } = useLevels();
-  const statusStages = ['ALL', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
-  const updateStages = ['ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
+  const { levels, getLevelName, getLevelNumber } = useLevels();
+  const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
+  const updateStages = ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
 
   // Track which complaint row has its owner dropdown open
   const [editingOwnerId, setEditingOwnerId] = useState(null);
@@ -106,7 +109,7 @@ const ComplaintTable = ({
   const getRoleLabel = (complaint) => {
     const inv = getAssignedInvestigator(complaint);
     if (!inv || !inv.hierarchyLevel) return 'Hierarchy';
-    return getLevelName(inv.hierarchyLevel);
+    return `Level ${getLevelNumber(inv.hierarchyLevel)}`;
   };
 
   const handleAssignUser = (complaintId, assignId) => {
@@ -132,21 +135,37 @@ const ComplaintTable = ({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Status filter */}
-      <div className="flex gap-2 mb-2 overflow-x-auto pb-2 scrollbar-none">
-        {statusStages.map(s => (
-          <button
-            key={s}
-            onClick={() => onFilterChange(s)}
-            className={`btn transition-all whitespace-nowrap ${
-              filterStatus === s
-                ? 'btn-primary'
-                : 'btn-secondary text-xs py-1.5'
-            }`}
-          >
-            {s.replace(/_/g, ' ')}
-          </button>
-        ))}
+      {/* Status filter & Sort Input */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 pb-2">
+        <div className="flex gap-2 overflow-x-auto scrollbar-none flex-1">
+          {statusStages.map(s => (
+            <button
+              key={s}
+              onClick={() => onFilterChange(s)}
+              className={`btn transition-all whitespace-nowrap ${
+                filterStatus === s
+                  ? 'btn-primary'
+                  : 'btn-secondary text-xs py-1.5'
+              }`}
+            >
+              {s.replace(/_/g, ' ')}
+            </button>
+          ))}
+        </div>
+        
+        {onSortChange && (
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all flex-shrink-0">
+            <ArrowUpDown size={14} className="text-slate-400" />
+            <select 
+              className="bg-transparent text-sm text-slate-600 font-medium outline-none border-none cursor-pointer focus:ring-0 flex-1 min-w-[120px]"
+              value={sortBy}
+              onChange={(e) => onSortChange(e.target.value)}
+            >
+              <option value="createdAt,desc">Newest First</option>
+              <option value="createdAt,asc">Oldest First</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -293,7 +312,7 @@ const ComplaintTable = ({
                         ) : (
                           <div className="bg-slate-100 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 inline-flex min-w-[140px]">
                              <span className="text-[11px] font-bold text-slate-700">
-                               {getAssignedInvestigator(c) 
+                                {getAssignedInvestigator(c) 
                                  ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
                                  : getRoleLabel(c)}
                              </span>
@@ -307,7 +326,7 @@ const ComplaintTable = ({
                       <div className="flex gap-1.5 justify-end items-center">
 
                         {/* Status — click opens popup */}
-                        {userLevel !== 'LEVEL_3' && (
+                        {(userLevel !== 'LEVEL_3' || userAccessRole === 'ROLE_2') && (
                           <div className="relative">
                             <button
                               onClick={(e) => toggleStatusPopup(e, c.id)}

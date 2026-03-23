@@ -60,7 +60,7 @@ public class ComplaintController {
         complaint.setTitle(request.getTitle());
         complaint.setDescription(request.getDescription());
         complaint.setLocation(request.getLocation());
-        complaint.setAnonymous(reporter != null ? false : request.isAnonymous());
+        complaint.setAnonymous(request.isAnonymous());
         complaint.setTenant(tenant);
         complaint.setReporter(reporter);
         Complaint saved = complaintService.createComplaint(complaint, files);
@@ -99,7 +99,7 @@ public class ComplaintController {
     public ResponseEntity<Page<ComplaintResponse>> getAll(
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain,
             @RequestParam(required = false) ComplaintStatus status,
-            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
             @org.springframework.security.core.annotation.AuthenticationPrincipal com.safeline.safeline.security.TenantAwareUserDetails principal,
             Pageable pageable) {
         Long tenantId = (domain != null && !"default".equalsIgnoreCase(domain)) 
@@ -110,8 +110,8 @@ public class ComplaintController {
         boolean isAdmin = currentAuth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN") || a.getAuthority().equals("LEVEL_1"));
         User user = userRepository.findByUsername(currentAuth.getName()).orElseThrow();
         Page<Complaint> complaints = isAdmin 
-                ? complaintQueryService.getAllComplaints(tenantId, status, category, pageable)
-                : complaintQueryService.getAssignedComplaints(user.getId(), status, pageable);
+                ? complaintQueryService.getAllComplaints(tenantId, status, search, pageable)
+                : complaintQueryService.getAssignedComplaints(user.getId(), status, search, pageable);
         
         Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
         if (currentAuth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("EXECUTIVE"))) {
@@ -138,9 +138,9 @@ public class ComplaintController {
 
     @GetMapping("/assigned")
     public ResponseEntity<Page<ComplaintResponse>> getAssigned(
-            Authentication auth, @RequestParam(required = false) ComplaintStatus status, Pageable pageable) {
+            Authentication auth, @RequestParam(required = false) ComplaintStatus status, @RequestParam(required = false) String search, Pageable pageable) {
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
-        return ResponseEntity.ok(complaintQueryService.getAssignedComplaints(user.getId(), status, pageable).map(this::mapToResponse));
+        return ResponseEntity.ok(complaintQueryService.getAssignedComplaints(user.getId(), status, search, pageable).map(this::mapToResponse));
     }
 
     @PutMapping("/{id}/triage")
@@ -194,11 +194,13 @@ public class ComplaintController {
         res.setPriority(c.getPriority() != null ? c.getPriority().name() : "NORMAL");
         res.setClassification(c.getClassification() != null ? c.getClassification().name() : "GENERAL");
         res.setAnonymous(c.isAnonymous());
-        res.setReporterUsername(c.getReporter() != null ? c.getReporter().getUsername() : "Public User");
+        res.setReporterUsername(c.isAnonymous() ? "Anonymous" : (c.getReporter() != null ? c.getReporter().getUsername() : "Public User"));
         if (c.getAssignedTo() != null) {
             res.setAssignedToUsername(c.getAssignedTo().getUsername());
+            res.setAssignedToFullName(c.getAssignedTo().getFullName());
+            res.setAssignedToEmployeeId(c.getAssignedTo().getEmployeeId());
             res.setAssignedToId(c.getAssignedTo().getId());
-            res.setAssignedToRole(c.getAssignedTo().getHierarchyLevel() + " / " + c.getAssignedTo().getAccessRole());
+            res.setAssignedToRole(c.getAssignedTo().getHierarchyLevel());
         }
         return res;
     }

@@ -4,7 +4,7 @@ import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import {
-  FileText, Clock, CheckCircle, Users, UserPlus, MessageSquare, ChevronRight, Settings
+  FileText, Clock, CheckCircle, Users, UserPlus, MessageSquare, ChevronRight, Settings, Search, ArrowUpDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageBoard from '../../components/ui/MessageBoard';
@@ -34,20 +34,36 @@ const OrgAdminDashboard = () => {
   const [showManageLevels, setShowManageLevels] = useState(false);
   const userLevel = user?.hierarchyLevel || 'LEVEL_3';
   const [filterStatus, setFilterStatus] = useState(userLevel === 'LEVEL_2' ? 'ASSIGNED' : 'ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt,desc');
 
   const tenantDomain = localStorage.getItem('tenantDomain') || 'Organization';
+
+  // Debounce search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(0); // reset page when search actually fires
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchData();
     fetchTeamData();
-  }, [page, filterStatus]);
+  }, [page, filterStatus, debouncedSearch, sortBy]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const endpoint = filterStatus === 'ALL'
-        ? `/complaints/all?page=${page}&size=10`
-        : `/complaints/all?status=${filterStatus}&page=${page}&size=10`;
+      let endpoint = `/complaints/all?page=${page}&size=10&sort=${sortBy}`;
+      if (filterStatus !== 'ALL') {
+        endpoint += `&status=${filterStatus}`;
+      }
+      if (debouncedSearch.trim() !== '') {
+        endpoint += `&category=${encodeURIComponent(debouncedSearch)}`;
+      }
       const resp = await api.get(endpoint);
       setComplaints(resp.data.content || []);
       setTotalPages(resp.data.totalPages || 0);
@@ -176,6 +192,18 @@ const OrgAdminDashboard = () => {
           title="Case Management"
           subtitle="Real-time listing of all organization-wide concerns and reports"
         >
+          <div className="flex flex-col mb-4">
+             <div className="relative w-full sm:max-w-md">
+               <input
+                 type="text"
+                 placeholder="Search tracking ID, Title, or Reporter..."
+                 className="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+               />
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+             </div>
+          </div>
           <div className="overflow-x-auto">
             <ComplaintTable
               complaints={complaints}
@@ -192,6 +220,8 @@ const OrgAdminDashboard = () => {
               onTriage={setTriageComplaint}
               userLevel={userLevel}
               showAssignment={['LEVEL_1', 'LEVEL_2'].includes(userLevel)}
+              sortBy={sortBy}
+              onSortChange={(s) => { setSortBy(s); setPage(0); }}
             />
           </div>
         </Card>

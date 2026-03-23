@@ -20,6 +20,8 @@ public class ComplaintResponse {
     private String priority;
     private String classification;
     private String assignedToUsername;
+    private String assignedToFullName;
+    private String assignedToEmployeeId;
     private String assignedToRole;
     private Long assignedToId;
 

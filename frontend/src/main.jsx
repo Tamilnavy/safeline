@@ -9,11 +9,11 @@ import { BrowserRouter } from 'react-router-dom'
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <LevelProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <LevelProvider>
           <App />
-        </AuthProvider>
-      </LevelProvider>
+        </LevelProvider>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

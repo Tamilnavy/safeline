@@ -30,12 +30,9 @@ public class ComplaintQueryService {
         return complaintRepository.findByReporterId(reporterId, pageable);
     }
 
-    public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, String categoryName, Pageable pageable) {
-        if (categoryName != null && !categoryName.isEmpty()) {
-            if (status != null) {
-                return complaintRepository.findByTenantIdAndStatusAndCategoryNameContainingIgnoreCase(tenantId, status, categoryName, pageable);
-            }
-            return complaintRepository.findByTenantIdAndCategoryNameContainingIgnoreCase(tenantId, categoryName, pageable);
+    public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, String search, Pageable pageable) {
+        if (search != null && !search.trim().isEmpty()) {
+            return complaintRepository.searchAdminComplaints(tenantId, status, search.trim(), pageable);
         }
         
         if (status != null) {
@@ -50,7 +47,10 @@ public class ComplaintQueryService {
                 .toList();
     }
 
-    public Page<Complaint> getAssignedComplaints(Long investigatorId, ComplaintStatus status, Pageable pageable) {
+    public Page<Complaint> getAssignedComplaints(Long investigatorId, ComplaintStatus status, String search, Pageable pageable) {
+        if (search != null && !search.trim().isEmpty()) {
+            return complaintRepository.searchAssignedComplaints(investigatorId, status, search.trim(), pageable);
+        }
         if (status != null) {
             return complaintRepository.findByAssignedToIdAndStatus(investigatorId, status, pageable);
         }

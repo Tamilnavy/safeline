@@ -13,7 +13,8 @@ import {
   Users,
   Settings,
   Activity,
-  Shield
+  Shield,
+  PlusCircle
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,21 +42,17 @@ const DashboardLayout = () => {
   if (!user) return <Navigate to="/login" />;
 
   const menuItems = [
-    { label: 'Overview', icon: LayoutDashboard, path: (user.hierarchyLevel === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), hierarchyLevels: null, accessRoles: null },
-    { label: 'My Reports', icon: FileText, path: '/dashboard', hierarchyLevels: ['LEVEL_3'], accessRoles: null },
-    { label: 'Registry', icon: Settings, path: '/dashboard/registry', hierarchyLevels: ['SUPER_ADMIN'], accessRoles: null },
-    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', hierarchyLevels: ['LEVEL_1', 'LEVEL_2'], accessRoles: null },
-    { label: 'Team Directory', icon: Users, path: '/dashboard/team', hierarchyLevels: ['LEVEL_1', 'LEVEL_2'], accessRoles: null },
+    { label: 'Overview', icon: LayoutDashboard, path: (user.hierarchyLevel === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), show: () => true },
+    { label: 'Submit Complaint', icon: PlusCircle, path: '/submit', show: (u) => !['LEVEL_1', 'SUPER_ADMIN'].includes(u.hierarchyLevel) && (['ROLE_1', 'ROLE_2'].includes(u.accessRole) || u.hierarchyLevel === 'LEVEL_3') },
+    { label: 'My Complaints', icon: FileText, path: '/dashboard/complaints', show: (u) => !['LEVEL_1', 'SUPER_ADMIN'].includes(u.hierarchyLevel) && (['ROLE_1', 'ROLE_2'].includes(u.accessRole) || u.hierarchyLevel === 'LEVEL_3') },
+    { label: 'My Cases', icon: ShieldCheck, path: '/dashboard/assigned', show: (u) => u.hierarchyLevel === 'LEVEL_1' || u.accessRole === 'ROLE_2' || u.hierarchyLevel === 'LEVEL_2' },
+    { label: 'Registry', icon: Settings, path: '/dashboard/registry', show: (u) => u.hierarchyLevel === 'SUPER_ADMIN' },
+    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', show: (u) => u.hierarchyLevel === 'LEVEL_1' },
+    { label: 'Team Directory', icon: Users, path: '/dashboard/team', show: (u) => u.hierarchyLevel === 'SUPER_ADMIN' || u.hierarchyLevel === 'LEVEL_1' },
   ];
 
-  // Filter menu: if accessRole is set, use it; otherwise fall back to hierarchyLevel filter
-  const filteredMenu = menuItems.filter(item => {
-    if (!item.hierarchyLevels && !item.accessRoles) return true; // available to all
-    if (user.accessRole) {
-      if (item.accessRoles && item.accessRoles.includes(user.accessRole)) return true;
-    }
-    return !item.hierarchyLevels || item.hierarchyLevels.includes(user.hierarchyLevel);
-  });
+  // Filter menu: use explicit show logic
+  const filteredMenu = menuItems.filter(item => item.show ? item.show(user) : true);
 
 
   const getRoleLabel = (role) => {
@@ -182,7 +179,7 @@ const DashboardLayout = () => {
 const DashboardDispatcher = ({ user }) => {
   if (user.hierarchyLevel === 'SUPER_ADMIN') return <SuperAdminOverview />;
   if (user.hierarchyLevel === 'LEVEL_1') return <OrgAdminDashboard />;
-  if (user.hierarchyLevel === 'LEVEL_2') return <InvestigatorDashboard />;
+  if (user.hierarchyLevel === 'LEVEL_2' || user.accessRole === 'ROLE_2') return <InvestigatorDashboard />;
   return <EmployeeDashboard />;
 };
 

@@ -43,7 +43,7 @@ const EmployeeDashboard = () => {
     <div className="space-y-8">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">My Reports</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">My Complaints</h1>
           <p className="text-slate-500 text-sm font-medium">Personal reporting console and case tracking</p>
         </div>
         <Link to="/submit" className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20">

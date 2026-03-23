@@ -13,12 +13,13 @@ const TeamDirectory = () => {
   const [loading, setLoading] = useState(true);
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [filterLevel, setFilterLevel] = useState('ALL');
 
   useEffect(() => {
     fetchTeam();
   }, []);
 
-  const { levels, getLevelName } = useLevels();
+  const { levels, getLevelName, getLevelNumber } = useLevels();
 
   const getRoleLabel = (role) => {
     switch (role) {
@@ -63,51 +64,82 @@ const TeamDirectory = () => {
       {loading ? (
         <div className="py-20 text-center animate-pulse text-slate-500 font-bold tracking-widest uppercase text-xs">Loading Personnel Registry...</div>
       ) : (
-        <Card title="Personnel Registry" subtitle="Comprehensive list of investigators, managers, and officers.">
-          <div className="table-container border-none shadow-none p-0!">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="table-header">
-                  <th className="px-8 py-4 text-xs font-bold text-slate-500 tracking-widest">Team Member</th>
-                  <th className="px-12 py-4 text-xs font-bold text-slate-500 tracking-widest text-center">Employee ID</th>
-                  <th className="px-8 py-4 text-xs font-bold text-slate-500 tracking-widest text-right">Role</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {team.length === 0 ? (
-                  <tr>
-                    <td colSpan="3" className="px-8 py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No team members enrolled yet.</td>
-                  </tr>
-                ) : team.map(member => (
-                  <tr key={member.id} className="table-row group cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedMember(member)}>
-                    <td className="px-6 py-4 border-b border-slate-100">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-100 to-blue-50 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200/50 mr-4 group-hover:scale-105 transition-transform shadow-sm text-sm">
-                          {(member.fullName || member.username || '?').charAt(0).toUpperCase()}
-                        </div>
-                        <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors whitespace-nowrap">{member.fullName || member.username}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 border-b border-slate-100 text-center">
-                      {(member.employeeId || member.username) && (
-                        <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 inline-flex items-center px-2 py-0.5 rounded border border-indigo-100/50 tracking-wider shadow-sm transition-colors group-hover:bg-white tracking-widest">
-                          {member.employeeId || member.username}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-8 py-5 text-right border-b border-slate-100">
-                      <div className="inline-flex items-center justify-end group-hover:scale-105 transition-transform">
-                        <Badge variant="secondary" className="shadow-sm border border-slate-200/60 bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[10px] px-2.5 py-1 rounded">
-                          {getLevelName(member.hierarchyLevel)}
-                        </Badge>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="space-y-6">
+          {/* Level Filter Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            <button
+              onClick={() => setFilterLevel('ALL')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm whitespace-nowrap ${
+                filterLevel === 'ALL'
+                  ? 'bg-indigo-600 border-indigo-600 text-white'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              ALL PERSONNEL
+            </button>
+            {levels.map(lvl => (
+              <button
+                key={lvl.id}
+                onClick={() => setFilterLevel(lvl.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm whitespace-nowrap ${
+                  filterLevel === lvl.id
+                    ? 'bg-indigo-600 border-indigo-600 text-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {getLevelName(lvl.id).toUpperCase()}
+              </button>
+            ))}
           </div>
-        </Card>
+
+          <Card title="Personnel Registry" subtitle="Comprehensive list of investigators, managers, and officers.">
+            <div className="table-container border-none shadow-none p-0!">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="table-header">
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 tracking-widest">Team Member</th>
+                    <th className="px-12 py-4 text-xs font-bold text-slate-500 tracking-widest text-center">Employee ID</th>
+                    <th className="px-8 py-4 text-xs font-bold text-slate-500 tracking-widest text-right">Role</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {team.filter(m => filterLevel === 'ALL' || m.hierarchyLevel === filterLevel).length === 0 ? (
+                    <tr>
+                      <td colSpan="3" className="px-8 py-12 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">
+                        No team members found in this category.
+                      </td>
+                    </tr>
+                  ) : team.filter(m => filterLevel === 'ALL' || m.hierarchyLevel === filterLevel).map(member => (
+                    <tr key={member.id} className="table-row group cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedMember(member)}>
+                      <td className="px-6 py-4 border-b border-slate-100">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-100 to-blue-50 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200/50 mr-4 group-hover:scale-105 transition-transform shadow-sm text-sm">
+                            {(member.fullName || member.username || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors whitespace-nowrap">{member.fullName || member.username}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 border-b border-slate-100 text-center">
+                        {(member.employeeId || member.username) && (
+                          <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 inline-flex items-center px-2 py-0.5 rounded border border-indigo-100/50 tracking-wider shadow-sm transition-colors group-hover:bg-white tracking-widest">
+                            {member.employeeId || member.username}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-8 py-5 text-right border-b border-slate-100">
+                        <div className="inline-flex items-center justify-end group-hover:scale-105 transition-transform">
+                          <Badge variant="secondary" className="shadow-sm border border-slate-200/60 bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[10px] px-2.5 py-1 rounded">
+                            {`Level ${getLevelNumber(member.hierarchyLevel)} - ${getLevelName(member.hierarchyLevel)}`}
+                          </Badge>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
       )}
 
       {/* ── Employee Details Modal ── */}
@@ -141,7 +173,7 @@ const TeamDirectory = () => {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Hierarchy Level</p>
-                  <p className="text-sm font-bold text-slate-700">{getLevelName(selectedMember.hierarchyLevel)}</p>
+                  <p className="text-sm font-bold text-slate-700">{`Level ${getLevelNumber(selectedMember.hierarchyLevel)} - ${getLevelName(selectedMember.hierarchyLevel)}`}</p>
                 </div>
               </div>
 

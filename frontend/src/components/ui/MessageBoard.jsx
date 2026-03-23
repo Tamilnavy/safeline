@@ -25,7 +25,7 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeade
   const fetchMessages = async () => {
     try {
       let resp;
-      if (isStaff) {
+      if (isStaff || !trackingId) {
         resp = await api.get(`/communication/messages-staff/${complaintId}`);
       } else {
         resp = await api.get(`/communication/messages-reporter?trackingId=${trackingId}&pin=${pin}`);
@@ -44,7 +44,7 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeade
 
     setLoading(true);
     try {
-      if (isStaff) {
+      if (isStaff || !trackingId) {
         await api.post(`/communication/send-staff/${complaintId}`, content, {
           headers: { 'Content-Type': 'text/plain' }
         });
@@ -70,17 +70,16 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeade
   return (
     <div
       className={`flex flex-col h-full bg-white overflow-hidden ${minimal ? '' : 'border border-slate-100 rounded-2xl shadow-sm'}`}
-      style={{ height: '100%', maxHeight: '500px' }}
+      style={{ height: '100%' }}
     >
       {showHeader && (
-        <header className="p-6 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+        <header className="p-4 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#3b82f6] shadow-sm ring-1 ring-blue-100">
-              <MessageSquare size={20} />
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#3b82f6] shadow-sm ring-1 ring-blue-100">
+              <MessageSquare size={16} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Communication Center</h3>
-              <p className="text-[11px] text-slate-400 font-medium">Direct channel with investigative team</p>
+              <h3 className="text-sm font-bold text-slate-900">Communication Center</h3>
             </div>
           </div>
         </header>
