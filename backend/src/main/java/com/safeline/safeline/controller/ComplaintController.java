@@ -1,7 +1,6 @@
 package com.safeline.safeline.controller;
 
-import com.safeline.safeline.dto.ComplaintRequest;
-import com.safeline.safeline.dto.ComplaintResponse;
+import com.safeline.safeline.dto.*;
 import com.safeline.safeline.model.*;
 import com.safeline.safeline.repository.*;
 import com.safeline.safeline.service.*;
@@ -180,7 +179,6 @@ public class ComplaintController {
         return ResponseEntity.ok(complaintQueryService.getMetricsForTenant(tenantId));
     }
 
-
     private ComplaintResponse mapToResponse(Complaint c) {
         ComplaintResponse res = new ComplaintResponse();
         res.setId(c.getId());
@@ -195,6 +193,7 @@ public class ComplaintController {
         res.setClassification(c.getClassification() != null ? c.getClassification().name() : "GENERAL");
         res.setAnonymous(c.isAnonymous());
         res.setReporterUsername(c.isAnonymous() ? "Anonymous" : (c.getReporter() != null ? c.getReporter().getUsername() : "Public User"));
+        
         if (c.getAssignedTo() != null) {
             res.setAssignedToUsername(c.getAssignedTo().getUsername());
             res.setAssignedToFullName(c.getAssignedTo().getFullName());
@@ -202,6 +201,18 @@ public class ComplaintController {
             res.setAssignedToId(c.getAssignedTo().getId());
             res.setAssignedToRole(c.getAssignedTo().getHierarchyLevel());
         }
+
+        if (c.getEvidences() != null) {
+            List<ComplaintEvidenceDTO> evidenceDTOs = c.getEvidences().stream().map(e -> {
+                ComplaintEvidenceDTO dto = new ComplaintEvidenceDTO();
+                dto.setId(e.getId());
+                dto.setFileName(e.getFileName());
+                dto.setContentType(e.getContentType());
+                return dto;
+            }).toList();
+            res.setEvidence(evidenceDTOs);
+        }
+
         return res;
     }
 }

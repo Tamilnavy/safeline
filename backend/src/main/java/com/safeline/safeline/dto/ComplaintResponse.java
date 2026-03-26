@@ -2,6 +2,7 @@ package com.safeline.safeline.dto;
 
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class ComplaintResponse {
@@ -28,5 +29,7 @@ public class ComplaintResponse {
     // Reporter visibility
     private boolean anonymous;
     private String reporterUsername;
+
+    private List<ComplaintEvidenceDTO> evidence;
 
 }

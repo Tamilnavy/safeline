@@ -3,7 +3,7 @@ import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import Badge from '../../components/ui/Badge';
-import { 
+import {
   Plus, Globe, Building, ShieldCheck, Shield, Users, Activity, X, UserPlus, AlertCircle, RefreshCw, Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,8 +20,8 @@ const SuperAdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ 
-    name: '', 
+  const [formData, setFormData] = useState({
+    name: '',
     domain: '',
     adminUsername: '',
     adminEmail: '',
@@ -54,9 +54,9 @@ const SuperAdminDashboard = () => {
     setSubmitting(true);
     try {
       await api.post('/tenants', formData);
-      setShowModal(false); 
-      setFormData({ 
-        name: '', 
+      setShowModal(false);
+      setFormData({
+        name: '',
         domain: '',
         adminUsername: '',
         adminEmail: '',
@@ -93,7 +93,7 @@ const SuperAdminDashboard = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial="hidden"
       animate="visible"
       className="space-y-8"
@@ -104,9 +104,9 @@ const SuperAdminDashboard = () => {
           <p className="text-slate-500 text-sm font-medium">Global governance and tenant environment management</p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             disabled={loading}
-            onClick={fetchData} 
+            onClick={fetchData}
             className="btn btn-secondary h-10 px-4"
           >
             <RefreshCw size={16} className={`${loading ? 'animate-spin' : ''} mr-2`} />
@@ -122,7 +122,7 @@ const SuperAdminDashboard = () => {
       <div className="mb-4" />
 
       {error && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex items-center gap-4 text-rose-700 font-bold shadow-sm"
@@ -135,17 +135,17 @@ const SuperAdminDashboard = () => {
       <motion.div variants={itemVariants}>
         <Card title="Organization Directory" subtitle="Real-time listing of all provisioned tenant environments.">
           <div className="overflow-x-auto">
-            <TenantTable 
-              tenants={tenants} 
-              loading={loading} 
-              onManage={openManageUsers} 
-              onDelete={handleDeleteTenant} 
+            <TenantTable
+              tenants={tenants}
+              loading={loading}
+              onManage={openManageUsers}
+              onDelete={handleDeleteTenant}
             />
           </div>
         </Card>
       </motion.div>
 
-      <ProvisionTenantModal 
+      <ProvisionTenantModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         formData={formData}
@@ -154,13 +154,13 @@ const SuperAdminDashboard = () => {
         submitting={submitting}
       />
 
-      <ManageTenantUsersDrawer 
+      <ManageTenantUsersDrawer
         isOpen={!!managingTenant}
         onClose={() => setManagingTenant(null)}
         tenant={managingTenant}
       />
 
-      <AddUserModal 
+      <AddUserModal
         isOpen={showAddUser}
         onClose={() => setShowAddUser(false)}
         onSave={handleSaveTenantUser}

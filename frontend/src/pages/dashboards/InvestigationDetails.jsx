@@ -152,7 +152,11 @@ const InvestigationDetails = () => {
               <Badge variant="primary">SECURE CHANNEL</Badge>
             </div>
             <div className="flex-1 min-h-0 bg-bg-secondary/30">
-              <MessageBoard complaintId={complaint.id} isStaff={true} />
+              <MessageBoard 
+                complaintId={complaint.id} 
+                evidence={complaint.evidence}
+                isStaff={true} 
+              />
             </div>
           </div>
         </div>
@@ -166,7 +170,8 @@ const InvestigationDetails = () => {
                   <div key={i} className="relative pl-8">
                     <div className="absolute left-1 top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 z-10 shadow-sm" />
                     <div>
-                      <p className="text-xs font-bold text-slate-800 mb-1 uppercase tracking-tight">{act.action.replace(/_/g, ' ')}</p>
+                      <p className="text-xs font-bold text-slate-800 mb-0.5 uppercase tracking-tight">{act.action.replace(/_/g, ' ')}</p>
+                      {act.detail && <p className="text-[10px] font-medium text-slate-500 mb-1 leading-snug">{act.detail}</p>}
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
                         <Clock size={12} />
                         {new Date(act.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
@@ -193,7 +198,7 @@ const InvestigationDetails = () => {
               </div>
               <div className="flex items-center justify-between py-2">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Evidence</span>
-                <span className="text-xs font-bold text-slate-900">{complaint.evidenceCount || 0} Files</span>
+                <span className="text-xs font-bold text-slate-900">{complaint.evidence?.length || 0} Files</span>
               </div>
             </div>
           </Card>

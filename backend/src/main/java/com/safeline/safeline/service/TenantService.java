@@ -28,6 +28,7 @@ public class TenantService {
     private final SLAPolicyRepository slaPolicyRepository;
     private final PasswordEncoder passwordEncoder;
     private final jakarta.persistence.EntityManager entityManager;
+    private Tenant savedTenant;
 
     // ------------------------------------------------
     // Get all tenants (mapped to Response with Admin details)
@@ -48,39 +49,32 @@ public class TenantService {
 
         System.out.println("DEBUG: Mapping tenant: " + tenant.getName() + " (ID: " + tenant.getId() + ")");
 
-        // Use a native query fallback to ensure we bypass any Hibernate filters for Super Admin view
+        // Use a native query to find the LEVEL_1 admin for this tenant
         try {
-            String sql = "SELECT u.username FROM users u JOIN user_roles ur ON u.id = ur.user_id " +
-                         "JOIN roles r ON ur.role_id = r.id " +
-                         "WHERE u.tenant_id = ?1 AND r.name = 'ORG_ADMIN' LIMIT 1";
+            String sql = "SELECT username FROM users WHERE tenant_id = ?1 AND hierarchy_level = 'LEVEL_1' LIMIT 1";
             
             List<String> results = entityManager.createNativeQuery(sql)
                     .setParameter(1, tenant.getId())
                     .getResultList();
-
+ 
             if (!results.isEmpty()) {
-                System.out.println("DEBUG: Found ORG_ADMIN: " + results.get(0));
                 response.setAdminUsername(results.get(0));
             } else {
-                System.out.println("DEBUG: No ORG_ADMIN found, trying fallback...");
-                // Second fallback: any user for this tenant
+                // Fallback: any user for this tenant
                 String sqlAny = "SELECT username FROM users WHERE tenant_id = ?1 LIMIT 1";
                 List<String> anyResults = entityManager.createNativeQuery(sqlAny)
                         .setParameter(1, tenant.getId())
                         .getResultList();
                 
                 if (!anyResults.isEmpty()) {
-                    System.out.println("DEBUG: Fallback found user: " + anyResults.get(0));
                     response.setAdminUsername(anyResults.get(0));
                 } else {
-                    System.out.println("DEBUG: No users found for tenant.");
-                    response.setAdminUsername("System Managed");
+                    response.setAdminUsername("Not Assigned");
                 }
             }
         } catch (Exception e) {
             System.err.println("DEBUG ERROR: Admin lookup failed for tenant " + tenant.getId() + ": " + e.getMessage());
-            e.printStackTrace();
-            response.setAdminUsername("Data Error");
+            response.setAdminUsername("Not Assigned");
         }
         
         return response;

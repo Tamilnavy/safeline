@@ -43,7 +43,20 @@ public class ComplaintActionService {
         complaint.setStatus(ComplaintStatus.ASSIGNED);
 
         Complaint updated = complaintRepository.save(complaint);
-        complaintService.logActivity(updated.getId(), "INVESTIGATOR_ASSIGNED", getCurrentUser());
+        
+        String investigatorName = investigator.getFullName();
+        if (investigatorName == null || investigatorName.trim().isEmpty() || "null".equalsIgnoreCase(investigatorName)) {
+            investigatorName = investigator.getUsername();
+        }
+        
+        // Final fallback if username is also problematic
+        if (investigatorName == null || investigatorName.trim().isEmpty() || "null".equalsIgnoreCase(investigatorName)) {
+            investigatorName = "Investigator #" + investigator.getId();
+        }
+
+        String detail = String.format("%s assigned case to %s (%s)", 
+                        getCurrentUser(), investigatorName, investigator.getHierarchyLevel());
+        complaintService.logActivity(updated.getId(), "INVESTIGATOR_ASSIGNED", getCurrentUser(), detail);
         return updated;
     }
 
@@ -58,7 +71,10 @@ public class ComplaintActionService {
         }
 
         Complaint updated = complaintRepository.save(complaint);
-        complaintService.logActivity(updated.getId(), "TRIAGED_PRIORITY_" + priority + "_CLASS_" + classification, getCurrentUser());
+        
+        String detail = String.format("Case triaged by %s. Priority: %s, Classification: %s", 
+                        getCurrentUser(), priority, classification);
+        complaintService.logActivity(updated.getId(), "TRIAGED", getCurrentUser(), detail);
         return updated;
     }
 
@@ -79,7 +95,9 @@ public class ComplaintActionService {
         
         complaint.setStatus(status);
         Complaint updated = complaintRepository.save(complaint);
-        complaintService.logActivity(updated.getId(), "STATUS_CHANGE_TO_" + status, auth.getName());
+        
+        String detail = String.format("Status updated to %s by %s", status, auth.getName());
+        complaintService.logActivity(updated.getId(), "STATUS_UPDATE", auth.getName(), detail);
         return updated;
     }
 }

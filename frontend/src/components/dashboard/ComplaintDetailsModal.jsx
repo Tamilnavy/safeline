@@ -88,7 +88,11 @@ const ComplaintDetailsModal = ({
                 </div>
 
                 <div className="flex-1 flex flex-col min-h-0 bg-slate-50/10">
-                  <MessageBoard complaintId={complaint.id} isStaff={!isEmployee} />
+                  <MessageBoard 
+                    complaintId={complaint.id} 
+                    evidence={complaint.evidence}
+                    isStaff={!isEmployee} 
+                  />
                 </div>
               </div>
 
@@ -144,6 +148,7 @@ const ComplaintDetailsModal = ({
                                     <p className="text-xs font-bold text-slate-800 mb-1 uppercase tracking-tight">
                                       {act.action.replace(/_/g, ' ')}
                                     </p>
+                                    {act.detail && <p className="text-[10px] font-medium text-slate-500 mb-1 leading-snug">{act.detail}</p>}
                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter opacity-80">
                                       {new Date(act.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                     </div>

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
-import { Send, User, MessageSquare } from 'lucide-react';
+import { Send, User, MessageSquare, Paperclip, FileText, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 
-const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeader = true, minimal = false }) => {
+const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = false, showHeader = true, minimal = false }) => {
   const [messages, setMessages] = useState([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showEvidence, setShowEvidence] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -82,7 +83,49 @@ const MessageBoard = ({ complaintId, trackingId, pin, isStaff = false, showHeade
               <h3 className="text-sm font-bold text-slate-900">Communication Center</h3>
             </div>
           </div>
+          
+          {evidence && evidence.length > 0 && (
+            <button 
+              onClick={() => setShowEvidence(!showEvidence)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                showEvidence ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-400 hover:text-indigo-600'
+              }`}
+            >
+              <Paperclip size={14} />
+              <span>Evidence ({evidence.length})</span>
+              {showEvidence ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          )}
         </header>
+      )}
+
+      {/* Evidence Dropdown/Section */}
+      {showEvidence && evidence && evidence.length > 0 && (
+        <div className="mx-4 mt-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl animate-in slide-in-from-top-2 duration-300">
+          <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <FileText size={12} /> Case Evidence Repository
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {evidence.map((file, idx) => (
+              <div key={idx} className="flex items-center justify-between p-2 bg-white border border-indigo-100 rounded-xl shadow-sm group">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="w-6 h-6 rounded bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                    <FileText size={12} />
+                  </div>
+                  <p className="text-[11px] font-bold text-slate-700 truncate">{file.fileName}</p>
+                </div>
+                <a 
+                  href={`http://localhost:8085/api/evidence/download/${file.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 ml-2 rounded hover:bg-slate-50 text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  <ExternalLink size={14} />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="flex-1 overflow-y-auto p-4 m-2 bg-slate-50/30 border border-slate-100/80 rounded-2xl space-y-6 scrollbar-hide">

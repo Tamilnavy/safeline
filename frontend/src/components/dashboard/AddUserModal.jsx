@@ -30,17 +30,25 @@ const AddUserModal = ({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      const defaultLvl = levels[0]?.id || 'LEVEL_1';
+      const defaultRole = (defaultLvl === 'LEVEL_1' || defaultLvl === 'LEVEL_2') ? 'ROLE_2' : 'ROLE_1';
       setForm({
         fullName: '',
         email: '',
         password: '',
         employeeId: '',
-        hierarchyLevel: levels[0]?.id || 'LEVEL_1',
-        accessRole: 'ROLE_1',
+        hierarchyLevel: defaultLvl,
+        accessRole: defaultRole,
       });
       setMsg({ text: '', type: '' });
     }
-  }, [isOpen]);
+  }, [isOpen, levels]);
+
+  const handleHierarchyChange = (val) => {
+    // Admin (LEVEL_1) or HR (LEVEL_2) -> Always ROLE_2
+    const defaultRole = (val === 'LEVEL_1' || val === 'LEVEL_2') ? 'ROLE_2' : 'ROLE_1';
+    setForm(prev => ({ ...prev, hierarchyLevel: val, accessRole: defaultRole }));
+  };
 
   if (!isOpen) return null;
 
@@ -146,7 +154,7 @@ const AddUserModal = ({
             <select
               className={selectClass}
               value={form.hierarchyLevel}
-              onChange={(e) => setForm({ ...form, hierarchyLevel: e.target.value })}
+              onChange={(e) => handleHierarchyChange(e.target.value)}
             >
               {levels.map(l => (
                 <option key={l.id} value={l.id}>{l.name}</option>
@@ -154,25 +162,27 @@ const AddUserModal = ({
             </select>
           </div>
 
-          {/* ── Access Role ── */}
-          <div className="space-y-1.5">
-            <label className={labelClass}>Role</label>
-            <select
-              className={selectClass}
-              value={form.accessRole}
-              onChange={(e) => setForm({ ...form, accessRole: e.target.value })}
-            >
-              {ACCESS_ROLES.map(r => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-          </div>
+          {/* ── Access Role ── Shown for everything EXCEPT Level 1 (Admin) and Level 2 (HR) */}
+          {form.hierarchyLevel !== 'LEVEL_1' && form.hierarchyLevel !== 'LEVEL_2' && (
+            <div className="space-y-1.5">
+              <label className={labelClass}>Role</label>
+              <select
+                className={selectClass}
+                value={form.accessRole}
+                onChange={(e) => setForm({ ...form, accessRole: e.target.value })}
+              >
+                {ACCESS_ROLES.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* ── Message ── */}
           {msg.text && (
             <div className={`p-4 rounded-xl flex items-center gap-3 border ${msg.type === 'success'
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                : 'bg-rose-50 text-rose-700 border-rose-100'
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+              : 'bg-rose-50 text-rose-700 border-rose-100'
               }`}>
               <p className="text-xs font-bold leading-none">{msg.text}</p>
             </div>

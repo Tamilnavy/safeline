@@ -219,6 +219,7 @@ const TrackComplaint = () => {
                   complaintId={complaint.id} 
                   trackingId={complaint.trackingId} 
                   pin={pin} 
+                  evidence={complaint.evidence}
                   showHeader={true}
                   minimal={true}
                 />
@@ -254,6 +255,7 @@ const TrackComplaint = () => {
                       }`}>
                         {act.action.replace(/_/g, ' ')}
                       </p>
+                      {act.detail && <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-snug">{act.detail}</p>}
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                           {new Date(act.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}

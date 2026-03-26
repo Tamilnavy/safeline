@@ -45,10 +45,10 @@ const DashboardLayout = () => {
     { label: 'Overview', icon: LayoutDashboard, path: (user.hierarchyLevel === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), show: () => true },
     { label: 'Submit Complaint', icon: PlusCircle, path: '/submit', show: (u) => !['LEVEL_1', 'SUPER_ADMIN'].includes(u.hierarchyLevel) && (['ROLE_1', 'ROLE_2'].includes(u.accessRole) || u.hierarchyLevel === 'LEVEL_3') },
     { label: 'My Complaints', icon: FileText, path: '/dashboard/complaints', show: (u) => !['LEVEL_1', 'SUPER_ADMIN'].includes(u.hierarchyLevel) && (['ROLE_1', 'ROLE_2'].includes(u.accessRole) || u.hierarchyLevel === 'LEVEL_3') },
-    { label: 'My Cases', icon: ShieldCheck, path: '/dashboard/assigned', show: (u) => u.hierarchyLevel === 'LEVEL_1' || u.accessRole === 'ROLE_2' || u.hierarchyLevel === 'LEVEL_2' },
+    { label: 'My Cases', icon: ShieldCheck, path: '/dashboard/assigned', show: (u) => u.hierarchyLevel !== 'SUPER_ADMIN' && (u.hierarchyLevel === 'LEVEL_1' || u.accessRole === 'ROLE_2' || u.hierarchyLevel === 'LEVEL_2') },
     { label: 'Registry', icon: Settings, path: '/dashboard/registry', show: (u) => u.hierarchyLevel === 'SUPER_ADMIN' },
     { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', show: (u) => u.hierarchyLevel === 'LEVEL_1' },
-    { label: 'Team Directory', icon: Users, path: '/dashboard/team', show: (u) => u.hierarchyLevel === 'SUPER_ADMIN' || u.hierarchyLevel === 'LEVEL_1' },
+    { label: 'Team Directory', icon: Users, path: '/dashboard/team', show: (u) => u.hierarchyLevel !== 'SUPER_ADMIN' && (u.hierarchyLevel === 'LEVEL_1' || u.hierarchyLevel === 'LEVEL_2') },
   ];
 
   // Filter menu: use explicit show logic

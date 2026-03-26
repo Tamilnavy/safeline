@@ -82,7 +82,7 @@ public class ComplaintService {
             }
         }
 
-        logActivity(saved.getId(), "COMPLAINT_SUBMITTED", "REPORTER");
+        logActivity(saved.getId(), "COMPLAINT_SUBMITTED", "REPORTER", "New case submitted by reporter.");
 
         return saved;
     }
@@ -120,14 +120,16 @@ public class ComplaintService {
     // ACTIVITY LOG
     // ------------------------------------------------
     public void logActivity(Long complaintId, String action, String performedBy) {
+        logActivity(complaintId, action, performedBy, null);
+    }
 
+    public void logActivity(Long complaintId, String action, String performedBy, String detail) {
         ComplaintActivityLog log = new ComplaintActivityLog();
-
         log.setComplaintId(complaintId);
         log.setAction(action);
         log.setPerformedBy(performedBy);
+        log.setDetail(detail);
         log.setTimestamp(LocalDateTime.now());
-
         logRepository.save(log);
     }
 
