@@ -1,4 +1,20 @@
-#/backend/target/
-#/backend/.idea/
-#/backend/.mvn/
+# Ignore compiled Java files (Spring Boot)
+/backend/target/
+/backend/.mvn/
+/backend/mvnw
+/backend/mvnw.cmd
+/backend/.idea/
+/backend/*.iml
 
+# Ignore frontend dependencies and build folders
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+/frontend/.env
+/frontend/.env.local
+
+# IDE and OS settings
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
