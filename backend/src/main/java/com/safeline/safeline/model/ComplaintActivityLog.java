@@ -15,7 +15,8 @@ public class ComplaintActivityLog {
 
     private Long complaintId;
 
-    private String action;
+    @Column(name = "activity_type")
+    private String activityType;
 
     private String performedBy;
 

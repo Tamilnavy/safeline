@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, UserPlus } from 'lucide-react';
+import { X, UserPlus, ChevronRight, Shield, User, Settings, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { useLevels } from '../../context/LevelContext';
 
-// Access role options
-const ACCESS_ROLES = [
-  { value: 'ROLE_1', label: 'Role 1 — Basic Access (Submit complaints, limited dashboard)' },
-  { value: 'ROLE_2', label: 'Role 2 — Extended Access (Manage complaints, advanced dashboard)' },
-];
+// Roles are now handled via committeePermissions checkboxes
 
 const AddUserModal = ({
   isOpen,
@@ -15,14 +12,14 @@ const AddUserModal = ({
   onSave,
   title = "Add Employee",
 }) => {
-  const { levels } = useLevels();
+  const { user: currentUser } = useAuth();
   const [form, setForm] = useState({
     fullName: '',
     email: '',
     password: '',
     employeeId: '',
-    hierarchyLevel: levels[0]?.id || 'LEVEL_3',
-    accessRole: 'ROLE_1',
+    role: 'EMPLOYEE',
+    committeePermissions: [],
   });
   const [msg, setMsg] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
@@ -30,25 +27,17 @@ const AddUserModal = ({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      const defaultLvl = levels[0]?.id || 'LEVEL_1';
-      const defaultRole = (defaultLvl === 'LEVEL_1' || defaultLvl === 'LEVEL_2') ? 'ROLE_2' : 'ROLE_1';
       setForm({
         fullName: '',
         email: '',
         password: '',
         employeeId: '',
-        hierarchyLevel: defaultLvl,
-        accessRole: defaultRole,
+        role: 'EMPLOYEE',
+        committeePermissions: [],
       });
       setMsg({ text: '', type: '' });
     }
-  }, [isOpen, levels]);
-
-  const handleHierarchyChange = (val) => {
-    // Admin (LEVEL_1) or HR (LEVEL_2) -> Always ROLE_2
-    const defaultRole = (val === 'LEVEL_1' || val === 'LEVEL_2') ? 'ROLE_2' : 'ROLE_1';
-    setForm(prev => ({ ...prev, hierarchyLevel: val, accessRole: defaultRole }));
-  };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -80,7 +69,7 @@ const AddUserModal = ({
   const labelClass = "text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1";
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-1000 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white w-full max-w-lg p-8 rounded-2xl shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -144,39 +133,133 @@ const AddUserModal = ({
               onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
             />
           </div>
+          
+          {/* ── Role Selection Cards ── */}
+          <div className="space-y-4">
+            <label className={labelClass}>Select Account Type</label>
+            <div className="grid grid-cols-1 gap-3">
+              {/* Card 1: Standard Employee */}
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, role: 'EMPLOYEE', committeePermissions: [] })}
+                className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                  form.role === 'EMPLOYEE' && form.committeePermissions.length === 0
+                    ? 'border-indigo-600 bg-indigo-50/50 shadow-md shadow-indigo-600/5'
+                    : 'border-slate-100 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  form.role === 'EMPLOYEE' && form.committeePermissions.length === 0 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  <User size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-900">Standard Employee</p>
+                    {form.role === 'EMPLOYEE' && form.committeePermissions.length === 0 && <Check size={16} className="text-indigo-600" />}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Basic access for submitting and tracking personal anonymous reports.</p>
+                </div>
+              </button>
 
-          {/* ── Divider ── */}
-          <div className="border-t border-slate-100 pt-1" />
+              {/* Card 2: Investigation Officer */}
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, role: 'EMPLOYEE', committeePermissions: form.committeePermissions.length > 0 ? form.committeePermissions : ['COMPLAINT_HANDLER'] })}
+                className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                  form.role === 'EMPLOYEE' && form.committeePermissions.length > 0
+                    ? 'border-purple-600 bg-purple-50/50 shadow-md shadow-purple-600/5'
+                    : 'border-slate-100 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  form.role === 'EMPLOYEE' && form.committeePermissions.length > 0 ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'
+                }`}>
+                  <Shield size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-slate-900">Investigation Officer</p>
+                    {form.role === 'EMPLOYEE' && form.committeePermissions.length > 0 && <Check size={16} className="text-purple-600" />}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Oversight power to review, triage, or investigate sensitive anonymous cases.</p>
+                </div>
+              </button>
 
-          {/* ── Hierarchy Level ── */}
-          <div className="space-y-1.5">
-            <label className={labelClass}>Hierarchy Level</label>
-            <select
-              className={selectClass}
-              value={form.hierarchyLevel}
-              onChange={(e) => handleHierarchyChange(e.target.value)}
-            >
-              {levels.map(l => (
-                <option key={l.id} value={l.id}>{l.name}</option>
-              ))}
-            </select>
+              {/* Card 3: System Administrator (Only for Org/Owner creators) */}
+              {currentUser?.role === 'ORG_ADMIN' && (
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, role: 'ADMIN', committeePermissions: [] })}
+                  className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                    form.role === 'ADMIN'
+                      ? 'border-slate-800 bg-slate-50 shadow-md shadow-slate-900/5'
+                      : 'border-slate-100 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    form.role === 'ADMIN' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'
+                  }`}>
+                    <Settings size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-slate-900">System Administrator</p>
+                      {form.role === 'ADMIN' && <Check size={16} className="text-slate-900" />}
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Full access for organization setup, team management, and directory control.</p>
+                  </div>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* ── Access Role ── Shown for everything EXCEPT Level 1 (Admin) and Level 2 (HR) */}
-          {form.hierarchyLevel !== 'LEVEL_1' && form.hierarchyLevel !== 'LEVEL_2' && (
-            <div className="space-y-1.5">
-              <label className={labelClass}>Role</label>
-              <select
-                className={selectClass}
-                value={form.accessRole}
-                onChange={(e) => setForm({ ...form, accessRole: e.target.value })}
+          {/* ── Advanced Permissions (Smart Reveal) ── */}
+          <AnimatePresence>
+            {form.role === 'EMPLOYEE' && form.committeePermissions.length > 0 && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
               >
-                {ACCESS_ROLES.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </select>
-            </div>
-          )}
+                <div className="border-t border-slate-100 pt-5 mt-2 space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <label className={labelClass}>Oversight Authorities</label>
+                    <p className="text-[10px] text-slate-400 font-medium px-1">Select the specific investigative powers for this officer.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {[
+                      { id: 'COMMITTEE_LEAD', label: 'Committee Lead', desc: 'Can triage and assign new cases' },
+                      { id: 'COMPLAINT_HANDLER', label: 'Complaint Handler', desc: 'Can investigate assigned cases' },
+                      { id: 'ESCALATION_HEAD', label: 'Escalation Head', desc: 'Handles high-sensitivity reports' }
+                    ].map(perm => (
+                      <label key={perm.id} className="flex items-start gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50/50 cursor-pointer hover:bg-white transition-all group">
+                        <div className="pt-0.5">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-600/20"
+                            checked={form.committeePermissions?.includes(perm.id)}
+                            onChange={(e) => {
+                              const perms = new Set(form.committeePermissions || []);
+                              if (e.target.checked) perms.add(perm.id);
+                              else perms.delete(perm.id);
+                              setForm({ ...form, committeePermissions: Array.from(perms) });
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 group-hover:text-purple-600 transition-colors">{perm.label}</p>
+                          <p className="text-[10px] text-slate-500 font-medium opacity-80">{perm.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ── Message ── */}
           {msg.text && (

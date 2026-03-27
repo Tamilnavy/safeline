@@ -55,7 +55,7 @@ public class ComplaintActionService {
         }
 
         String detail = String.format("%s assigned case to %s (%s)", 
-                        getCurrentUser(), investigatorName, investigator.getHierarchyLevel());
+                        getCurrentUser(), investigatorName, investigator.getRole());
         complaintService.logActivity(updated.getId(), "INVESTIGATOR_ASSIGNED", getCurrentUser(), detail);
         return updated;
     }

@@ -9,7 +9,7 @@ public class UserResponse {
     private String fullName;
     private String employeeId;
     private String email;
-    private String hierarchyLevel;
-    private String accessRole;
+    private String role;
     private Long tenantId;
+    private java.util.Set<com.safeline.safeline.model.CommitteePermission> committeePermissions;
 }

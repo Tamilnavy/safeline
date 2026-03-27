@@ -1,5 +1,3 @@
-import { useLevels } from '../../context/LevelContext';
-
 import { useState } from 'react';
 import { MessageSquare, ChevronLeft, ChevronRight, Pencil, X, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -19,17 +17,14 @@ const ComplaintTable = ({
   filterStatus,
   onFilterChange,
   showAssignment = true,
-  userLevel = 'LEVEL_3',
-  userAccessRole,
+  isLead = false,
+  isEscalation = false,
   sortBy,
   onSortChange
 }) => {
-  const { levels, getLevelName, getLevelNumber } = useLevels();
   const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
   const updateStages = ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
 
-  // Track which complaint row has its owner dropdown open
-  const [editingOwnerId, setEditingOwnerId] = useState(null);
   // Track open role popover
   const [editingRoleId, setEditingRoleId] = useState(null);
   const [activeRoleLevel, setActiveRoleLevel] = useState(null);
@@ -38,7 +33,7 @@ const ComplaintTable = ({
   const [editingStatusId, setEditingStatusId] = useState(null);
   const [popupStyle, setPopupStyle] = useState({});
 
-  const toggleRolePopup = (e, complaint, inv) => {
+  const toggleRolePopup = (e, complaint) => {
     e.stopPropagation();
     if (editingRoleId === complaint.id) {
       setEditingRoleId(null);
@@ -53,7 +48,7 @@ const ComplaintTable = ({
       width: 'max-content'
     });
     setEditingRoleId(complaint.id);
-    setActiveRoleLevel(inv ? inv.hierarchyLevel : null);
+    setActiveRoleLevel(null); 
   };
 
   const toggleStatusPopup = (e, id) => {
@@ -73,17 +68,6 @@ const ComplaintTable = ({
     setEditingStatusId(id);
   };
 
-  const getPriorityVariant = (priority) => {
-    switch (priority) {
-      case 'CRITICAL':
-      case 'URGENT': return 'danger';
-      case 'HIGH': return 'warning';
-      case 'NORMAL': return 'primary';
-      case 'LOW': return 'secondary';
-      default: return 'secondary';
-    }
-  };
-
   const getStatusVariant = (status) => {
     switch (status) {
       case 'RESOLVED':
@@ -99,17 +83,20 @@ const ComplaintTable = ({
     }
   };
 
-  // Extract the specific investigator assigned to a complaint
   const getAssignedInvestigator = (complaint) => {
     if (!complaint.assignedToUsername) return null;
     return investigators.find(i => i.username === complaint.assignedToUsername || i.id === complaint.assignedToId);
   };
 
-  // Explicitly return the Role (Hierarchy Level) instead of the user's name
   const getRoleLabel = (complaint) => {
     const inv = getAssignedInvestigator(complaint);
-    if (!inv || !inv.hierarchyLevel) return 'Hierarchy';
-    return `Level ${getLevelNumber(inv.hierarchyLevel)}`;
+    if (!inv) return 'Unassigned';
+    
+    if (inv.committeePermissions?.includes('ESCALATION_HEAD')) return 'Escalation Head';
+    if (inv.committeePermissions?.includes('COMMITTEE_LEAD')) return 'Committee Lead';
+    if (inv.committeePermissions?.includes('COMPLAINT_HANDLER')) return 'Complaint Handler';
+    
+    return 'Employee';
   };
 
   const handleAssignUser = (complaintId, assignId) => {
@@ -119,23 +106,33 @@ const ComplaintTable = ({
     setEditingRoleId(null);
   };
 
-  // Group investigators by their hierarchy level for the dropdown
   const groupedInvestigators = (() => {
-    const groups = {};
+    const groups = {
+      'ESCALATION_HEAD': [],
+      'COMMITTEE_LEAD': [],
+      'COMPLAINT_HANDLER': [],
+      'MEMBER': []
+    };
+    
     investigators.forEach(inv => {
-      const level = (inv.hierarchyLevel || 'UNASSIGNED').toString().trim().toUpperCase();
-      if (!groups[level]) groups[level] = [];
-      groups[level].push(inv);
+      const perms = inv.committeePermissions || [];
+      if (perms.includes('ESCALATION_HEAD')) groups['ESCALATION_HEAD'].push(inv);
+      else if (perms.includes('COMMITTEE_LEAD')) groups['COMMITTEE_LEAD'].push(inv);
+      else if (perms.includes('COMPLAINT_HANDLER')) groups['COMPLAINT_HANDLER'].push(inv);
+      else groups['MEMBER'].push(inv);
     });
     return groups;
   })();
 
-  // Dynamic level order based on context + system levels
-  const levelOrder = ['SUPER_ADMIN', ...levels.map(l => l.id.toUpperCase()), 'UNASSIGNED'];
+  const roleOrder = [
+    { id: 'COMMITTEE_LEAD', name: 'Committee Leads' },
+    { id: 'COMPLAINT_HANDLER', name: 'Complaint Handlers' },
+    { id: 'ESCALATION_HEAD', name: 'Escalation Heads' },
+    { id: 'MEMBER', name: 'Other Personnel' }
+  ];
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Status filter & Sort Input */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 pb-2">
         <div className="flex gap-2 overflow-x-auto scrollbar-none flex-1">
           {statusStages.map(s => (
@@ -143,9 +140,7 @@ const ComplaintTable = ({
               key={s}
               onClick={() => onFilterChange(s)}
               className={`btn transition-all whitespace-nowrap ${
-                filterStatus === s
-                  ? 'btn-primary'
-                  : 'btn-secondary text-xs py-1.5'
+                filterStatus === s ? 'btn-primary' : 'btn-secondary text-xs py-1.5'
               }`}
             >
               {s.replace(/_/g, ' ')}
@@ -154,7 +149,7 @@ const ComplaintTable = ({
         </div>
         
         {onSortChange && (
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all flex-shrink-0">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 shadow-sm transition-all shrink-0">
             <ArrowUpDown size={14} className="text-slate-400" />
             <select 
               className="bg-transparent text-sm text-slate-600 font-medium outline-none border-none cursor-pointer focus:ring-0 flex-1 min-w-[120px]"
@@ -178,155 +173,138 @@ const ComplaintTable = ({
             <table className="w-full text-left">
               <thead>
                 <tr className="table-header">
-                  <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Tracking ID</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Type</th>
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Summary</th>
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Reporter</th>
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Status</th>
-                  {showAssignment && <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Role</th>}
+                  {showAssignment && <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Handling Role</th>}
                   <th className="px-2 py-4 text-xs font-bold text-slate-500 tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
                 {complaints.length === 0 ? (
                   <tr>
-                    <td colSpan={showAssignment ? 7 : 6} className="py-24 text-center text-slate-500 font-medium">
+                    <td colSpan={showAssignment ? 6 : 5} className="py-24 text-center text-slate-500 font-medium">
                       No matching records found.
                     </td>
                   </tr>
                 ) : complaints.map(c => (
                   <tr key={c.id} className="table-row group">
-                    {/* Tracking ID */}
                     <td className="px-4 py-5 whitespace-nowrap">
-                      <span className="text-indigo-600 font-bold text-sm tracking-tight">{c.trackingId}</span>
-                      <div className="text-slate-400 text-[10px] mt-1 font-medium">{new Date(c.createdAt).toLocaleDateString()}</div>
+                      <div className="flex flex-col">
+                        <span className="text-indigo-600 font-bold text-sm tracking-tight">{c.trackingId}</span>
+                        <div className="text-slate-400 text-[10px] mt-1 font-medium">{new Date(c.createdAt).toLocaleDateString()}</div>
+                      </div>
                     </td>
-
-                    {/* Summary */}
+                    <td className="px-4 py-5 whitespace-nowrap">
+                      <Badge variant={c.type === 'SENSITIVE' ? 'danger' : 'secondary'} className="px-2 py-0.5 text-[9px] font-black tracking-tighter">
+                        {c.type || 'NORMAL'}
+                      </Badge>
+                    </td>
                     <td className="px-4 py-5">
                       <div className="flex flex-col gap-1 min-w-[180px]">
-                        <div className="font-bold text-slate-900 text-sm truncate max-w-[240px]">{c.title}</div>
+                        <div className="flex items-center gap-2">
+                          <div className={`font-bold text-sm truncate max-w-[200px] ${c.type === 'SENSITIVE' ? 'text-rose-600' : 'text-slate-900'}`}>{c.title}</div>
+                        </div>
                         <div className="text-slate-500 text-[10px] uppercase tracking-wider font-bold opacity-70">
                           {c.categoryName || 'General Ethics'}
                         </div>
                       </div>
                     </td>
-
-                    {/* Reporter */}
                     <td className="px-4 py-5">
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-slate-800">
-                          {(c.reporterUsername && c.reporterUsername !== 'Public User') ? c.reporterUsername : 'Anonymous'}
+                          {c.anonymous ? (c.anonymousId || 'ANON-REPORTER') : (c.reporterUsername || 'Public User')}
                         </span>
-                        {(c.reporterUsername && c.reporterUsername !== 'Public User') &&
+                        {c.anonymous ? 
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Anonymous</span> :
                           <span className="text-[9px] text-indigo-500 font-bold uppercase tracking-tighter">Identified</span>}
                       </div>
                     </td>
-
-                    {/* Status */}
                     <td className="px-4 py-5">
                       <Badge variant={getStatusVariant(c.status)}>{c.status?.replace(/_/g, ' ')}</Badge>
                     </td>
 
-                    {/* Owner — cascading custom popover */}
                     {showAssignment && (
                       <td className="px-4 py-5">
-                        {['SUPER_ADMIN', 'LEVEL_1'].includes(userLevel) ? (
-                          <div className="relative">
-                            <button
-                              onClick={(e) => toggleRolePopup(e, c, getAssignedInvestigator(c))}
-                              className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border shadow-sm transition-all focus:outline-none min-w-[140px] ${
-                                getRoleLabel(c) === 'Hierarchy' 
-                                  ? 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-white hover:border-slate-300' 
-                                  : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
-                              } ${editingRoleId === c.id ? 'ring-2 ring-indigo-500/20 border-indigo-300' : ''}`}
-                            >
-                              <span className="text-[11px] font-bold tracking-wide truncate max-w-[220px]">
-                                {editingRoleId === c.id && activeRoleLevel 
-                                  ? (getLevelName(activeRoleLevel))
-                                  : (getAssignedInvestigator(c) 
-                                      ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
-                                      : getRoleLabel(c))}
-                              </span>
-                              <ChevronRight size={14} className={`flex-shrink-0 transition-transform ${editingRoleId === c.id ? 'rotate-90' : ''}`} />
-                            </button>
+                        <div className="relative">
+                          <button
+                            onClick={(e) => toggleRolePopup(e, c)}
+                            className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border shadow-sm transition-all focus:outline-none min-w-[140px] ${
+                              getRoleLabel(c) === 'Unassigned' 
+                                ? 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-white hover:border-slate-300' 
+                                : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                            } ${editingRoleId === c.id ? 'ring-2 ring-indigo-500/20 border-indigo-300' : ''}`}
+                          >
+                            <span className="text-[11px] font-bold tracking-wide truncate max-w-[220px]">
+                              {getAssignedInvestigator(c) 
+                                  ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
+                                  : 'Untriaged / Unassigned'}
+                            </span>
+                            <ChevronRight size={14} className={`shrink-0 transition-transform ${editingRoleId === c.id ? 'rotate-90' : ''}`} />
+                          </button>
 
-                            {editingRoleId === c.id && (
-                              <>
-                                <div className="fixed inset-0 z-[200]" onClick={(e) => { e.stopPropagation(); setEditingRoleId(null); }} />
-                                <div style={rolePopupStyle} className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in zoom-in-95 duration-150">
-                                  {activeRoleLevel ? (
-                                    /* Cascaded Employee List */
-                                    <div className="flex flex-col space-y-1">
-                                      <button 
-                                        onClick={(e) => { e.stopPropagation(); setActiveRoleLevel(null); }}
-                                        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-50 text-slate-500 font-semibold text-[10px] uppercase tracking-wider hover:bg-slate-100 hover:text-slate-800 transition-colors"
-                                      >
-                                        <ChevronLeft size={12} />
-                                        Back
-                                      </button>
-                                      <div className="max-h-[220px] overflow-y-auto space-y-1">
-                                        {(groupedInvestigators[activeRoleLevel] || []).length === 0 ? (
-                                          <div className="px-3 py-2 text-sm text-slate-400 font-medium italic">No employees.</div>
-                                        ) : (
-                                          groupedInvestigators[activeRoleLevel].map(inv => (
-                                            <button
-                                              key={inv.id}
-                                              onClick={() => handleAssignUser(c.id, inv.id)}
-                                              className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${
-                                                getAssignedInvestigator(c)?.id === inv.id 
-                                                  ? 'bg-indigo-50 text-indigo-600 font-semibold' 
-                                                  : 'text-slate-600 font-medium'
-                                              }`}
-                                            >
-                                              {inv.fullName || inv.username} - ({inv.employeeId || inv.username})
-                                            </button>
-                                          ))
-                                        )}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    /* Root Levels List */
-                                    <div className="flex flex-col space-y-1">
-                                      {levelOrder.map(lvl => {
-                                        const normalizedLvl = lvl.toString().trim().toUpperCase();
-                                        const levelName = getLevelName(lvl);
-                                        const count = (groupedInvestigators[normalizedLvl] || []).length;
-                                        return (
+                          {editingRoleId === c.id && (
+                            <>
+                              <div className="fixed inset-0 z-200" onClick={(e) => { e.stopPropagation(); setEditingRoleId(null); }} />
+                              <div style={rolePopupStyle} className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in zoom-in-95 duration-150">
+                                {activeRoleLevel ? (
+                                  <div className="flex flex-col space-y-1">
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); setActiveRoleLevel(null); }}
+                                      className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-50 text-slate-500 font-semibold text-[10px] uppercase tracking-wider hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                                    >
+                                      <ChevronLeft size={12} />
+                                      Back to Groups
+                                    </button>
+                                    <div className="max-h-[220px] overflow-y-auto space-y-1">
+                                      {(groupedInvestigators[activeRoleLevel] || []).length === 0 ? (
+                                        <div className="px-3 py-2 text-sm text-slate-400 font-medium italic">No personnel found.</div>
+                                      ) : (
+                                        groupedInvestigators[activeRoleLevel].map(inv => (
                                           <button
-                                            key={lvl}
-                                            disabled={count === 0}
-                                            onClick={(e) => { e.stopPropagation(); setActiveRoleLevel(lvl); }}
-                                            className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent group/level"
+                                            key={inv.id}
+                                            onClick={() => handleAssignUser(c.id, inv.id)}
+                                            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${
+                                              getAssignedInvestigator(c)?.id === inv.id 
+                                                ? 'bg-indigo-50 text-indigo-600 font-semibold' 
+                                                : 'text-slate-600 font-medium'
+                                            }`}
                                           >
-                                            <span className="font-medium text-slate-600 group-disabled/level:text-slate-400">{levelName}</span>
-                                            <span className="ml-4 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold group-hover:bg-white">{count}</span>
+                                            {inv.fullName || inv.username} ({inv.employeeId || 'ID UNKNOWN'})
                                           </button>
-                                        );
-                                      })}
+                                        ))
+                                      )}
                                     </div>
-                                  )}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="bg-slate-100 px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 inline-flex min-w-[140px]">
-                             <span className="text-[11px] font-bold text-slate-700">
-                                {getAssignedInvestigator(c) 
-                                 ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
-                                 : getRoleLabel(c)}
-                             </span>
-                          </div>
-                        )}
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col space-y-1">
+                                    {roleOrder.map(role => {
+                                      const count = (groupedInvestigators[role.id] || []).length;
+                                      return (
+                                        <button
+                                          key={role.id}
+                                          disabled={count === 0}
+                                          onClick={(e) => { e.stopPropagation(); setActiveRoleLevel(role.id); }}
+                                          className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent group/role"
+                                        >
+                                          <span className="font-medium text-slate-600 group-disabled/role:text-slate-400">{role.name}</span>
+                                          <span className="ml-4 text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-bold group-hover:bg-white">{count}</span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </td>
                     )}
 
-                    {/* Actions */}
                     <td className="px-2 py-5 text-right">
                       <div className="flex gap-1.5 justify-end items-center">
-
-                        {/* Status — click opens popup */}
-                        {(userLevel !== 'LEVEL_3' || userAccessRole === 'ROLE_2') && (
+                         {(isLead || isEscalation) && (
                           <div className="relative">
                             <button
                               onClick={(e) => toggleStatusPopup(e, c.id)}
@@ -335,34 +313,16 @@ const ComplaintTable = ({
                             >
                               <Pencil size={15} />
                             </button>
-
-                            {/* Popup */}
                             {editingStatusId === c.id && (
                               <>
-                                {/* Backdrop */}
-                                <div
-                                  className="fixed inset-0 z-[200]"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingStatusId(null);
-                                  }}
-                                />
-                                {/* Floating panel */}
-                                <div 
-                                  style={popupStyle}
-                                  className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in slide-in-from-top-2 duration-200 space-y-1"
-                                >
+                                <div className="fixed inset-0 z-200" onClick={(e) => { e.stopPropagation(); setEditingStatusId(null); }} />
+                                <div style={popupStyle} className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in slide-in-from-top-2 duration-200 space-y-1">
                                   {updateStages.map(s => (
                                     <button
                                       key={s}
-                                      onClick={() => {
-                                        onUpdateStatus(c.id, s);
-                                        setEditingStatusId(null);
-                                      }}
+                                      onClick={() => { onUpdateStatus(c.id, s); setEditingStatusId(null); }}
                                       className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${
-                                        c.status === s 
-                                          ? 'bg-indigo-50 text-indigo-600 font-bold' 
-                                          : 'text-slate-600 font-medium'
+                                        c.status === s ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 font-medium'
                                       }`}
                                     >
                                       {s.replace(/_/g, ' ')}
@@ -373,8 +333,6 @@ const ComplaintTable = ({
                             )}
                           </div>
                         )}
-
-                        {/* View details button */}
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}

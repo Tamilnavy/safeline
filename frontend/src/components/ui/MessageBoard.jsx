@@ -138,7 +138,8 @@ const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = f
           </div>
         ) : (
           safeMessages.map((m, idx) => {
-            const isMe = (isStaff && m.senderRole === 'STAFF') || (!isStaff && m.senderRole === 'REPORTER');
+            const isMe = (isStaff && (m.senderRole === 'INVESTIGATOR' || m.senderRole === 'COMMITTEE')) || 
+                         (!isStaff && m.senderRole === 'REPORTER');
             return (
               <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                 <div className={`
@@ -150,7 +151,7 @@ const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = f
                   {m.content}
                 </div>
                 <div className="mt-1.5 px-1 flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  <span>{m.senderRole === 'STAFF' ? 'Investigator' : 'Reporter'}</span>
+                  <span>{m.senderDisplayName}</span>
                   <span>•</span>
                   <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>

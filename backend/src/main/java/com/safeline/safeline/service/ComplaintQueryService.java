@@ -30,31 +30,27 @@ public class ComplaintQueryService {
         return complaintRepository.findByReporterId(reporterId, pageable);
     }
 
-    public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, String search, Pageable pageable) {
-        if (search != null && !search.trim().isEmpty()) {
-            return complaintRepository.searchAdminComplaints(tenantId, status, search.trim(), pageable);
-        }
-        
-        if (status != null) {
-            return complaintRepository.findByTenantIdAndStatus(tenantId, status, pageable);
-        }
-        return complaintRepository.findByTenantId(tenantId, pageable);
+    public Page<Complaint> getComplaintsByType(Long tenantId, ComplaintType type, ComplaintStatus status, String search, Long userId, Pageable pageable) {
+        System.out.println("DEBUG: Oversight Query (By Type)");
+        System.out.println("DEBUG: TenantId=" + tenantId + ", Type=" + type + ", Status=" + status + ", UserId=" + userId);
+        return complaintRepository.searchByTenantAndType(tenantId, type, status, search, userId, pageable);
+    }
+
+    public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, String search, Long userId, Pageable pageable) {
+        System.out.println("DEBUG: Oversight Query (All)");
+        System.out.println("DEBUG: TenantId=" + tenantId + ", Status=" + status + ", UserId=" + userId);
+        return complaintRepository.searchAdminComplaints(tenantId, status, search, userId, pageable);
     }
 
     public List<Complaint> getAllComplaintsInternal(Long tenantId) {
+        System.out.println("DEBUG: Internal Listing (Metrics) for TenantId=" + tenantId);
         return complaintRepository.findAll().stream()
                 .filter(c -> c.getTenant().getId().equals(tenantId))
                 .toList();
     }
 
     public Page<Complaint> getAssignedComplaints(Long investigatorId, ComplaintStatus status, String search, Pageable pageable) {
-        if (search != null && !search.trim().isEmpty()) {
-            return complaintRepository.searchAssignedComplaints(investigatorId, status, search.trim(), pageable);
-        }
-        if (status != null) {
-            return complaintRepository.findByAssignedToIdAndStatus(investigatorId, status, pageable);
-        }
-        return complaintRepository.findByAssignedToId(investigatorId, pageable);
+        return complaintRepository.searchAssignedComplaints(investigatorId, status, search, pageable);
     }
 
     public boolean verifyTracking(String trackingId, String pin) {

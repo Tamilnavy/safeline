@@ -47,10 +47,13 @@ public class User {
     private Tenant tenant;
 
     @Column(nullable = false)
-    private String hierarchyLevel = "LEVEL_3";
+    private String role = "EMPLOYEE";
 
-    @Column(nullable = false)
-    private String accessRole = "ROLE_1";
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_permissions", joinColumns = @JoinColumn(name = "user_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "permission")
+    private Set<CommitteePermission> committeePermissions = new java.util.HashSet<>();
 
     private boolean enabled = true;
 

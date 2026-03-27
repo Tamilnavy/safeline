@@ -76,7 +76,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                         
                         if (userDetails instanceof TenantAwareUserDetails) {
-                            TenantContext.setCurrentTenant(((TenantAwareUserDetails) userDetails).getTenantId());
+                            Long userTenantId = ((TenantAwareUserDetails) userDetails).getTenantId();
+                            TenantContext.setCurrentTenant(userTenantId);
+                            System.out.println("DEBUG: Authenticated Regular User: " + username + ", Tenant: " + userTenantId);
+                        } else {
+                            System.err.println("DEBUG WARNING: Authenticated user " + username + " is NOT TenantAware!");
                         }
                     }
                 }

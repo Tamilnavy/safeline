@@ -6,8 +6,8 @@ import lombok.Data;
 public class AuthResponse {
     private String token;
     private String username;
-    private String hierarchyLevel;
-    private String accessRole;
+    private String role;
     private Long tenantId;
-    private String tenantDomain; // Added so frontend can set X-Tenant-Id correctly
+    private String tenantDomain;
+    private java.util.Set<com.safeline.safeline.model.CommitteePermission> committeePermissions;
 }

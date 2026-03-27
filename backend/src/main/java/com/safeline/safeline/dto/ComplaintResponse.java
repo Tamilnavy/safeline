@@ -24,6 +24,7 @@ public class ComplaintResponse {
     private String assignedToFullName;
     private String assignedToEmployeeId;
     private String assignedToRole;
+    private String assignedToCommitteeRole;
     private Long assignedToId;
 
     // Reporter visibility

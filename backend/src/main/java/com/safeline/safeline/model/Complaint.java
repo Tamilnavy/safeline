@@ -32,7 +32,7 @@ public class Complaint {
     @lombok.EqualsAndHashCode.Include
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false)
@@ -48,7 +48,7 @@ public class Complaint {
 
     private boolean anonymous = true;
 
-    @Column(unique = true)
+    @Column(unique = true, columnDefinition = "TEXT")
     private String trackingId;
 
     private String pinHash;
@@ -76,6 +76,17 @@ public class Complaint {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporter_id")
     private User reporter;
+
+    private String anonymousId;
+
+    @Enumerated(EnumType.STRING)
+    private ComplaintType type = ComplaintType.NORMAL;
+
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "accused_user_id")
+    private User accusedUser;
 
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude

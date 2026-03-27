@@ -4,7 +4,7 @@ import com.safeline.safeline.dto.AuthRequest;
 import com.safeline.safeline.dto.AuthResponse;
 import com.safeline.safeline.dto.TrackRequest;
 import com.safeline.safeline.dto.TrackResponse;
-import com.safeline.safeline.model.Complaint;
+import com.safeline.safeline.model.*;
 import com.safeline.safeline.repository.ComplaintRepository;
 import com.safeline.safeline.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -63,8 +63,8 @@ public class AuthController {
         response.setUsername(userDetails.getUsername());
         
         userRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
-            response.setHierarchyLevel(u.getHierarchyLevel());
-            response.setAccessRole(u.getAccessRole());
+            response.setRole(u.getRole());
+            response.setCommitteePermissions(u.getCommitteePermissions());
         });
 
         if (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails tenantUser) {
@@ -152,8 +152,8 @@ public class AuthController {
             response.setToken(token);
             response.setUsername(userDetails.getUsername());
             userRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
-                response.setHierarchyLevel(u.getHierarchyLevel());
-                response.setAccessRole(u.getAccessRole());
+                response.setRole(u.getRole());
+                response.setCommitteePermissions(u.getCommitteePermissions());
             });
 
             if (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails) {

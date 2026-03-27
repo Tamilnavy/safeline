@@ -8,6 +8,6 @@ import java.util.List;
 public interface ComplaintActivityLogRepository
         extends JpaRepository<ComplaintActivityLog, Long> {
 
-    List<ComplaintActivityLog> findByComplaintId(Long complaintId);
+    List<ComplaintActivityLog> findByComplaintIdOrderByTimestampDesc(Long complaintId);
 
 }

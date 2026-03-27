@@ -68,9 +68,9 @@ public class UserService {
             if (auth != null && auth.isAuthenticated()) {
                 System.out.println("DEBUG: Current Auth Principal: " + auth.getPrincipal());
                 
-                // ORG_ADMIN or INTAKE_OFFICER or any tenant staff should only create users in their own tenant
+                // ORG_ADMIN or ADMIN or any tenant staff should only create users in their own tenant
                 boolean isTenantStaff = auth.getAuthorities().stream().anyMatch(a -> 
-                    List.of("LEVEL_1", "LEVEL_2", "LEVEL_3").contains(a.getAuthority())
+                    List.of("ORG_ADMIN", "ADMIN", "EMPLOYEE").contains(a.getAuthority())
                 );
                 
                 if (isTenantStaff) {
@@ -105,11 +105,11 @@ public class UserService {
                     .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + effectiveTenantId));
             user.setTenant(tenant);
 
-            user.setHierarchyLevel(request.getHierarchyLevel());
-            user.setAccessRole(request.getAccessRole());
+            user.setRole(request.getRole() != null ? request.getRole() : "EMPLOYEE");
+            user.setCommitteePermissions(request.getCommitteePermissions());
             
             User saved = userRepository.save(user);
-            System.out.println("DEBUG: User '" + saved.getUsername() + "' saved with Hierarchy: " + saved.getHierarchyLevel());
+            System.out.println("DEBUG: User '" + saved.getUsername() + "' saved with Role: " + saved.getRole());
 
             UserResponse response = new UserResponse();
             response.setId(saved.getId());
@@ -117,9 +117,9 @@ public class UserService {
             response.setFullName(saved.getFullName());
             response.setEmployeeId(saved.getEmployeeId());
             response.setEmail(saved.getEmail());
-            response.setHierarchyLevel(saved.getHierarchyLevel());
-            response.setAccessRole(saved.getAccessRole());
+            response.setRole(saved.getRole());
             response.setTenantId(tenant.getId());
+            response.setCommitteePermissions(saved.getCommitteePermissions());
 
             return response;
         } catch (Exception e) {

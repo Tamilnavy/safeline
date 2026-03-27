@@ -49,9 +49,9 @@ public class TenantService {
 
         System.out.println("DEBUG: Mapping tenant: " + tenant.getName() + " (ID: " + tenant.getId() + ")");
 
-        // Use a native query to find the LEVEL_1 admin for this tenant
+        // Use a native query to find the ORG_ADMIN for this tenant
         try {
-            String sql = "SELECT username FROM users WHERE tenant_id = ?1 AND hierarchy_level = 'LEVEL_1' LIMIT 1";
+            String sql = "SELECT username FROM users WHERE tenant_id = ?1 AND role = 'ORG_ADMIN' LIMIT 1";
             
             List<String> results = entityManager.createNativeQuery(sql)
                     .setParameter(1, tenant.getId())
@@ -101,8 +101,7 @@ public class TenantService {
         admin.setPassword(passwordEncoder.encode(request.getAdminPassword()));
         admin.setTenant(savedTenant);
 
-        admin.setHierarchyLevel("LEVEL_1");
-        admin.setAccessRole("ROLE_2");
+        admin.setRole("ORG_ADMIN");
         userRepository.save(admin);
 
         // 4. Build Response

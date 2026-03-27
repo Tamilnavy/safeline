@@ -28,14 +28,18 @@ const InvestigatorDashboard = () => {
 
   const { user } = useAuth();
   const navigate = useNavigate();
-  const userRole = user?.role || 'INVESTIGATOR';
+  
+  // Use committee permissions to determine role for logic
+  const isLead = user?.committeePermissions?.includes('COMMITTEE_LEAD');
+  const isEscalation = user?.committeePermissions?.includes('ESCALATION_HEAD');
+  const isHandler = user?.committeePermissions?.includes('COMPLAINT_HANDLER');
   
   const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
 
   useEffect(() => {
     fetchData();
     // Allow management roles to see investigator list for re-assignment if needed
-    if (['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)) {
+    if (isLead || isEscalation || ['ORG_ADMIN', 'ADMIN'].includes(user?.role)) {
       fetchInvestigators();
     }
   }, [page, filter, searchTerm, sortBy]);
@@ -53,8 +57,9 @@ const InvestigatorDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // PER USER REQUEST: All specialized roles only see reports assigned to them.
-      const baseEndpoint = '/complaints/assigned';
+      // Logic: Leads and Escalation Heads see the "all" view (filtered by backend)
+      // Standard handlers see only "assigned"
+      const baseEndpoint = (isLead || isEscalation) ? '/complaints/all' : '/complaints/assigned';
 
       const queryParams = [];
       if (filter !== 'ALL') queryParams.push(`status=${filter}`);
@@ -112,14 +117,10 @@ const InvestigatorDashboard = () => {
   };
 
   const getDashboardTitle = () => {
-    switch (userRole) {
-      case 'HR_MANAGER': return 'Personnel Intelligence';
-      case 'COMPLIANCE_OFFICER': return 'Protocol Intelligence';
-      case 'INTAKE_OFFICER': return 'Triage Intelligence';
-      case 'EXECUTIVE': return 'Oversight Intelligence';
-      case 'INVESTIGATOR': return 'Field Intelligence';
-      default: return 'Specialized Intelligence';
-    }
+    if (isEscalation) return 'Escalation Intelligence';
+    if (isLead) return 'Committee Oversight';
+    if (isHandler) return 'Case Investigation';
+    return 'Specialized Intelligence';
   };
 
   const itemVariants = {
@@ -132,7 +133,9 @@ const InvestigatorDashboard = () => {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">{getDashboardTitle()}</h1>
-          <p className="text-slate-500 text-sm font-medium">Personal assignments and case monitor</p>
+          <p className="text-slate-500 text-sm font-medium">
+            {isLead || isEscalation ? 'Global organization oversight and routing' : 'Personal assignments and case monitor'}
+          </p>
         </div>
       </header>
 
@@ -153,7 +156,7 @@ const InvestigatorDashboard = () => {
       <motion.div variants={itemVariants}>
         <Card
           title="Case Inventory"
-          subtitle="Reports explicitly assigned to you for investigation or oversight."
+          subtitle={isLead || isEscalation ? "Overview of all reports requiring your attention." : "Reports explicitly assigned to you for investigation."}
         >
           <div className="overflow-x-auto table-container border-none shadow-none p-0!">
             <ComplaintTable
@@ -162,10 +165,8 @@ const InvestigatorDashboard = () => {
               page={page}
               totalPages={totalPages}
               filterStatus={filter}
-              showAssignment={['HR_MANAGER', 'COMPLIANCE_OFFICER', 'ORG_ADMIN'].includes(userRole)}
-              investigators={investigators}
-              userLevel={user?.hierarchyLevel}
-              userAccessRole={user?.accessRole}
+              isLead={isLead}
+              isEscalation={isEscalation}
               onAssign={handleAssign}
               onUpdateStatus={updateStatus}
               onPageChange={setPage}
@@ -190,7 +191,7 @@ const InvestigatorDashboard = () => {
         isOpen={!!selectedCase}
         onClose={() => setSelectedCase(null)}
         complaint={selectedCase}
-        userRole={userRole}
+        userRole={isEscalation ? 'ESCALATION' : (isLead ? 'LEAD' : 'INVESTIGATOR')}
         getStatusVariant={getStatusVariant}
       />
     </div>

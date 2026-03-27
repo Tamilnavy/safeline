@@ -31,6 +31,7 @@ public class ComplaintService {
     private final ComplaintEvidenceRepository evidenceRepository;
     private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
+    private final AnonymityService anonymityService;
 
     private String getCurrentUser() {
         org.springframework.security.core.Authentication auth = 
@@ -55,6 +56,23 @@ public class ComplaintService {
 
         complaint.setStatus(ComplaintStatus.SUBMITTED);
         
+        // --- NEW LOGIC: ANONYMITY & ROUTING ---
+        if (complaint.isAnonymous() && complaint.getReporter() != null) {
+            String anonId = anonymityService.getOrCreateAnonymousId(complaint.getReporter(), complaint.getTenant());
+            complaint.setAnonymousId(anonId);
+            // Hide reporter from database for anonymous complaints
+            complaint.setReporter(null);
+        }
+
+        // Auto-detect SENSITIVE type if accused is a committee member
+        if (complaint.getAccusedUser() != null) {
+            User accused = userRepository.findById(complaint.getAccusedUser().getId()).orElse(null);
+            if (accused != null && accused.getCommitteePermissions() != null && !accused.getCommitteePermissions().isEmpty()) {
+                complaint.setType(ComplaintType.SENSITIVE);
+            }
+        }
+        // --------------------------------------
+
         // Dynamic SLA calculation
         int slaDays = 2; // Default 48 hours
         if (complaint.getCategory() != null) {
@@ -91,8 +109,7 @@ public class ComplaintService {
     // GET ACTIVITY LOGS
     // ------------------------------------------------
     public List<ComplaintActivityLog> getActivityLogs(Long complaintId) {
-
-        return logRepository.findByComplaintId(complaintId);
+        return logRepository.findByComplaintIdOrderByTimestampDesc(complaintId);
     }
 
     // ------------------------------------------------
@@ -123,10 +140,10 @@ public class ComplaintService {
         logActivity(complaintId, action, performedBy, null);
     }
 
-    public void logActivity(Long complaintId, String action, String performedBy, String detail) {
+    public void logActivity(Long complaintId, String activityType, String performedBy, String detail) {
         ComplaintActivityLog log = new ComplaintActivityLog();
         log.setComplaintId(complaintId);
-        log.setAction(action);
+        log.setActivityType(activityType);
         log.setPerformedBy(performedBy);
         log.setDetail(detail);
         log.setTimestamp(LocalDateTime.now());

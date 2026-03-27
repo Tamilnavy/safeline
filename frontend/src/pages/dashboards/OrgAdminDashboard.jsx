@@ -12,7 +12,6 @@ import Badge from '../../components/ui/Badge';
 
 // Modular Components
 import AddUserModal from '../../components/dashboard/AddUserModal';
-import ManageLevelsModal from '../../components/dashboard/ManageLevelsModal';
 import ComplaintTable from '../../components/dashboard/ComplaintTable';
 import TriageModal from '../../components/dashboard/TriageModal';
 import ComplaintDetailsModal from '../../components/dashboard/ComplaintDetailsModal';
@@ -31,9 +30,8 @@ const OrgAdminDashboard = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [triageComplaint, setTriageComplaint] = useState(null);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
-  const [showManageLevels, setShowManageLevels] = useState(false);
-  const userLevel = user?.hierarchyLevel || 'LEVEL_3';
-  const [filterStatus, setFilterStatus] = useState(userLevel === 'LEVEL_2' ? 'ASSIGNED' : 'ALL');
+  const userRole = user?.role || 'EMPLOYEE';
+  const [filterStatus, setFilterStatus] = useState(userRole === 'ADMIN' ? 'ASSIGNED' : 'ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState('createdAt,desc');
@@ -130,9 +128,9 @@ const OrgAdminDashboard = () => {
   // userRole is now defined at the top for state initialization
 
   const getDashboardTitle = () => {
-    switch (userLevel) {
-      case 'LEVEL_1': return 'Command Center';
-      case 'LEVEL_2': return 'Triage / Oversight Center';
+    switch (userRole) {
+      case 'ORG_ADMIN': return 'Command Center';
+      case 'ADMIN': return 'Triage / Oversight Center';
       default: return 'Field Operations';
     }
   };
@@ -148,7 +146,7 @@ const OrgAdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">{getDashboardTitle()}</h1>
           <p className="text-slate-500 text-sm font-medium">
-            {userLevel === 'LEVEL_2' ? 'Triage and prioritize incoming reports and oversight' :
+            {userRole === 'ADMIN' ? 'Triage and prioritize incoming reports and oversight' :
                 `Management console for ${tenantDomain}`}
           </p>
         </div>
@@ -157,15 +155,8 @@ const OrgAdminDashboard = () => {
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-[10px] font-bold text-emerald-700 tracking-widest">Live System Connected</span>
           </div>
-          {userLevel === 'LEVEL_1' && (
+          {userRole === 'ORG_ADMIN' && (
             <div className="flex items-center gap-3">
-              <button
-                className="h-11 px-5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm"
-                onClick={() => setShowManageLevels(true)}
-              >
-                <Settings size={18} className="text-slate-400" />
-                <span>Manage Levels</span>
-              </button>
               <button
                 className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20 flex items-center gap-2"
                 onClick={() => setShowAddEmployee(true)}
@@ -182,7 +173,7 @@ const OrgAdminDashboard = () => {
         <Stat label="Total Reports" value={stats.total} icon={FileText} />
         <Stat label="Active Cases" value={stats.pending} icon={Clock} />
         <Stat label="Resolved Cases" value={stats.resolved} icon={CheckCircle} />
-        {userLevel === 'LEVEL_1' && (
+        {userRole === 'ORG_ADMIN' && (
           <Stat label="Team Members" value={allTeam.length} icon={Users} />
         )}
       </div>
@@ -218,8 +209,8 @@ const OrgAdminDashboard = () => {
               onFilterChange={(s) => { setFilterStatus(s); setPage(0); }}
               onViewDetails={setSelectedComplaint}
               onTriage={setTriageComplaint}
-              userLevel={userLevel}
-              showAssignment={['LEVEL_1', 'LEVEL_2'].includes(userLevel)}
+              userLevel={userRole}
+              showAssignment={['ORG_ADMIN', 'ADMIN'].includes(userRole)}
               sortBy={sortBy}
               onSortChange={(s) => { setSortBy(s); setPage(0); }}
             />
@@ -238,7 +229,7 @@ const OrgAdminDashboard = () => {
         isOpen={!!selectedComplaint}
         onClose={() => setSelectedComplaint(null)}
         complaint={selectedComplaint}
-        userLevel={userLevel}
+        userLevel={userRole}
         getStatusVariant={getStatusVariant}
         getPriorityVariant={getPriorityVariant}
       />
@@ -248,11 +239,6 @@ const OrgAdminDashboard = () => {
         onClose={() => setShowAddEmployee(false)}
         onSave={handleSaveUser}
         title="Add Employee"
-      />
-
-      <ManageLevelsModal
-        isOpen={showManageLevels}
-        onClose={() => setShowManageLevels(false)}
       />
     </div>
   );
