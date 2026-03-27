@@ -155,8 +155,49 @@ public class TenantService {
     // ------------------------------------------------
     // Delete tenant
     // ------------------------------------------------
+    @Transactional
     public void deleteTenant(Long id) {
-        tenantRepository.deleteById(id);
+        // First delete dependent entities to satisfy foreign key constraints
+        
+        // 1. Complaint dependencies
+        entityManager.createNativeQuery("DELETE FROM complaint_evidences WHERE complaint_id IN (SELECT id FROM complaints WHERE tenant_id = :tenantId)")
+            .setParameter("tenantId", id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM complaint_messages WHERE complaint_id IN (SELECT id FROM complaints WHERE tenant_id = :tenantId)")
+            .setParameter("tenantId", id).executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM complaint_activity_logs WHERE complaint_id IN (SELECT id FROM complaints WHERE tenant_id = :tenantId)")
+            .setParameter("tenantId", id).executeUpdate();
+            
+        // 2. Complaints
+        entityManager.createNativeQuery("DELETE FROM complaints WHERE tenant_id = :tenantId")
+            .setParameter("tenantId", id).executeUpdate();
+
+        // 3. Anonymous Mappings
+        entityManager.createNativeQuery("DELETE FROM anonymous_mappings WHERE tenant_id = :tenantId")
+            .setParameter("tenantId", id).executeUpdate();
+
+        // 4. User dependencies
+        entityManager.createNativeQuery("DELETE FROM user_permissions WHERE user_id IN (SELECT id FROM users WHERE tenant_id = :tenantId)")
+            .setParameter("tenantId", id).executeUpdate();
+            
+        // 5. Users
+        entityManager.createNativeQuery("DELETE FROM users WHERE tenant_id = :tenantId")
+            .setParameter("tenantId", id).executeUpdate();
+            
+        // 6. SLA Policies based on categories
+        entityManager.createNativeQuery("DELETE FROM sla_policies WHERE tenant_id = :tenantId")
+            .setParameter("tenantId", id).executeUpdate();
+            
+        // 7. Categories
+        entityManager.createNativeQuery("DELETE FROM categories WHERE tenant_id = :tenantId")
+            .setParameter("tenantId", id).executeUpdate();
+            
+        // 8. Security Logs
+        entityManager.createNativeQuery("DELETE FROM security_logs WHERE tenant_id = :tenantId")
+            .setParameter("tenantId", id).executeUpdate();
+            
+        // 9. Tenant
+        entityManager.createNativeQuery("DELETE FROM tenants WHERE id = :tenantId")
+            .setParameter("tenantId", id).executeUpdate();
     }
 
     // ------------------------------------------------
@@ -186,6 +227,16 @@ public class TenantService {
         tenant.setName(tenantDetails.getName());
         tenant.setDomain(tenantDetails.getDomain());
 
+        return tenantRepository.save(tenant);
+    }
+
+    // ------------------------------------------------
+    // Toggle tenant status
+    // ------------------------------------------------
+    public Tenant toggleTenantStatus(Long id) {
+        Tenant tenant = tenantRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+        tenant.setActive(!tenant.isActive());
         return tenantRepository.save(tenant);
     }
 

@@ -13,6 +13,10 @@ import {
   MapPin,
   Tag,
   Users,
+  Search,
+  Lock,
+  Shield,
+  Info,
   ChevronRight,
   ChevronLeft,
   AlertCircle,
@@ -25,7 +29,6 @@ import {
 const SubmitComplaint = () => {
   const [step, setStep] = useState(1);
   const [categories, setCategories] = useState([]);
-  const [employees, setEmployees] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -44,7 +47,6 @@ const SubmitComplaint = () => {
 
   useEffect(() => {
     fetchCategories();
-    fetchEmployees();
     // Check if user is logged in
     const token = localStorage.getItem('token');
     if (token) {
@@ -63,10 +65,10 @@ const SubmitComplaint = () => {
 
   const fetchEmployees = async () => {
     try {
-      const resp = await api.get('/auth/users');
-      setEmployees(resp.data);
+      const resp = await api.get('/complaints/potential-accused');
+      setEmployees(Array.isArray(resp.data) ? resp.data : []);
     } catch (err) {
-      console.error('Failed to fetch employees');
+      console.error('Failed to fetch employees', err);
     }
   };
 
@@ -83,7 +85,6 @@ const SubmitComplaint = () => {
       data.append('request', JSON.stringify({
         ...formData,
         anonymous: formData.isAnonymous,
-        accusedUserId: formData.accusedUserId || null,
         type: formData.isSensitive ? 'SENSITIVE' : 'NORMAL'
       }));
 
@@ -189,7 +190,7 @@ const SubmitComplaint = () => {
                           onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                         >
                           <option value="">Select a category...</option>
-                          {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                          {Array.isArray(categories) && categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                         </select>
                         <Tag className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
@@ -208,26 +209,6 @@ const SubmitComplaint = () => {
                         <MapPin className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                       </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[13px] font-bold text-slate-700 ml-1">Who is involved? (Optional)</label>
-                    <div className="relative">
-                      <select
-                        className="w-full h-12 px-5 bg-white border border-slate-200/60 rounded-2xl focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-[13px] font-bold text-slate-900 appearance-none cursor-pointer shadow-sm"
-                        value={formData.accusedUserId}
-                        onChange={(e) => setFormData({ ...formData, accusedUserId: e.target.value })}
-                      >
-                        <option value="">Search employee or skip...</option>
-                        {employees.map(emp => (
-                          <option key={emp.id} value={emp.id}>{emp.fullName} ({emp.employeeId})</option>
-                        ))}
-                      </select>
-                      <Users className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest ml-1">
-                      System auto-detects conflicts if this person is part of the committee.
-                    </p>
                   </div>
                 </div>
 

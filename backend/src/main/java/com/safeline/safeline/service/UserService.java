@@ -20,6 +20,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
+    
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
 
     private String normalizeEmployeeId(String id) {
         if (id == null) return null;
@@ -119,6 +122,7 @@ public class UserService {
             response.setEmail(saved.getEmail());
             response.setRole(saved.getRole());
             response.setTenantId(tenant.getId());
+            response.setEnabled(saved.isEnabled());
             response.setCommitteePermissions(saved.getCommitteePermissions());
 
             return response;
@@ -127,5 +131,93 @@ public class UserService {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    public UserResponse updateUser(Long id, UserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
+
+        if ("ORG_ADMIN".equals(user.getRole()) && !isSuperAdmin) {
+            throw new SecurityException("Only Super Admins can modify Organization Admins");
+        }
+
+        Long tenantId = com.safeline.safeline.security.TenantContext.getCurrentTenant();
+        if (tenantId != null && !user.getTenant().getId().equals(tenantId)) {
+            throw new SecurityException("Cannot edit user from another organization");
+        }
+        
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        if (request.getEmployeeId() != null && !request.getEmployeeId().isEmpty()) {
+            user.setEmployeeId(normalizeEmployeeId(request.getEmployeeId()));
+            user.setUsername(user.getEmployeeId());
+        }
+        user.setRole(request.getRole() != null ? request.getRole() : "EMPLOYEE");
+        user.setCommitteePermissions(request.getCommitteePermissions());
+        
+        User saved = userRepository.save(user);
+        
+        UserResponse response = new UserResponse();
+        response.setId(saved.getId());
+        response.setUsername(saved.getUsername());
+        response.setFullName(saved.getFullName());
+        response.setEmployeeId(saved.getEmployeeId());
+        response.setEmail(saved.getEmail());
+        response.setRole(saved.getRole());
+        response.setTenantId(saved.getTenant().getId());
+        response.setEnabled(saved.isEnabled());
+        response.setCommitteePermissions(saved.getCommitteePermissions());
+        return response;
+    }
+
+    public void toggleUserStatus(Long id) {
+        User user = userRepository.findById(id).orElseThrow();
+        Long tenantId = com.safeline.safeline.security.TenantContext.getCurrentTenant();
+        
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
+
+        if ("ORG_ADMIN".equals(user.getRole()) && !isSuperAdmin) {
+            throw new SecurityException("Only Super Admins can modify Organization Admins");
+        }
+
+        if (tenantId != null && !user.getTenant().getId().equals(tenantId)) {
+            throw new SecurityException("Cannot edit user from another organization");
+        }
+        user.setEnabled(!user.isEnabled());
+        userRepository.save(user);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow();
+        Long tenantId = com.safeline.safeline.security.TenantContext.getCurrentTenant();
+        
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isSuperAdmin = auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
+
+        if ("ORG_ADMIN".equals(user.getRole()) && !isSuperAdmin) {
+            throw new SecurityException("Only Super Admins can modify Organization Admins");
+        }
+
+        entityManager.createNativeQuery("DELETE FROM complaint_messages WHERE sender_id = :userId")
+            .setParameter("userId", id).executeUpdate();
+            
+        entityManager.createNativeQuery("UPDATE complaints SET assigned_to_id = NULL WHERE assigned_to_id = :userId")
+            .setParameter("userId", id).executeUpdate();
+
+        entityManager.createNativeQuery("UPDATE complaints SET reporter_id = NULL WHERE reporter_id = :userId")
+            .setParameter("userId", id).executeUpdate();
+            
+        entityManager.createNativeQuery("UPDATE complaints SET accused_user_id = NULL WHERE accused_user_id = :userId")
+            .setParameter("userId", id).executeUpdate();
+            
+        entityManager.createNativeQuery("DELETE FROM anonymous_mappings WHERE user_id = :userId")
+            .setParameter("userId", id).executeUpdate();
+
+        userRepository.delete(user);
     }
 }

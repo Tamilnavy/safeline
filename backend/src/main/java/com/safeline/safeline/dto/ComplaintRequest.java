@@ -9,6 +9,7 @@ public class ComplaintRequest {
     private Long categoryId;
     private String location;
     private boolean anonymous;
-    private Long accusedUserId;
     private String type; // NORMAL or SENSITIVE
+    @com.fasterxml.jackson.annotation.JsonProperty("isSensitive")
+    private boolean isSensitive;
 }

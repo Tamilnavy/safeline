@@ -82,6 +82,9 @@ public class Complaint {
     @Enumerated(EnumType.STRING)
     private ComplaintType type = ComplaintType.NORMAL;
 
+    @Column(name = "is_sensitive", nullable = false, columnDefinition = "boolean default false")
+    private boolean isSensitive = false;
+
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)

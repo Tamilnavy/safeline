@@ -242,7 +242,7 @@ const TrackComplaint = () => {
                 Case Progress
               </h3>
               <div className="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
-                {activities.map((act, i) => (
+                {Array.isArray(activities) && activities.map((act, i) => (
                   <div key={i} className="relative pl-10 group animate-in slide-in-from-right-2 duration-500" style={{ animationDelay: `${i * 150}ms` }}>
                     <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 transition-transform flex items-center justify-center ${
                       i === 0 ? 'bg-[#3b82f6] ring-4 ring-blue-50 scale-110' : 'bg-slate-200'

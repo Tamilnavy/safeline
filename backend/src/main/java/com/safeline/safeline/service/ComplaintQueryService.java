@@ -33,13 +33,16 @@ public class ComplaintQueryService {
     public Page<Complaint> getComplaintsByType(Long tenantId, ComplaintType type, ComplaintStatus status, String search, Long userId, Pageable pageable) {
         System.out.println("DEBUG: Oversight Query (By Type)");
         System.out.println("DEBUG: TenantId=" + tenantId + ", Type=" + type + ", Status=" + status + ", UserId=" + userId);
-        return complaintRepository.searchByTenantAndType(tenantId, type, status, search, userId, pageable);
+        String typeStr = (type != null) ? type.name() : null;
+        String statusStr = (status != null) ? status.name() : null;
+        return complaintRepository.searchByTenantAndType(tenantId, typeStr, statusStr, search, userId, pageable);
     }
 
     public Page<Complaint> getAllComplaints(Long tenantId, ComplaintStatus status, String search, Long userId, Pageable pageable) {
         System.out.println("DEBUG: Oversight Query (All)");
         System.out.println("DEBUG: TenantId=" + tenantId + ", Status=" + status + ", UserId=" + userId);
-        return complaintRepository.searchAdminComplaints(tenantId, status, search, userId, pageable);
+        String statusStr = (status != null) ? status.name() : null;
+        return complaintRepository.searchAdminComplaints(tenantId, statusStr, search, userId, pageable);
     }
 
     public List<Complaint> getAllComplaintsInternal(Long tenantId) {
@@ -50,7 +53,8 @@ public class ComplaintQueryService {
     }
 
     public Page<Complaint> getAssignedComplaints(Long investigatorId, ComplaintStatus status, String search, Pageable pageable) {
-        return complaintRepository.searchAssignedComplaints(investigatorId, status, search, pageable);
+        String statusStr = (status != null) ? status.name() : null;
+        return complaintRepository.searchAssignedComplaints(investigatorId, statusStr, search, pageable);
     }
 
     public boolean verifyTracking(String trackingId, String pin) {

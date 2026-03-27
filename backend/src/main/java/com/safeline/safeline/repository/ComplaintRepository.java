@@ -24,30 +24,48 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     Page<Complaint> findByTenantIdAndCategoryNameContainingIgnoreCase(Long tenantId, String categoryName, Pageable pageable);
     Page<Complaint> findByTenantIdAndStatusAndCategoryNameContainingIgnoreCase(Long tenantId, ComplaintStatus status, String categoryName, Pageable pageable);
     
-    @Query("SELECT c FROM Complaint c " +
-           "LEFT JOIN FETCH c.category " +
-           "WHERE c.tenant.id = :tenantId AND " +
+    @Query(value = "SELECT c.* FROM complaints c " +
+           "LEFT JOIN categories cat ON cat.id = c.category_id " +
+           "WHERE c.tenant_id = :tenantId AND " +
            "c.type = :type AND " +
-           "(c.accusedUser IS NULL OR c.accusedUser.id != :userId) AND " +
+           "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
            "(:status IS NULL OR c.status = :status) AND " +
-           "(:search IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.trackingId) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Complaint> searchByTenantAndType(@Param("tenantId") Long tenantId, @Param("type") ComplaintType type, @Param("status") ComplaintStatus status, @Param("search") String search, @Param("userId") Long userId, Pageable pageable);
+           "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           countQuery = "SELECT count(*) FROM complaints c " +
+                        "WHERE c.tenant_id = :tenantId AND c.type = :type AND " +
+                        "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
+                        "(:status IS NULL OR c.status = :status) AND " +
+                        "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           nativeQuery = true)
+    Page<Complaint> searchByTenantAndType(@Param("tenantId") Long tenantId, @Param("type") String type, @Param("status") String status, @Param("search") String search, @Param("userId") Long userId, Pageable pageable);
 
-    @Query("SELECT c FROM Complaint c " +
-           "LEFT JOIN FETCH c.category " +
-           "WHERE c.tenant.id = :tenantId AND " +
-           "(c.accusedUser IS NULL OR c.accusedUser.id != :userId) AND " +
+    @Query(value = "SELECT c.* FROM complaints c " +
+           "LEFT JOIN categories cat ON cat.id = c.category_id " +
+           "WHERE c.tenant_id = :tenantId AND " +
+           "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
            "(:status IS NULL OR c.status = :status) AND " +
-           "(:search IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.trackingId) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Complaint> searchAdminComplaints(@Param("tenantId") Long tenantId, @Param("status") ComplaintStatus status, @Param("search") String search, @Param("userId") Long userId, Pageable pageable);
+           "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           countQuery = "SELECT count(*) FROM complaints c " +
+                        "WHERE c.tenant_id = :tenantId AND " +
+                        "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
+                        "(:status IS NULL OR c.status = :status) AND " +
+                        "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           nativeQuery = true)
+    Page<Complaint> searchAdminComplaints(@Param("tenantId") Long tenantId, @Param("status") String status, @Param("search") String search, @Param("userId") Long userId, Pageable pageable);
 
-    @Query("SELECT c FROM Complaint c " +
-           "LEFT JOIN FETCH c.category " +
-           "WHERE c.assignedTo.id = :investigatorId AND " +
-           "(c.accusedUser IS NULL OR c.accusedUser.id != :investigatorId) AND " +
+    @Query(value = "SELECT c.* FROM complaints c " +
+           "LEFT JOIN categories cat ON cat.id = c.category_id " +
+           "WHERE c.assigned_to_id = :investigatorId AND " +
+           "(c.accused_user_id IS NULL OR c.accused_user_id != :investigatorId) AND " +
            "(:status IS NULL OR c.status = :status) AND " +
-           "(:search IS NULL OR LOWER(c.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.trackingId) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Complaint> searchAssignedComplaints(@Param("investigatorId") Long investigatorId, @Param("status") ComplaintStatus status, @Param("search") String search, Pageable pageable);
+           "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           countQuery = "SELECT count(*) FROM complaints c " +
+                        "WHERE c.assigned_to_id = :investigatorId AND " +
+                        "(c.accused_user_id IS NULL OR c.accused_user_id != :investigatorId) AND " +
+                        "(:status IS NULL OR c.status = :status) AND " +
+                        "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           nativeQuery = true)
+    Page<Complaint> searchAssignedComplaints(@Param("investigatorId") Long investigatorId, @Param("status") String status, @Param("search") String search, Pageable pageable);
 
     Page<Complaint> findByAssignedToId(Long investigatorId, Pageable pageable);
     Page<Complaint> findByAssignedToIdAndStatus(Long investigatorId, ComplaintStatus status, Pageable pageable);

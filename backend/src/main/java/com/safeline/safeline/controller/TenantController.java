@@ -68,6 +68,13 @@ public class TenantController {
         return ResponseEntity.ok(tenantService.updateTenant(id, tenant));
     }
 
+    // TOGGLE tenant status
+    @PutMapping("/{id}/toggle-status")
+    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    public ResponseEntity<Tenant> toggleTenantStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(tenantService.toggleTenantStatus(id));
+    }
+
     // ------------------------------------------------
     // GET users for a specific tenant (Super Admin can still see list)
     // ------------------------------------------------

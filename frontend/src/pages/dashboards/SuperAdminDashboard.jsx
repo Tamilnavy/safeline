@@ -73,6 +73,14 @@ const SuperAdminDashboard = () => {
     catch (err) { alert('Failed to delete organization.'); }
   };
 
+  const handleToggleTenantStatus = async (id) => {
+    try { 
+      await api.put(`/tenants/${id}/toggle-status`); 
+      fetchData(); 
+    }
+    catch (err) { alert('Failed to toggle organization status.'); }
+  };
+
   const openManageUsers = (tenant) => {
     setManagingTenant(tenant);
   };
@@ -140,6 +148,7 @@ const SuperAdminDashboard = () => {
               loading={loading}
               onManage={openManageUsers}
               onDelete={handleDeleteTenant}
+              onToggleStatus={handleToggleTenantStatus}
             />
           </div>
         </Card>

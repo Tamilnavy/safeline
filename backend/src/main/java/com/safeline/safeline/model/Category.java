@@ -29,6 +29,7 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @lombok.ToString.Exclude
     @lombok.EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)

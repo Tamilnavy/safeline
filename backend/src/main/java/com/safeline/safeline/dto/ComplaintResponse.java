@@ -29,6 +29,8 @@ public class ComplaintResponse {
 
     // Reporter visibility
     private boolean anonymous;
+    @com.fasterxml.jackson.annotation.JsonProperty("isSensitive")
+    private boolean isSensitive;
     private String reporterUsername;
 
     private List<ComplaintEvidenceDTO> evidence;

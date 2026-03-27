@@ -4,7 +4,7 @@ import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import {
-  FileText, Clock, CheckCircle, Users, UserPlus, MessageSquare, ChevronRight, Settings, Search, ArrowUpDown
+  FileText, Clock, CheckCircle, Users, UserPlus, MessageSquare, ChevronRight, Settings, Search, ArrowUpDown, Shield
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageBoard from '../../components/ui/MessageBoard';
@@ -53,6 +53,8 @@ const OrgAdminDashboard = () => {
   }, [page, filterStatus, debouncedSearch, sortBy]);
 
   const fetchData = async () => {
+    if (userRole === 'ADMIN') return;
+    
     setLoading(true);
     try {
       let endpoint = `/complaints/all?page=${page}&size=10&sort=${sortBy}`;
@@ -169,54 +171,25 @@ const OrgAdminDashboard = () => {
         </div>
       </header>
 
+      {['ORG_ADMIN', 'ADMIN'].includes(userRole) && (
       <div className="metrics-grid">
-        <Stat label="Total Reports" value={stats.total} icon={FileText} />
-        <Stat label="Active Cases" value={stats.pending} icon={Clock} />
-        <Stat label="Resolved Cases" value={stats.resolved} icon={CheckCircle} />
-        {userRole === 'ORG_ADMIN' && (
-          <Stat label="Team Members" value={allTeam.length} icon={Users} />
-        )}
+        <Stat label="Total Users Enrolled" value={allTeam.length} icon={Users} />
+        <Stat label="Active Personnel" value={allTeam.filter(u => u.active !== false).length} icon={CheckCircle} />
+        <Stat label="System Settings" value={4} icon={Settings} />
       </div>
+      )}
 
+      {['ORG_ADMIN', 'ADMIN'].includes(userRole) && (
       <motion.div variants={itemVariants}>
-        <Card
-          title="Case Management"
-          subtitle="Real-time listing of all organization-wide concerns and reports"
-        >
-          <div className="flex flex-col mb-4">
-             <div className="relative w-full sm:max-w-md">
-               <input
-                 type="text"
-                 placeholder="Search tracking ID, Title, or Reporter..."
-                 className="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
-                 value={searchTerm}
-                 onChange={(e) => setSearchTerm(e.target.value)}
-               />
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <ComplaintTable
-              complaints={complaints}
-              investigators={investigators}
-              loading={loading}
-              page={page}
-              totalPages={totalPages}
-              filterStatus={filterStatus}
-              onAssign={handleAssign}
-              onUpdateStatus={handleUpdateStatus}
-              onPageChange={setPage}
-              onFilterChange={(s) => { setFilterStatus(s); setPage(0); }}
-              onViewDetails={setSelectedComplaint}
-              onTriage={setTriageComplaint}
-              userLevel={userRole}
-              showAssignment={['ORG_ADMIN', 'ADMIN'].includes(userRole)}
-              sortBy={sortBy}
-              onSortChange={(s) => { setSortBy(s); setPage(0); }}
-            />
+        <Card title="Setup Configuration" subtitle="Organization administrative actions">
+          <div className="p-12 text-center flex flex-col items-center justify-center">
+            <Shield className="text-slate-200 mb-6" size={64} />
+            <h3 className="text-xl font-bold text-slate-800 mb-2">System Administration Active</h3>
+            <p className="text-slate-500 max-w-sm mx-auto">Welcome to the setup console. Use the sidebar navigation to manage workforce registries, roles, and functional configurations.</p>
           </div>
         </Card>
       </motion.div>
+      )}
 
       <TriageModal
         isOpen={!!triageComplaint}

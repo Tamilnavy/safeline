@@ -20,6 +20,8 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/complaints")
@@ -35,6 +37,8 @@ public class ComplaintController {
     private final CategoryRepository categoryRepository;
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
+
+
 
     @GetMapping("/categories")
     public ResponseEntity<List<Category>> getCategories(
@@ -72,16 +76,25 @@ public class ComplaintController {
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain) throws Exception {
         ComplaintRequest request = objectMapper.readValue(requestStr, ComplaintRequest.class);
-        Tenant tenant = tenantRepository.findByDomain(domain != null ? domain : "default")
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User reporter = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) 
                 ? userRepository.findByUsername(auth.getName()).orElse(null) : null;
+
+        Tenant tenant;
+        if (reporter != null && reporter.getTenant() != null) {
+            tenant = reporter.getTenant();
+            System.out.println("DEBUG: Submission Tenant from Reporter: " + tenant.getDomain());
+        } else {
+            tenant = tenantRepository.findByDomain(domain != null && !domain.isEmpty() && !"null".equals(domain) && !"undefined".equals(domain) ? domain : "default")
+                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+            System.out.println("DEBUG: Submission Tenant from Header: " + tenant.getDomain());
+        }
         Complaint complaint = new Complaint();
         complaint.setTitle(request.getTitle());
         complaint.setDescription(request.getDescription());
         complaint.setLocation(request.getLocation());
         complaint.setAnonymous(request.isAnonymous());
+        complaint.setSensitive(request.isSensitive());
         complaint.setTenant(tenant);
         complaint.setReporter(reporter);
 
@@ -89,23 +102,15 @@ public class ComplaintController {
             categoryRepository.findById(request.getCategoryId()).ifPresent(complaint::setCategory);
         }
 
-        if (request.getAccusedUserId() != null) {
-            userRepository.findById(request.getAccusedUserId()).ifPresent(complaint::setAccusedUser);
-        }
-
         if (request.getType() != null && !request.getType().isEmpty()) {
             try {
-                complaint.setType(ComplaintType.valueOf(request.getType()));
+                ComplaintType requestedType = ComplaintType.valueOf(request.getType());
+                complaint.setType(requestedType);
+                complaint.setSensitive(requestedType == ComplaintType.SENSITIVE);
             } catch (Exception ignored) {}
-        }
-
-        // AUTO-DETECT CONFLICTS (RELIABILITY RULE)
-        // If the accused belongs to the Committee, force the complaint to SENSITIVE
-        if (complaint.getAccusedUser() != null && complaint.getAccusedUser().getCommitteePermissions() != null) {
-            if (!complaint.getAccusedUser().getCommitteePermissions().isEmpty()) {
-                System.out.println("DEBUG: Conflict Detected! Accused is a Committee Member. Forcing SENSITIVE report.");
-                complaint.setType(ComplaintType.SENSITIVE);
-            }
+        } else {
+            // Sync isSensitive (boolean) with type (enum) if type not explicitly provided
+            complaint.setType(complaint.isSensitive() ? ComplaintType.SENSITIVE : ComplaintType.NORMAL);
         }
 
         Complaint saved = complaintService.createComplaint(complaint, files);
@@ -149,6 +154,21 @@ public class ComplaintController {
             @RequestParam(required = false) String search,
             Pageable pageable) {
         
+        // Native SQL queries don't translate camelCase to snake_case — remap manually
+        org.springframework.data.domain.Sort remappedSort = org.springframework.data.domain.Sort.by(
+            pageable.getSort().stream().map(order -> {
+                String prop = order.getProperty()
+                    .replace("createdAt", "created_at")
+                    .replace("updatedAt", "updated_at");
+                return order.isAscending()
+                    ? org.springframework.data.domain.Sort.Order.asc(prop)
+                    : org.springframework.data.domain.Sort.Order.desc(prop);
+            }).toList()
+        );
+        Pageable safePageable = org.springframework.data.domain.PageRequest.of(
+            pageable.getPageNumber(), pageable.getPageSize(), remappedSort
+        );
+
         try {
             Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
             if (currentAuth == null || !currentAuth.isAuthenticated() || "anonymousUser".equals(currentAuth.getPrincipal())) {
@@ -164,10 +184,7 @@ public class ComplaintController {
                     ? tenantRepository.findByDomain(domain).map(Tenant::getId).orElse(principal != null ? principal.getTenantId() : null)
                     : (principal != null ? principal.getTenantId() : (tenantId != null ? tenantId : null));
             
-            System.out.println("DEBUG: getAll request - Domain: " + domain + ", ParamTenantId: " + tenantId + ", PrincipalTenantId: " + (principal != null ? principal.getTenantId() : "null") + ", FinalTenantId: " + finalTenantId);
-            
             if (finalTenantId == null) {
-                System.err.println("DEBUG ERROR: No TenantID resolved for getAll request!");
                 return ResponseEntity.badRequest().build();
             }
             
@@ -177,29 +194,33 @@ public class ComplaintController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
             
+            System.out.println("DEBUG: User " + user.getUsername() + " Permissions: " + user.getCommitteePermissions());
             boolean isSuperAdmin = currentAuth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
             
             Page<Complaint> complaints;
-            // Strict Privacy Rule: Local Organization Admins are restricted from viewing reports.
-            // Only Committee Leads or Escalation Heads can view their respective queues.
-            if (isSuperAdmin) {
-                complaints = complaintQueryService.getAllComplaints(finalTenantId, status, search, user.getId(), pageable);
-            } else if (user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD)) {
-                complaints = complaintQueryService.getComplaintsByType(finalTenantId, ComplaintType.SENSITIVE, status, search, user.getId(), pageable);
-            } else if (user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD)) {
-                complaints = complaintQueryService.getComplaintsByType(finalTenantId, ComplaintType.NORMAL, status, search, user.getId(), pageable);
-            } else if (user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.COMPLAINT_HANDLER)) {
-                complaints = complaintQueryService.getAssignedComplaints(user.getId(), status, search, pageable);
+            java.util.Set<CommitteePermission> perms = user.getCommitteePermissions();
+            boolean isEscalation = perms != null && perms.contains(CommitteePermission.ESCALATION_HEAD);
+            boolean isLead = perms != null && perms.contains(CommitteePermission.COMMITTEE_LEAD);
+            boolean isHandler = perms != null && perms.contains(CommitteePermission.COMPLAINT_HANDLER);
+
+            System.out.println("DEBUG: User=" + user.getUsername() + ", Tenant=" + finalTenantId + 
+                               ", Role=" + user.getRole() + ", isEscalation=" + isEscalation + 
+                               ", isLead=" + isLead + ", isHandler=" + isHandler);
+
+            if (isEscalation) {
+                complaints = complaintQueryService.getComplaintsByType(finalTenantId, ComplaintType.SENSITIVE, status, search, user.getId(), safePageable);
+            } else if (isLead) {
+                complaints = complaintQueryService.getComplaintsByType(finalTenantId, ComplaintType.NORMAL, status, search, user.getId(), safePageable);
+            } else if (isHandler) {
+                complaints = complaintQueryService.getAssignedComplaints(user.getId(), status, search, safePageable);
             } else {
                 complaints = Page.empty();
             }
-            
+
             Page<ComplaintResponse> responsePage = complaints.map(this::mapToResponse);
             return ResponseEntity.ok(responsePage);
         } catch (Exception e) {
-            System.err.println("DEBUG FATAL: Exception in ComplaintController.getAll()!");
-            System.err.println("Message: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("ERROR in getAll: " + e.getMessage());
             throw e;
         }
     }
@@ -226,7 +247,15 @@ public class ComplaintController {
     public ResponseEntity<Page<ComplaintResponse>> getAssigned(
             Authentication auth, @RequestParam(required = false) ComplaintStatus status, @RequestParam(required = false) String search, Pageable pageable) {
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
-        return ResponseEntity.ok(complaintQueryService.getAssignedComplaints(user.getId(), status, search, pageable).map(this::mapToResponse));
+        // Native SQL doesn't translate camelCase — remap sort column
+        org.springframework.data.domain.Sort remappedSort = org.springframework.data.domain.Sort.by(
+            pageable.getSort().stream().map(order -> {
+                String prop = order.getProperty().replace("createdAt", "created_at").replace("updatedAt", "updated_at");
+                return order.isAscending() ? org.springframework.data.domain.Sort.Order.asc(prop) : org.springframework.data.domain.Sort.Order.desc(prop);
+            }).toList()
+        );
+        Pageable safePageable = org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), remappedSort);
+        return ResponseEntity.ok(complaintQueryService.getAssignedComplaints(user.getId(), status, search, safePageable).map(this::mapToResponse));
     }
 
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'ADMIN') or isAuthenticated()")
@@ -315,6 +344,7 @@ public class ComplaintController {
         res.setPriority(c.getPriority() != null ? c.getPriority().name() : "NORMAL");
         res.setClassification(c.getClassification() != null ? c.getClassification().name() : "GENERAL");
         res.setAnonymous(c.isAnonymous());
+        res.setSensitive(c.isSensitive());
         res.setReporterUsername(c.isAnonymous() ? "Anonymous" : (c.getReporter() != null ? c.getReporter().getUsername() : "Public User"));
         
         if (c.getAssignedTo() != null) {

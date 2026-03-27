@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
-import { Users, UserPlus, Mail, ShieldCheck, X } from 'lucide-react';
+import { Users, UserPlus, Mail, ShieldCheck, X, Settings } from 'lucide-react';
 import AddUserModal from '../../components/dashboard/AddUserModal';
 import { useAuth } from '../../context/AuthContext';
 
@@ -11,6 +11,7 @@ const TeamDirectory = () => {
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddUser, setShowAddUser] = useState(false);
+  const [showEditUser, setShowEditUser] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [filterRole, setFilterRole] = useState('ALL');
 
@@ -45,6 +46,33 @@ const TeamDirectory = () => {
     setShowAddUser(false);
   };
 
+  const handleUpdateUser = async (formData) => {
+    try {
+      await api.put(`/admin/users/${selectedMember.id}`, formData);
+      fetchTeam();
+      setShowEditUser(false);
+      setSelectedMember(null);
+    } catch (err) {
+      alert('Failed to update employee');
+    }
+  };
+
+  const handleToggleStatus = async (id) => {
+    try {
+      await api.put(`/admin/users/${id}/toggle-status`);
+      fetchTeam();
+      setSelectedMember(null);
+    } catch (err) { alert('Failed to toggle status'); }
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      await api.delete(`/admin/users/${id}`);
+      fetchTeam();
+      setSelectedMember(null);
+    } catch (err) { alert('Failed to delete user'); }
+  };
+
   return (
     <div className="space-y-8 animate-slide-up">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -52,7 +80,7 @@ const TeamDirectory = () => {
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">Team Directory</h1>
           <p className="text-slate-500 text-sm font-medium">Manage and view all enrolled organization staff members.</p>
         </div>
-        {['ORG_ADMIN', 'ADMIN'].includes(user?.role) && (
+        {(user?.role === 'ORG_ADMIN' || user?.role === 'ADMIN') && (
           <button className="btn btn-primary h-11 px-6 shadow-lg shadow-indigo-600/20" onClick={() => setShowAddUser(true)}>
             <UserPlus size={18} className="mr-2" />
             <span>Add Team Member</span>
@@ -92,8 +120,9 @@ const TeamDirectory = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {team
+                  {Array.isArray(team) && team
                     .filter(m => {
+                      if (!m) return false;
                       if (filterRole === 'ALL') return true;
                       if (filterRole === 'ORG_ADMIN') return m.role === 'ORG_ADMIN';
                       if (filterRole === 'ADMIN') return m.role === 'ADMIN';
@@ -148,7 +177,7 @@ const TeamDirectory = () => {
       )}
 
       {/* ── Employee Details Modal ── */}
-      {selectedMember && (
+      {selectedMember && !showEditUser && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedMember(null)}>
           <div className="bg-white w-full max-w-sm rounded-[28px] shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="bg-slate-50/80 px-6 pt-10 pb-8 border-b border-slate-100 flex flex-col items-center text-center relative">
@@ -197,10 +226,33 @@ const TeamDirectory = () => {
               </div>
             </div>
             
-            <div className="p-4 bg-slate-50 border-t border-slate-100">
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2">
+              {(user?.role === 'SUPER_ADMIN' || (user?.role === 'ORG_ADMIN' && selectedMember.role !== 'ORG_ADMIN')) && (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowEditUser(true)}
+                    className="flex-1 h-10 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all"
+                  >
+                    <Settings className="opacity-60" size={14} />
+                    Edit
+                  </button>
+                  <button 
+                    onClick={() => handleToggleStatus(selectedMember.id)}
+                    className="flex-1 h-11 bg-white border border-slate-300 hover:border-orange-400 hover:text-orange-600 font-bold rounded-xl transition-all shadow-sm flex items-center justify-center text-sm tracking-tight text-slate-700 whitespace-nowrap"
+                  >
+                    {selectedMember.enabled === false ? 'Activate' : 'Deactivate'}
+                  </button>
+                  <button 
+                    onClick={() => { if(window.confirm('PERMANENTLY DELETE user? This action cannot be undone.')) handleDeleteUser(selectedMember.id); }}
+                    className="flex-1 h-11 bg-rose-50 border border-rose-200 hover:bg-rose-100 hover:text-rose-700 text-rose-600 font-bold rounded-xl transition-all shadow-sm flex items-center justify-center text-sm tracking-tight"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
               <button 
                 onClick={() => setSelectedMember(null)}
-                className="w-full h-12 bg-white border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 text-slate-700 font-bold tracking-tight rounded-xl transition-all shadow-sm active:scale-[0.98]"
+                className="w-full h-11 bg-white border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold tracking-tight rounded-xl transition-all shadow-sm active:scale-[0.98]"
               >
                 Close Profile
               </button>
@@ -210,9 +262,12 @@ const TeamDirectory = () => {
       )}
 
       <AddUserModal
-        isOpen={showAddUser}
-        onClose={() => setShowAddUser(false)}
-        onSave={handleSaveUser}
+        isOpen={showAddUser || showEditUser}
+        onClose={() => { setShowAddUser(false); setShowEditUser(false); }}
+        onSave={showEditUser ? handleUpdateUser : handleSaveUser}
+        title={showEditUser ? "Edit Profile" : "Add Employee"}
+        editMode={showEditUser}
+        initialData={selectedMember}
       />
     </div>
   );

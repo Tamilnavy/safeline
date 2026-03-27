@@ -45,19 +45,31 @@ const TenantTable = ({
                 </div>
               </td>
               <td className="px-8 py-5 text-right">
-                <div className="flex gap-3 justify-end">
-                  <button
-                    className="btn btn-secondary py-2! px-4! text-[10px]! font-black! uppercase! tracking-widest!"
-                    onClick={() => onManage(t)}
-                  >
-                    Manage
-                  </button>
+                <div className="flex gap-4 justify-end items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.active ? 'Active' : 'Inactive'}</span>
+                    <button 
+                      onClick={() => onToggleStatus && onToggleStatus(t.id)}
+                      className={`w-11 h-6 rounded-full p-1 transition-all duration-300 relative border cursor-pointer flex items-center ${t.active ? 'bg-emerald-500 border-emerald-600' : 'bg-slate-200 border-slate-300'}`}
+                    >
+                      <div
+                        className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${t.active ? 'translate-x-5' : 'translate-x-0'}`}
+                      />
+                    </button>
+                  </div>
                   <button 
                     className="btn btn-secondary !p-2" 
                     onClick={() => window.open(`http://${t.domain}.localhost:5173`, '_blank')}
                     title="Visit Portal"
                   >
                     <Globe size={14} className="text-slate-400" />
+                  </button>
+                  <button 
+                    className="btn btn-secondary !p-2 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200" 
+                    onClick={() => onDelete && onDelete(t.id)}
+                    title="Delete Organization"
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </td>

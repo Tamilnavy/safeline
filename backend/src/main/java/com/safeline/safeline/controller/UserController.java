@@ -32,11 +32,14 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'ADMIN') or isAuthenticated()")
     @Transactional(readOnly = true)
     public ResponseEntity<List<UserResponse>> getInvestigators() {
-        Long tenantId = com.safeline.safeline.security.TenantContext.getCurrentTenant();
+        // Use auth principal for reliable tenant — TenantContext ThreadLocal may be null for committee members
+        org.springframework.security.core.Authentication auth = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         
-        System.out.println("DEBUG: Investigator List Request");
-        System.out.println("DEBUG: Authentication Principal: " + org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        System.out.println("DEBUG: Resolved TenantId (ThreadLocal): " + tenantId);
+        Long tenantId = null;
+        if (auth != null && auth.getPrincipal() instanceof com.safeline.safeline.security.TenantAwareUserDetails tenantUser) {
+            tenantId = tenantUser.getTenantId();
+        }
         
         if (tenantId == null) {
             System.err.println("DEBUG ERROR: No TenantId found for Investigator List fetch!");
@@ -86,6 +89,7 @@ public class UserController {
             res.setEmail(u.getEmail());
             res.setRole(u.getRole());
             res.setTenantId(u.getTenant().getId());
+            res.setEnabled(u.isEnabled());
             res.setCommitteePermissions(u.getCommitteePermissions());
             return res;
         }).toList();
@@ -96,5 +100,25 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'ADMIN')")
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
         return ResponseEntity.ok(userService.createUser(request));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest request) {
+        return ResponseEntity.ok(userService.updateUser(id, request));
+    }
+
+    @PutMapping("/{id}/toggle-status")
+    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<Void> toggleUserStatus(@PathVariable Long id) {
+        userService.toggleUserStatus(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ORG_ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

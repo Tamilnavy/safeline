@@ -11,6 +11,8 @@ const AddUserModal = ({
   onClose,
   onSave,
   title = "Add Employee",
+  editMode = false,
+  initialData = null
 }) => {
   const { user: currentUser } = useAuth();
   const [form, setForm] = useState({
@@ -27,17 +29,28 @@ const AddUserModal = ({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setForm({
-        fullName: '',
-        email: '',
-        password: '',
-        employeeId: '',
-        role: 'EMPLOYEE',
-        committeePermissions: [],
-      });
+      if (editMode && initialData) {
+        setForm({
+          fullName: initialData.fullName || '',
+          email: initialData.email || '',
+          password: '', // Blank for edit
+          employeeId: initialData.employeeId || '',
+          role: initialData.role || 'EMPLOYEE',
+          committeePermissions: initialData.committeePermissions || [],
+        });
+      } else {
+        setForm({
+          fullName: '',
+          email: '',
+          password: '',
+          employeeId: '',
+          role: 'EMPLOYEE',
+          committeePermissions: [],
+        });
+      }
       setMsg({ text: '', type: '' });
     }
-  }, [isOpen]);
+  }, [isOpen, editMode, initialData]);
 
   if (!isOpen) return null;
 
@@ -109,18 +122,19 @@ const AddUserModal = ({
             />
           </div>
 
-          {/* ── Password ── */}
-          <div className="space-y-1.5">
-            <label className={labelClass}>Password</label>
-            <input
-              type="password"
-              className={inputClass}
-              required
-              placeholder="Secure password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
-          </div>
+          {!editMode && (
+            <div className="space-y-1.5">
+              <label className={labelClass}>Password</label>
+              <input
+                type="password"
+                className={inputClass}
+                required
+                placeholder="Secure password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              />
+            </div>
+          )}
 
           {/* ── Employee ID ── */}
           <div className="space-y-1.5">
@@ -162,32 +176,34 @@ const AddUserModal = ({
                 </div>
               </button>
 
-              {/* Card 2: Investigation Officer */}
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, role: 'EMPLOYEE', committeePermissions: form.committeePermissions.length > 0 ? form.committeePermissions : ['COMPLAINT_HANDLER'] })}
-                className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                  form.role === 'EMPLOYEE' && form.committeePermissions.length > 0
-                    ? 'border-purple-600 bg-purple-50/50 shadow-md shadow-purple-600/5'
-                    : 'border-slate-100 hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                  form.role === 'EMPLOYEE' && form.committeePermissions.length > 0 ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'
-                }`}>
-                  <Shield size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-slate-900">Investigation Officer</p>
-                    {form.role === 'EMPLOYEE' && form.committeePermissions.length > 0 && <Check size={16} className="text-purple-600" />}
+              {/* Card 2: Investigation Officer (For Admins and Org Admins) */}
+              {(currentUser?.role === 'ORG_ADMIN' || currentUser?.role === 'ADMIN') && (
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, role: 'EMPLOYEE', committeePermissions: form.committeePermissions.length > 0 ? form.committeePermissions : ['COMPLAINT_HANDLER'] })}
+                  className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                    form.role === 'EMPLOYEE' && form.committeePermissions.length > 0
+                      ? 'border-purple-600 bg-purple-50/50 shadow-md shadow-purple-600/5'
+                      : 'border-slate-100 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    form.role === 'EMPLOYEE' && form.committeePermissions.length > 0 ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'
+                  }`}>
+                    <Shield size={20} />
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Oversight power to review, triage, or investigate sensitive anonymous cases.</p>
-                </div>
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-slate-900">Investigation Officer</p>
+                      {form.role === 'EMPLOYEE' && form.committeePermissions.length > 0 && <Check size={16} className="text-purple-600" />}
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Oversight power to review, triage, or investigate sensitive anonymous cases.</p>
+                  </div>
+                </button>
+              )}
 
               {/* Card 3: System Administrator (Only for Org/Owner creators) */}
-              {currentUser?.role === 'ORG_ADMIN' && (
+              {(currentUser?.role === 'ORG_ADMIN' || currentUser?.role === 'ADMIN') && (
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, role: 'ADMIN', committeePermissions: [] })}
@@ -282,7 +298,7 @@ const AddUserModal = ({
             ) : (
               <>
                 <UserPlus size={18} />
-                <span>Add Employee</span>
+                <span>{editMode ? 'Update Employee' : 'Add Employee'}</span>
               </>
             )}
           </button>

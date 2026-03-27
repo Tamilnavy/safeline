@@ -22,13 +22,36 @@ public class DataInitializer implements CommandLineRunner {
     private final SLAPolicyRepository slaPolicyRepository;
     private final UserRepository userRepository;
     private final SecurityLogRepository securityLogRepository;
-    private final ComplaintRepository complaintRepository;
     private final ComplaintMessageRepository complaintMessageRepository;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) {
+        // Ensure database schema is up to date (Migration for missing columns)
+        try {
+            System.out.println("DEBUG: Running pre-startup schema checks...");
+            // Users table
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(255) DEFAULT 'EMPLOYEE'");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id VARCHAR(255)");
+            
+            // Fix legacy NOT NULL constraints that block startup
+            try {
+                jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN access_role DROP NOT NULL");
+            } catch (Exception e) {
+                // Ignore if column doesn't exist
+            }
+            
+            // Complaints table
+            jdbcTemplate.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS type VARCHAR(255) DEFAULT 'NORMAL'");
+            jdbcTemplate.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS accused_user_id BIGINT");
+            jdbcTemplate.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assigned_to_id BIGINT");
+            jdbcTemplate.execute("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS anonymous_id VARCHAR(255)");
+            System.out.println("DEBUG: Schema checks complete.");
+        } catch (Exception e) {
+            System.err.println("WARNING: Schema migration failed: " + e.getMessage());
+        }
+
         // 1. Default Tenant
         Tenant defaultTenant = tenantRepository.findByDomain("default")
                 .orElseGet(() -> {
@@ -47,25 +70,12 @@ public class DataInitializer implements CommandLineRunner {
                     return tenantRepository.save(t);
                 });
 
-        // 3. Create Required Test Users
+        // 3. Create Required System Bootstrap Admin
         createTestUser("admin", "Admin User", "ADM-001", "admin@safeline.com", "admin123", defaultTenant, "SUPER_ADMIN", Set.of());
         
-        // Org Admin for Shal (Can manage users, but CANNOT see cases)
-        createTestUser("shal", "Shal Org Admin", "SHAL-ADM", "shal@shal.com", "123456", shalTenant, "ORG_ADMIN", Set.of());
+        // Removed legacy test users (Sara, John, etc.) as requested by user.
         
-        // Committee Lead for Shal (Can see cases, triage, and assign)
-        createTestUser("EMP001", "James - Committee Lead", "EMP001", "emp001@shal.com", "123456", shalTenant, "EMPLOYEE", Set.of(CommitteePermission.COMMITTEE_LEAD));
-        
-        // Standard Employee for Shal
-        createTestUser("EMP002", "John Doe - Employee", "EMP002", "emp002@shal.com", "123456", shalTenant, "EMPLOYEE", Set.of());
-        
-        // Complaint Handler for Shal (Assigned cases only)
-        createTestUser("EMP003", "Sara - Handler", "EMP003", "emp003@shal.com", "123456", shalTenant, "EMPLOYEE", Set.of(CommitteePermission.COMPLAINT_HANDLER));
-
-        // Escalation Head for Shal (Can see SENSITIVE complaints)
-        createTestUser("EMP004", "Michael - Escalation Head", "EMP004", "emp004@shal.com", "123456", shalTenant, "EMPLOYEE", Set.of(CommitteePermission.ESCALATION_HEAD));
-
-        // 4. Categories and SLA Policies
+        // 4. Categories and SLA Policies (Required for system functionality)
         tenantRepository.findAll().forEach(tenant -> {
             if (categoryRepository.findByTenantId(tenant.getId()).isEmpty()) {
                 saveCategoryWithSLA("Ethics & Compliance", "Bribery, corruption, fraud", tenant, 7);
@@ -75,37 +85,8 @@ public class DataInitializer implements CommandLineRunner {
             }
         });
 
-        // 5. Add a Sample Complaint for Shal Tenant
-        if (complaintRepository.findAll().stream().noneMatch(c -> c.getTenant().getId().equals(shalTenant.getId()))) {
-            Complaint c = new Complaint();
-            c.setTitle("Sample Ethics Issue");
-            c.setDescription("This is an anonymous test report for the Committee Lead to triage.");
-            c.setLocation("Main Office");
-            c.setAnonymous(true);
-            c.setTenant(shalTenant);
-            c.setStatus(ComplaintStatus.SUBMITTED);
-            c.setTrackingId("TRK-SHAL-789");
-            c.setPinHash(passwordEncoder.encode("1234"));
-            c.setReporter(userRepository.findByUsername("EMP002").orElse(null));
-            complaintRepository.save(c);
-        }
-
-        // 6. Add a Sensitive Complaint for Shal Tenant (Should only be visible to EMP004)
-        if (complaintRepository.findAll().stream().noneMatch(c -> c.getType() == ComplaintType.SENSITIVE)) {
-            Complaint s = new Complaint();
-            s.setTitle("Leadership Misconduct");
-            s.setDescription("This is a sensitive report against a senior member. Only the Escalation Head should see this.");
-            s.setLocation("Executive Floor");
-            s.setAnonymous(true);
-            s.setTenant(shalTenant);
-            s.setStatus(ComplaintStatus.SUBMITTED);
-            s.setType(ComplaintType.SENSITIVE);
-            s.setTrackingId("TRK-SENS-123");
-            s.setPinHash(passwordEncoder.encode("1234"));
-            s.setReporter(userRepository.findByUsername("EMP002").orElse(null));
-            complaintRepository.save(s);
-        }
-
+        // Removed Sample Complaint generation (TRK-SHAL-789, TRK-SENS-123)
+        
         System.out.println("DEBUG: DATA INITIALIZATION COMPLETE.");
     }
 

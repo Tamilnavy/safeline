@@ -11,5 +11,6 @@ public class UserResponse {
     private String email;
     private String role;
     private Long tenantId;
+    private boolean enabled;
     private java.util.Set<com.safeline.safeline.model.CommitteePermission> committeePermissions;
 }

@@ -26,23 +26,25 @@ const InvestigatorDashboard = () => {
   const [triageComplaint, setTriageComplaint] = useState(null);
   const [investigators, setInvestigators] = useState([]);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
-  // Use committee permissions to determine role for logic
   const isLead = user?.committeePermissions?.includes('COMMITTEE_LEAD');
   const isEscalation = user?.committeePermissions?.includes('ESCALATION_HEAD');
   const isHandler = user?.committeePermissions?.includes('COMPLAINT_HANDLER');
+  const isOrgAdmin = ['ORG_ADMIN', 'ADMIN'].includes(user?.role);
   
   const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
 
   useEffect(() => {
+    // Wait until auth context has finished loading before fetching
+    if (authLoading || !user) return;
     fetchData();
     // Allow management roles to see investigator list for re-assignment if needed
     if (isLead || isEscalation || ['ORG_ADMIN', 'ADMIN'].includes(user?.role)) {
       fetchInvestigators();
     }
-  }, [page, filter, searchTerm, sortBy]);
+  }, [page, filter, searchTerm, sortBy, user, authLoading]);
 
 
   const fetchInvestigators = async () => {
@@ -57,9 +59,9 @@ const InvestigatorDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Logic: Leads and Escalation Heads see the "all" view (filtered by backend)
+      // Logic: Leads, Escalation Heads, and Org Admins see the "all" view (filtered by backend)
       // Standard handlers see only "assigned"
-      const baseEndpoint = (isLead || isEscalation) ? '/complaints/all' : '/complaints/assigned';
+      const baseEndpoint = (isLead || isEscalation || isOrgAdmin) ? '/complaints/all' : '/complaints/assigned';
 
       const queryParams = [];
       if (filter !== 'ALL') queryParams.push(`status=${filter}`);
@@ -118,7 +120,7 @@ const InvestigatorDashboard = () => {
 
   const getDashboardTitle = () => {
     if (isEscalation) return 'Escalation Intelligence';
-    if (isLead) return 'Committee Oversight';
+    if (isLead || isOrgAdmin) return 'Committee Oversight';
     if (isHandler) return 'Case Investigation';
     return 'Specialized Intelligence';
   };
@@ -191,7 +193,7 @@ const InvestigatorDashboard = () => {
         isOpen={!!selectedCase}
         onClose={() => setSelectedCase(null)}
         complaint={selectedCase}
-        userRole={isEscalation ? 'ESCALATION' : (isLead ? 'LEAD' : 'INVESTIGATOR')}
+        userRole={isEscalation ? 'ESCALATION' : (isLead || isOrgAdmin ? 'LEAD' : 'INVESTIGATOR')}
         getStatusVariant={getStatusVariant}
       />
     </div>

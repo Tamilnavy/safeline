@@ -4,6 +4,8 @@ public enum ComplaintStatus {
 
     DRAFT,
     SUBMITTED,
+    UNDER_REVIEW,
+    INVESTIGATING,
     TRIAGED,
     ASSIGNED,
     IN_PROGRESS,

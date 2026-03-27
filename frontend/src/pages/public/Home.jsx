@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, FileSearch, ArrowRight } from 'lucide-react';
+import { ShieldCheck, FileSearch, ArrowRight, PlusCircle, Search } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();

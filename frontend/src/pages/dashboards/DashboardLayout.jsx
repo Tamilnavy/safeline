@@ -25,9 +25,6 @@ import InvestigatorDashboard from './InvestigatorDashboard';
 import EmployeeDashboard from './EmployeeDashboard';
 import OrgAdminDashboard from './OrgAdminDashboard';
 import InvestigationDetails from './InvestigationDetails';
-import SystemMonitoring from './SystemMonitoring';
-import Messages from './Messages';
-import TeamWorkload from './TeamWorkload';
 import TeamDirectory from './TeamDirectory';
 import SuperAdminOverview from './SuperAdminOverview';
 
@@ -40,13 +37,19 @@ const DashboardLayout = () => {
   if (!user) return <Navigate to="/login" />;
 
   const menuItems = [
-    { label: 'Overview', icon: LayoutDashboard, path: (user.role === 'SUPER_ADMIN' ? '/dashboard/overview' : '/dashboard'), show: (u) => !['ADMIN', 'ORG_ADMIN'].includes(u.role) },
+    // Basic Employee / Investigator Menus
+    { label: 'Overview', icon: LayoutDashboard, path: '/dashboard', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
     { label: 'Submit Complaint', icon: PlusCircle, path: '/submit', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
     { label: 'My Complaints', icon: FileText, path: '/dashboard/complaints', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
-    { label: 'Investigations', icon: ShieldCheck, path: '/dashboard/assigned', show: (u) => u.committeePermissions?.length > 0 },
-    { label: 'Registry', icon: Settings, path: '/dashboard/registry', show: (u) => u.role === 'SUPER_ADMIN' },
-    { label: 'Team Workload', icon: Shield, path: '/dashboard/workload', show: (u) => !['ADMIN', 'ORG_ADMIN'].includes(u.role) && u.committeePermissions?.includes('COMMITTEE_LEAD') },
-    { label: 'Team Directory', icon: Users, path: '/dashboard/team', show: (u) => ['ORG_ADMIN', 'ADMIN'].includes(u.role) || u.committeePermissions?.includes('COMMITTEE_LEAD') },
+    { label: 'Investigations', icon: ShieldCheck, path: '/dashboard/assigned', show: (u) => u.committeePermissions?.length > 0 && !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
+    
+    // Super Admin Menus
+    { label: 'Global Overview', icon: LayoutDashboard, path: '/dashboard/overview', show: (u) => u.role === 'SUPER_ADMIN' },
+    { label: 'Organization Registry', icon: Settings, path: '/dashboard/registry', show: (u) => u.role === 'SUPER_ADMIN' },
+    
+    // Setup Admin Menus (Strictly Setup Role per Prompt)
+    { label: 'Dashboard Overview', icon: LayoutDashboard, path: '/dashboard/org', show: (u) => ['ADMIN', 'ORG_ADMIN'].includes(u.role) },
+    { label: 'User Management', icon: Users, path: '/dashboard/team', show: (u) => ['ADMIN', 'ORG_ADMIN'].includes(u.role) },
   ];
 
   const filteredMenu = menuItems.filter(item => item.show ? item.show(user) : true);
@@ -54,7 +57,7 @@ const DashboardLayout = () => {
   const getRoleLabel = (role) => {
     if (user.role === 'SUPER_ADMIN') return 'Platform Super Admin';
     if (user.role === 'ORG_ADMIN') return 'Organization Owner';
-    if (user.role === 'ADMIN') return 'Organization Admin';
+    if (user.role === 'ADMIN') return 'Admin';
     
     if (user.committeePermissions?.includes('ESCALATION_HEAD')) return 'Escalation Head';
     if (user.committeePermissions?.includes('COMMITTEE_LEAD')) return 'Committee Lead';
@@ -159,15 +162,16 @@ const DashboardLayout = () => {
               <Route path="/" element={<DashboardDispatcher user={user} />} />
               <Route path="/overview" element={user.role === 'SUPER_ADMIN' ? <SuperAdminOverview /> : <Navigate to="/dashboard" />} />
               <Route path="/complaints" element={<EmployeeDashboard />} />
-              <Route path="/assigned" element={<InvestigatorDashboard />} />
+              <Route path="/assigned" element={user.committeePermissions?.length > 0 ? <InvestigatorDashboard /> : <Navigate to="/dashboard" />} />
               <Route path="/complaint/:id" element={<InvestigationDetails />} />
               <Route path="/org" element={<OrgAdminDashboard />} />
               <Route
                 path="/registry"
                 element={user.role === 'SUPER_ADMIN' ? <SuperAdminDashboard /> : <Navigate to="/dashboard" />}
               />
-              <Route path="/workload" element={['ORG_ADMIN', 'ADMIN'].includes(user.role) || user.committeePermissions?.includes('COMMITTEE_LEAD') ? <TeamWorkload /> : <Navigate to="/dashboard" />} />
               <Route path="/team" element={['ORG_ADMIN', 'ADMIN'].includes(user.role) || user.committeePermissions?.includes('COMMITTEE_LEAD') ? <TeamDirectory /> : <Navigate to="/dashboard" />} />
+              <Route path="/categories" element={user.role === 'ADMIN' || user.role === 'ORG_ADMIN' ? <div className="p-8 text-center text-slate-500"><PlusCircle className="mx-auto mb-4 opacity-50" size={48} /><p>Category Management (Coming Soon)</p></div> : <Navigate to="/dashboard" />} />
+              <Route path="/settings" element={user.role === 'ADMIN' || user.role === 'ORG_ADMIN' ? <div className="p-8 text-center text-slate-500"><Settings className="mx-auto mb-4 opacity-50" size={48} /><p>Organization Settings (Coming Soon)</p></div> : <Navigate to="/dashboard" />} />
             </Routes>
           </motion.div>
         </main>
@@ -182,8 +186,8 @@ const DashboardDispatcher = ({ user }) => {
   // Committee roles take precedence for investigators
   if (user.committeePermissions?.length > 0) return <InvestigatorDashboard />;
   
-  // Organization Admins land on Team Management
-  if (user.role === 'ORG_ADMIN' || user.role === 'ADMIN') return <TeamDirectory />;
+  // Organization Admins land on Dashboard Overview
+  if (user.role === 'ORG_ADMIN' || user.role === 'ADMIN') return <OrgAdminDashboard />;
   
   // Default to Employee Dashboard
   return <EmployeeDashboard />;

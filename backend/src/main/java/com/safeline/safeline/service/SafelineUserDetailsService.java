@@ -20,17 +20,18 @@ public class SafelineUserDetailsService implements UserDetailsService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Long tenantId = com.safeline.safeline.security.TenantContext.getCurrentTenant();
         System.out.println("DEBUG: loadUserByUsername - Username: " + username + ", TenantContext: " + tenantId);
         
         User user;
         if (tenantId != null) {
-            user = userRepository.findByUsernameAndTenantId(username, tenantId)
-                    .orElseGet(() -> userRepository.findByUsername(username)
+            user = userRepository.findByUsernameIgnoreCaseAndTenantId(username, tenantId)
+                    .orElseGet(() -> userRepository.findByUsernameIgnoreCase(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username)));
         } else {
-            user = userRepository.findByUsername(username)
+            user = userRepository.findByUsernameIgnoreCase(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
         }
 
@@ -38,6 +39,11 @@ public class SafelineUserDetailsService implements UserDetailsService {
             System.out.println("DEBUG: Authenticated user '" + user.getUsername() + "' belongs to Tenant ID: " + user.getTenant().getId());
         } else {
             System.out.println("DEBUG: Authenticated user '" + user.getUsername() + "' is GLOBAL");
+        }
+
+        if (user.getTenant() != null && !user.getTenant().isActive() && !"SUPER_ADMIN".equals(user.getRole())) {
+            System.err.println("DEBUG: Blocked login attempt for user '" + user.getUsername() + "' from deactivated organization.");
+            throw new org.springframework.security.authentication.DisabledException("Organization is deactivated");
         }
 
         return new com.safeline.safeline.security.TenantAwareUserDetails(

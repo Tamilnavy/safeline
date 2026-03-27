@@ -131,6 +131,16 @@ const ComplaintTable = ({
     { id: 'MEMBER', name: 'Other Personnel' }
   ];
 
+  // Filter assignment options by viewer's role:
+  // Escalation Head → can only assign to other Escalation Heads
+  // Committee Lead → can only assign to Complaint Handlers (their job is to route, not investigate)
+  const getFilteredRoleOrder = () => {
+    if (isEscalation) return roleOrder.filter(r => r.id === 'ESCALATION_HEAD');
+    if (isLead) return roleOrder.filter(r => r.id === 'COMPLAINT_HANDLER');
+    return roleOrder;
+  };
+  const filteredRoleOrder = getFilteredRoleOrder();
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2 pb-2">
@@ -279,7 +289,7 @@ const ComplaintTable = ({
                                   </div>
                                 ) : (
                                   <div className="flex flex-col space-y-1">
-                                    {roleOrder.map(role => {
+                                    {filteredRoleOrder.map(role => {
                                       const count = (groupedInvestigators[role.id] || []).length;
                                       return (
                                         <button
