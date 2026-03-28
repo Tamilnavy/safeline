@@ -20,10 +20,12 @@ public class MessageService {
 
     private final ComplaintMessageRepository messageRepository;
     private final ComplaintRepository complaintRepository;
+    private final NotificationService notificationService;
 
-    public MessageService(ComplaintMessageRepository messageRepository, ComplaintRepository complaintRepository) {
+    public MessageService(ComplaintMessageRepository messageRepository, ComplaintRepository complaintRepository, NotificationService notificationService) {
         this.messageRepository = messageRepository;
         this.complaintRepository = complaintRepository;
+        this.notificationService = notificationService;
     }
 
     public List<MessageResponse> getMessages(Long complaintId) {
@@ -76,7 +78,34 @@ public class MessageService {
         message.setSender(sender);
         message.setCreatedAt(LocalDateTime.now());
 
-        return mapToResponse(messageRepository.save(message));
+        ComplaintMessage savedMessage = messageRepository.save(message);
+
+        // Notify counterpart
+        Long tenantId = complaint.getTenant() != null ? complaint.getTenant().getId() : null;
+        if ("REPORTER".equalsIgnoreCase(senderRole)) {
+            if (complaint.getAssignedTo() != null) {
+                String assignedUsername = complaint.getAssignedTo().getUsername();
+                notificationService.createNotification(
+                    assignedUsername,
+                    "Reporter has messaged on case: " + complaint.getTitle(),
+                    complaint.getId(),
+                    tenantId
+                );
+            }
+        } else {
+            // Investigator or Handler messaging
+            if (complaint.getReporter() != null) {
+                String reporterUsername = complaint.getReporter().getUsername();
+                notificationService.createNotification(
+                    reporterUsername,
+                    "Investigator has messaged on case: " + complaint.getTitle(),
+                    complaint.getId(),
+                    tenantId
+                );
+            }
+        }
+
+        return mapToResponse(savedMessage);
     }
 
     private MessageResponse mapToResponse(ComplaintMessage m) {

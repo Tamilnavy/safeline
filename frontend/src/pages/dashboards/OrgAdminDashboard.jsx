@@ -210,9 +210,9 @@ const OrgAdminDashboard = () => {
 const getStatusVariant = (status) => {
   switch (status) {
     case 'RESOLVED': case 'CLOSED': return 'success';
-    case 'ON_HOLD':
+    case 'INVESTIGATING':
     case 'SUBMITTED': case 'TRIAGED': return 'warning';
-    case 'IN_PROGRESS':
+    case 'UNDER_REVIEW':
     case 'INVESTIGATION': case 'ASSIGNED': return 'primary';
     case 'REOPENED': return 'danger';
     default: return 'warning';

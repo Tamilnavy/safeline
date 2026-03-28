@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import MessageBoard from '../../components/ui/MessageBoard';
+import CaseDeliveryProgress from '../../components/dashboard/CaseDeliveryProgress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
@@ -153,9 +154,6 @@ const TrackComplaint = () => {
               </motion.button>
             </form>
 
-            <p className="mt-8 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-              Military Grade Encryption Active
-            </p>
           </motion.div>
         </motion.div>
       </div>
@@ -199,6 +197,12 @@ const TrackComplaint = () => {
             animate={{ opacity: 1, y: 0 }}
             className="lg:col-span-8 flex flex-col gap-8"
           >
+            {/* Case Delivery Progress Tracker */}
+            <CaseDeliveryProgress 
+              status={complaint.status} 
+              activities={activities} 
+            />
+
             {/* Case Overview Card */}
             <div className="bg-white p-8 rounded-[32px] shadow-2xl shadow-indigo-500/5 border border-white">
               <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
@@ -213,21 +217,28 @@ const TrackComplaint = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-[32px] shadow-2xl shadow-indigo-500/5 border border-white overflow-hidden h-[500px] flex flex-col">
-              <div className="flex-1 relative">
+            {/* Secure Communication Trace */}
+            <div className="bg-white p-8 rounded-[32px] shadow-2xl shadow-indigo-500/5 border border-white">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#3b82f6]">
+                  <MessageSquare size={16} />
+                </div>
+                Secure Communication Trace
+              </h3>
+              <div className="relative h-[400px]">
                 <MessageBoard 
                   complaintId={complaint.id} 
                   trackingId={complaint.trackingId} 
                   pin={pin} 
                   evidence={complaint.evidence}
-                  showHeader={true}
+                  showHeader={false}
                   minimal={true}
                 />
               </div>
             </div>
           </motion.div>
 
-          {/* Right Column: Case Progress */}
+          {/* Right Column: Case Progress Timeline */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -241,15 +252,32 @@ const TrackComplaint = () => {
                 </div>
                 Case Progress
               </h3>
-              <div className="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
+              <div className="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 h-[400px] overflow-y-auto custom-scrollbar pr-4 pb-4">
                 {Array.isArray(activities) && activities.map((act, i) => {
                   const maskIdentity = (detail) => {
                     if (!detail) return '';
-                    // Rule: No reporter should ever see "who" performed an action or "who" is assigned.
-                    if (detail.includes('Status updated to')) return detail.split(' by ')[0];
-                    if (detail.includes('assigned case to')) return 'Case assigned for investigation';
-                    if (detail.includes('Case triaged by')) return 'Case triaged for priority';
-                    return detail;
+                    let masked = detail;
+                    
+                    // 1. Hide 'by [id]' references
+                    if (masked.includes(' by ')) {
+                      masked = masked.split(' by ')[0];
+                    }
+                    
+                    // 2. Remove parenthetical info (contains identifiers like '(employee5)')
+                    masked = masked.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
+                    
+                    // 3. Standardize system labels
+                    if (masked.includes('RESOLUTION ALERT')) {
+                      return 'Final resolution proposed for review';
+                    }
+                    if (masked.includes('assigned case to')) {
+                      return 'Case assigned for investigation';
+                    }
+                    if (masked.includes('triaged by')) {
+                      return 'Case triaged for priority';
+                    }
+                    
+                    return masked;
                   };
 
                   return (
@@ -278,13 +306,6 @@ const TrackComplaint = () => {
               </div>
             </div>
 
-            {/* Shield Info */}
-            <div className="p-6 bg-[#f8faff] border border-blue-100 rounded-[28px] flex items-center gap-4 shadow-sm">
-              <div className="w-11 h-11 rounded-xl bg-white border border-blue-100 shadow-sm flex items-center justify-center text-[#3b82f6] flex-shrink-0">
-                <ShieldCheck size={22} />
-              </div>
-              <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Dedicated end-to-end encrypted secure channel.</p>
-            </div>
           </motion.div>
         </div>
       </div>

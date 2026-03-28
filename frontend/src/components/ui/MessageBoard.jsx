@@ -22,8 +22,10 @@ const MessageBoard = ({
   const [showEvidence, setShowEvidence] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    }
   };
 
   useEffect(() => {
@@ -35,8 +37,17 @@ const MessageBoard = ({
   }, [complaintId, trackingId, hideChat]);
 
   useEffect(() => {
-    if (!hideChat) scrollToBottom();
+    if (!hideChat) {
+      scrollToBottom(messages.length > 5); // Smooth only if more than a few messages
+    }
   }, [messages, hideChat]);
+
+  // Initial instant scroll
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom(false);
+    }
+  }, [complaintId]);
 
   const fetchMessages = async () => {
     try {
@@ -85,8 +96,8 @@ const MessageBoard = ({
 
   return (
     <div
-      className={`flex flex-col h-full bg-white overflow-hidden ${minimal ? '' : 'border border-slate-100 rounded-2xl shadow-sm'}`}
-      style={{ height: '100%' }}
+      className={`flex flex-col h-full bg-white overflow-hidden ${minimal ? 'rounded-b-[32px]' : 'border border-slate-100 rounded-2xl shadow-sm'}`}
+      style={{ minHeight: '100%', maxHeight: '100%' }}
     >
       {showHeader && (
         <header className="p-4 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
@@ -143,7 +154,7 @@ const MessageBoard = ({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 m-2 bg-slate-50/30 border border-slate-100/80 rounded-2xl space-y-6 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-6 bg-slate-50/10 space-y-6 custom-scrollbar">
         {hideChat ? (
           <div className="p-4 space-y-6 animate-in fade-in duration-500">
             <div className="space-y-2">
@@ -176,7 +187,10 @@ const MessageBoard = ({
           </div>
         ) : (
           safeMessages.map((m, idx) => {
-            const isMe = (isStaff && (m.senderRole === 'INVESTIGATOR' || m.senderRole === 'COMMITTEE')) || 
+            // Robust 'isMe' logic: 
+            // 1. If staff, must match current user's ID
+            // 2. If reporter (no currentUser object), any REPORTER role message is yours
+            const isMe = (isStaff && (m.senderId === currentUser?.id || m.senderUsername === currentUser?.username)) || 
                          (!isStaff && m.senderRole === 'REPORTER');
             return (
               <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
@@ -190,9 +204,7 @@ const MessageBoard = ({
                 </div>
                 <div className="mt-1.5 px-1 flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   <span>
-                    {!isMe && m.senderRole === 'STAFF' && (!isStaff || (currentUser?.id && m.complaintReporterId === currentUser.id))
-                      ? 'Case Investigator'
-                      : m.senderDisplayName}
+                    {m.senderRole === 'REPORTER' ? 'Reporter' : 'Investigator'}
                   </span>
                   <span>•</span>
                   <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>

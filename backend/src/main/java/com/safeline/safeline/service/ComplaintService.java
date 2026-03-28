@@ -60,8 +60,8 @@ public class ComplaintService {
         if (complaint.isAnonymous() && complaint.getReporter() != null) {
             String anonId = anonymityService.getOrCreateAnonymousId(complaint.getReporter(), complaint.getTenant());
             complaint.setAnonymousId(anonId);
-            // Hide reporter from database for anonymous complaints
-            complaint.setReporter(null);
+            // Retain the reporter in the database so the employee can still view it in "My Complaints". 
+            // The DTO mapping automatically masks the identity for committee members.
         }
 
         // Auto-detect SENSITIVE type if accused is a committee member

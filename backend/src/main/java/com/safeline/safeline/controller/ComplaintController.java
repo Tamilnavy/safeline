@@ -136,14 +136,18 @@ public class ComplaintController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<Page<Complaint>> getMyComplaints(Pageable pageable) {
+    public ResponseEntity<Page<ComplaintResponse>> getMyComplaints(Pageable pageable) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
-        return ResponseEntity.ok(complaintQueryService.getMyComplaints(user.getId(), pageable));
+        Page<Complaint> complaints = complaintQueryService.getMyComplaints(user.getId(), pageable);
+        System.out.println("DEBUG: getMyComplaints for user " + user.getId() + " returned " + complaints.getTotalElements() + " items.");
+        return ResponseEntity.ok(complaints.map(this::mapToResponse));
     }
+
+
 
     @GetMapping("/all")
     @Transactional(readOnly = true)
@@ -235,8 +239,9 @@ public class ComplaintController {
         boolean isCommitteeMember = currentUser.getCommitteePermissions() != null && 
             (currentUser.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD) || 
              currentUser.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD));
+        boolean isReporter = complaint.getReporter() != null && complaint.getReporter().getId().equals(currentUser.getId());
 
-        if (!isSuperAdmin && !isCommitteeMember && (complaint.getAssignedTo() == null || !complaint.getAssignedTo().getId().equals(currentUser.getId()))) {
+        if (!isSuperAdmin && !isCommitteeMember && !isReporter && (complaint.getAssignedTo() == null || !complaint.getAssignedTo().getId().equals(currentUser.getId()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(mapToResponse(complaint));

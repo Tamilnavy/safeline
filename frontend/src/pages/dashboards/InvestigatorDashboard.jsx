@@ -33,7 +33,7 @@ const InvestigatorDashboard = () => {
   const isHandler = user?.committeePermissions?.includes('COMPLAINT_HANDLER');
   const isOrgAdmin = ['ORG_ADMIN', 'ADMIN'].includes(user?.role);
   
-  const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
+  const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED'];
 
   useEffect(() => {
     // Wait until auth context has finished loading before fetching
@@ -197,8 +197,8 @@ const InvestigatorDashboard = () => {
 const getStatusVariant = (status) => {
   switch (status) {
     case 'RESOLVED': case 'CLOSED': return 'success';
-    case 'ASSIGNED': case 'IN_PROGRESS': return 'primary';
-    case 'ON_HOLD': return 'warning';
+    case 'ASSIGNED': case 'UNDER_REVIEW': return 'primary';
+    case 'INVESTIGATING': return 'warning';
     case 'REOPENED': return 'danger';
     default: return 'warning';
   }

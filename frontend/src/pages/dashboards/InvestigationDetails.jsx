@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import MessageBoard from '../../components/ui/MessageBoard';
+import CaseDeliveryProgress from '../../components/dashboard/CaseDeliveryProgress';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lock,
@@ -22,7 +23,9 @@ import {
   ArrowRight,
   UserPlus,
   Users,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Settings,
+  X
 } from 'lucide-react';
 
 const InvestigationDetails = () => {
@@ -33,6 +36,7 @@ const InvestigationDetails = () => {
   const [activities, setActivities] = useState([]);
   const [investigators, setInvestigators] = useState([]);
   const [showAssignMenu, setShowAssignMenu] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
   const [assignSearch, setAssignSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -137,11 +141,30 @@ const InvestigationDetails = () => {
 
           <div className="flex items-center gap-3">
             <div className="px-5 py-2 rounded-full bg-white border border-slate-100 flex items-center gap-2.5 shadow-sm">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-[11px] font-black uppercase tracking-widest text-indigo-600">{complaint.status}</span>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] font-black uppercase tracking-widest text-emerald-600">{complaint.status?.replace(/_/g, ' ')}</span>
             </div>
+
+            {/* Manage Status Trigger - Restricted to Committee Lead */}
+            {user?.committeePermissions?.includes('COMMITTEE_LEAD') && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowStatusModal(true)}
+                className="flex items-center gap-2 px-5 py-2 bg-rose-600 text-white rounded-full text-[11px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/20 hover:bg-rose-700 transition-all"
+              >
+                <Settings size={14} />
+                Finalize & Close Case
+              </motion.button>
+            )}
           </div>
         </div>
+
+        {/* Case Delivery Progress Tracker */}
+        <CaseDeliveryProgress 
+          status={complaint.status} 
+          activities={activities} 
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Intelligence Section */}
@@ -175,13 +198,12 @@ const InvestigationDetails = () => {
                 </p>
               </div>
 
-              {/* Summary Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
                 {[
                   { icon: Calendar, label: 'Submitted', value: new Date(complaint.createdAt).toLocaleDateString() },
                   { icon: Tag, label: 'Category', value: complaint.categoryName || 'General Ethics' },
                   { icon: MapPin, label: 'Location', value: complaint.location || 'N/A' },
-                  { icon: Shield, label: 'Priority', value: complaint.priority || 'UNRATED' }
+                  { icon: Shield, label: 'Priority', value: complaint.priority || 'NORMAL' }
                 ].map((item, idx) => (
                   <div key={idx} className="p-5 bg-white border border-slate-100 rounded-[24px] shadow-sm hover:border-indigo-200 transition-all hover:scale-[1.02]">
                     <item.icon size={14} className="text-slate-400 mb-2" />
@@ -220,135 +242,53 @@ const InvestigationDetails = () => {
             )}
 
             {/* Communication Center */}
-            <div className="bg-white rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white overflow-hidden flex flex-col min-h-[550px]">
-              <div className="px-10 py-6 border-b border-slate-100 bg-white flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm">
-                    <MessageSquare size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-md font-black text-slate-900 tracking-tight">Investigation Communication</h3>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">End-to-end encrypted channel with reporter</p>
+            {!user?.committeePermissions?.includes('COMMITTEE_LEAD') && (
+              <div className="bg-white rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white overflow-hidden flex flex-col min-h-[550px]">
+                <div className="bg-white rounded-b-[40px] overflow-hidden flex flex-col h-[500px]">
+                  <div className="flex-1 relative min-h-0">
+                    <MessageBoard 
+                      complaintId={complaint.id} 
+                      initialMessages={[]} 
+                      isStaff={true} 
+                      showHeader={true}
+                      title="Investigation Communication"
+                    />
                   </div>
                 </div>
               </div>
-              <div className="flex-1 bg-slate-50/20">
-                <MessageBoard complaintId={complaint.id} initialMessages={[]} isStaff={true} />
-              </div>
-            </div>
+            )}
           </motion.div>
 
-          {/* Right Column: Progress & Control */}
+          {/* Right Column: Progress Timeline */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-4 space-y-8"
           >
-            {/* Management Oversight Card (For Leads/Heads only) */}
-            {(user?.committeePermissions?.includes('COMMITTEE_LEAD') || user?.committeePermissions?.includes('ESCALATION_HEAD')) && (
-              <div className="bg-white p-10 rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white relative overflow-hidden ring-1 ring-indigo-50/50 mb-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm">
-                      <Users size={18} />
-                    </div>
-                    <h3 className="text-md font-black text-slate-900 tracking-tight">Staff Oversight</h3>
-                  </div>
-                  <button 
-                    onClick={() => setShowAssignMenu(!showAssignMenu)}
-                    className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all shadow-sm ring-1 ring-indigo-100"
-                  >
-                    <UserPlus size={16} />
-                  </button>
-                </div>
-
-                <div className="p-6 rounded-[32px] bg-slate-50/50 border border-slate-100 relative group transition-all hover:bg-white hover:shadow-xl hover:shadow-indigo-500/5">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Current Assignee</p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-500 border border-slate-100 font-black text-lg">
-                      {(complaint.assignedToFullName || complaint.assignedToUsername || '?').charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 leading-tight">
-                        {complaint.assignedToFullName || complaint.assignedToUsername || 'Not Assigned'}
-                      </h4>
-                      <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tight">
-                        {complaint.assignedToCommitteeRole?.replace(/_/g, ' ') || 'UNASSIGNED ROLE'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status Quick-Update (ENABLED for Leads/Heads) */}
-                <div className="mt-6 p-6 rounded-[32px] bg-indigo-50/30 border border-indigo-100/50">
-                  <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest mb-3">Lifecycle Progress</p>
-                  <div className="grid grid-cols-1 gap-2">
-                    {['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].map((s) => (
+            {/* Inline Lifecycle Status (Restored for Handler per request) */}
+            {user?.committeePermissions?.includes('COMPLAINT_HANDLER') && 
+             !user?.committeePermissions?.includes('COMMITTEE_LEAD') && (
+              <div className="bg-white p-10 rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white relative overflow-hidden ring-1 ring-indigo-50/50">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Lifecycle Update</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {['SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED']
+                    .map((s) => (
                       <button
                         key={s}
                         onClick={() => handleUpdateStatus(s)}
                         className={`px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                           complaint.status === s 
                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-                            : 'bg-white text-indigo-600 border border-indigo-100 hover:border-indigo-400 outline-none'
+                            : 'bg-slate-50 text-indigo-600 border border-slate-100 hover:border-indigo-400 outline-none'
                         }`}
                       >
                         {s.replace(/_/g, ' ')}
                       </button>
                     ))}
-                  </div>
                 </div>
-
-                {/* Sliding Assign Menu */}
-                <AnimatePresence>
-                  {showAssignMenu && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="mt-6 pt-6 border-t border-slate-100 overflow-hidden"
-                    >
-                      <div className="relative mb-4">
-                        <SearchIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input 
-                          type="text"
-                          placeholder="Search Investigators..."
-                          value={assignSearch}
-                          onChange={(e) => setAssignSearch(e.target.value)}
-                          className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-300 transition-all"
-                        />
-                      </div>
-                      <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                        {investigators
-                          .filter(inv => 
-                            (inv.fullName || inv.username).toLowerCase().includes(assignSearch.toLowerCase())
-                          )
-                          .map(inv => (
-                            <button
-                              key={inv.id}
-                              onClick={() => handleAssign(inv.id)}
-                              className="w-full p-4 rounded-2xl border border-slate-100 bg-white hover:border-indigo-300 hover:shadow-md transition-all text-left flex items-center gap-3 group"
-                            >
-                              <div className="w-8 h-8 rounded-xl bg-slate-50 group-hover:bg-indigo-50 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 font-bold text-xs">
-                                {(inv.fullName || inv.username).charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex-1 overflow-hidden">
-                                <p className="text-[11px] font-black text-slate-900 truncate">{inv.fullName || inv.username}</p>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">{inv.committeePermissions?.[0]?.replace(/_/g, ' ') || 'STAFF'}</p>
-                              </div>
-                              {complaint.assignedToId === inv.id && (
-                                <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                              )}
-                            </button>
-                          ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             )}
 
-            {/* Professional Timeline */}
             <div className="bg-white p-10 rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white relative overflow-hidden">
               <h3 className="text-md font-black text-slate-900 mb-10 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
@@ -356,30 +296,35 @@ const InvestigationDetails = () => {
                 </div>
                 Investigation Progress
               </h3>
-              <div className="space-y-10 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
+              <div className="space-y-10 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 max-h-[400px] overflow-y-auto custom-scrollbar pr-4 pb-4">
                 {activities.map((act, i) => {
-                  const isConflictOfInterest = user?.id === complaint.reporterId;
+                  const isStaff = user?.committeePermissions && user.committeePermissions.length > 0;
+                  const isReporter = user?.id === complaint?.reporterId;
+                  // Unmask for ALL staff, mask ONLY for the public reporter view.
+                  const shouldMask = !isStaff || isReporter;
 
                   const maskIdentity = (detail) => {
-                    if (!detail) return '';
-                    if (!isConflictOfInterest) return detail;
-
-                    // Strict masking for reporters (even if they are committee members)
-                    if (detail.includes('Status updated to')) return detail.split(' by ')[0];
-                    if (detail.includes('assigned case to')) return 'Case assigned for investigation';
-                    if (detail.includes('Case triaged by')) return 'Case triaged for priority';
-                    return detail;
+                    if (!detail || !shouldMask) return detail;
+                    let masked = detail;
+                    if (masked.includes(' by ')) masked = masked.split(' by ')[0];
+                    masked = masked.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
+                    if (masked.includes('RESOLUTION ALERT:')) return 'Case has been submitted for final resolution review.';
+                    if (masked.includes('assigned case to')) return 'Case assigned for investigation';
+                    return masked;
                   };
 
                   return (
                     <div key={i} className="relative pl-10 group">
-                      <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 transition-transform ${i === 0 ? 'bg-[#3b82f6] ring-4 ring-blue-50 scale-110' : 'bg-slate-200 group-hover:scale-125'
+                      <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 transition-transform ${
+                        act.activityType === 'RESOLUTION_PENDING_REVIEW'
+                          ? 'bg-amber-500 ring-4 ring-amber-50 scale-110'
+                          : i === 0 ? 'bg-indigo-600 ring-4 ring-indigo-50 scale-110' : 'bg-slate-200 group-hover:scale-125'
                         }`}>
-                        {i === 0 && <Clock size={10} className="text-white mx-auto mt-[4px]" />}
+                        {act.activityType === 'RESOLUTION_PENDING_REVIEW' && <CheckCircle size={10} className="text-white mx-auto mt-[4px]" />}
+                        {act.activityType !== 'RESOLUTION_PENDING_REVIEW' && i === 0 && <Clock size={10} className="text-white mx-auto mt-[4px]" />}
                       </div>
                       <div>
-                        <p className={`text-[12px] font-black uppercase tracking-tight transition-colors ${i === 0 ? 'text-[#3b82f6]' : 'text-slate-800'
-                          }`}>
+                        <p className={`text-[12px] font-black uppercase tracking-tight ${i === 0 ? 'text-indigo-600' : 'text-slate-800'}`}>
                           {act.activityType?.replace(/_/g, ' ') || 'SYSTEM ACTION'}
                         </p>
                         <p className="text-[11px] font-bold text-slate-500 mt-1 leading-snug">{maskIdentity(act.detail)}</p>
@@ -394,23 +339,84 @@ const InvestigationDetails = () => {
                 })}
               </div>
             </div>
-
-            {/* Shield Info */}
-            <div className="p-8 bg-slate-900 rounded-[40px] shadow-2xl flex items-center gap-5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-white/10 transition-all duration-700" />
-              <div className="w-12 h-12 rounded-2xl bg-white/10 ring-1 ring-white/20 flex items-center justify-center text-white flex-shrink-0 animate-pulse">
-                <ShieldCheck size={26} />
-              </div>
-              <div>
-                <h4 className="text-[11px] font-black text-white uppercase tracking-widest mb-1">Encrypted Intelligence</h4>
-                <p className="text-[10px] text-slate-400 font-bold leading-relaxed underline decoration-slate-700 decoration-dashed underline-offset-4">Compliant with Global Privacy Protocols</p>
-              </div>
-            </div>
           </motion.div>
         </div>
+
+        {/* Manage Status Modal (Resolution Center) */}
+        <AnimatePresence>
+          {showStatusModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="bg-white w-full max-w-lg rounded-[48px] shadow-2xl overflow-hidden border border-white"
+              >
+                <div className="p-10">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <Shield size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-slate-900">Resolution Center</h3>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Update Lifecycle Status</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setShowStatusModal(false)}
+                      className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {['SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED']
+                      .filter(s => {
+                        const isLead = user?.committeePermissions?.includes('COMMITTEE_LEAD');
+                        if (isLead) return s === 'CLOSED';
+                        const isHandlerOnly = user?.committeePermissions?.includes('COMPLAINT_HANDLER') &&
+                          !user?.committeePermissions?.includes('COMMITTEE_LEAD') &&
+                          !user?.committeePermissions?.includes('ESCALATION_HEAD');
+                        return isHandlerOnly ? s !== 'CLOSED' : true;
+                      })
+                      .map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          handleUpdateStatus(s);
+                          setShowStatusModal(false);
+                        }}
+                        className={`w-full p-5 rounded-[28px] text-[11px] font-black uppercase tracking-widest transition-all text-left flex items-center justify-between group ${
+                          complaint.status === s 
+                            ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 translate-x-1' 
+                            : s === 'CLOSED'
+                            ? 'bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white'
+                            : 'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-2 h-2 rounded-full ${complaint.status === s ? 'bg-white' : 'bg-current opacity-20'}`} />
+                          {s.replace(/_/g, ' ')}
+                        </div>
+                        {complaint.status === s ? <CheckCircle size={16} /> : <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-all" />}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="mt-8 text-[10px] font-bold text-slate-400 text-center uppercase tracking-tighter">
+                    Status updates trigger automated audit events & stakeholder notifications.
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
 };
 
 export default InvestigationDetails;
+

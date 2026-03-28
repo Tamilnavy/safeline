@@ -479,9 +479,9 @@ const SubmitComplaint = () => {
                   <CheckCircle size={40} />
                 </div>
                 <div className="space-y-4">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Report Secured</h2>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">Report Submitted</h2>
                   <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium leading-relaxed">
-                    Your anonymous report has been encrypted and securely delivered. Please save your credentials to track progress.
+                    Your complaint has been successfully received by the committee. Please save your credentials to track its progress.
                   </p>
                 </div>
 

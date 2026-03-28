@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, ChevronLeft, ChevronRight, Pencil, X, ArrowUpDown } from 'lucide-react';
+import { MessageSquare, Eye, ChevronLeft, ChevronRight, X, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Badge from '../ui/Badge';
 
@@ -19,11 +19,12 @@ const ComplaintTable = ({
   showAssignment = true,
   isLead = false,
   isEscalation = false,
+  isHandler = false,
   sortBy,
   onSortChange
 }) => {
-  const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
-  const updateStages = ['SUBMITTED', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED'];
+  const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED'];
+  const updateStages = ['SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED'];
 
   // Track open role popover
   const [editingRoleId, setEditingRoleId] = useState(null);
@@ -72,10 +73,10 @@ const ComplaintTable = ({
     switch (status) {
       case 'RESOLVED':
       case 'CLOSED': return 'success';
-      case 'ON_HOLD':
+      case 'INVESTIGATING':
       case 'SUBMITTED':
       case 'TRIAGED': return 'warning';
-      case 'IN_PROGRESS':
+      case 'UNDER_REVIEW':
       case 'INVESTIGATION':
       case 'ASSIGNED': return 'primary';
       case 'REOPENED': return 'danger';
@@ -188,7 +189,7 @@ const ComplaintTable = ({
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Reporter</th>
                   <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Status</th>
                   {showAssignment && <th className="px-4 py-4 text-xs font-bold text-slate-500 tracking-widest">Handling Role</th>}
-                  <th className="px-2 py-4 text-xs font-bold text-slate-500 tracking-widest text-right">Actions</th>
+                  <th className="px-2 py-4 text-xs font-bold text-slate-500 tracking-widest text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
@@ -312,45 +313,16 @@ const ComplaintTable = ({
                       </td>
                     )}
 
-                    <td className="px-2 py-5 text-right">
-                      <div className="flex gap-1.5 justify-end items-center">
-                         {(isLead || isEscalation) && (
-                          <div className="relative">
-                            <button
-                              onClick={(e) => toggleStatusPopup(e, c.id)}
-                              className="p-2 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-indigo-500 transition-colors border border-transparent hover:border-slate-200"
-                              title="Update status"
-                            >
-                              <Pencil size={15} />
-                            </button>
-                            {editingStatusId === c.id && (
-                              <>
-                                <div className="fixed inset-0 z-200" onClick={(e) => { e.stopPropagation(); setEditingStatusId(null); }} />
-                                <div style={popupStyle} className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in slide-in-from-top-2 duration-200 space-y-1">
-                                  {updateStages.map(s => (
-                                    <button
-                                      key={s}
-                                      onClick={() => { onUpdateStatus(c.id, s); setEditingStatusId(null); }}
-                                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${
-                                        c.status === s ? 'bg-indigo-50 text-indigo-600 font-bold' : 'text-slate-600 font-medium'
-                                      }`}
-                                    >
-                                      {s.replace(/_/g, ' ')}
-                                    </button>
-                                  ))}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )}
-                        <motion.button
+                    <td className="px-2 py-5">
+                      <div className="flex gap-1.5 justify-center items-center">
+                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => onViewDetails(c)}
                           className="p-2 rounded-lg text-indigo-600 transition-all border border-slate-200 hover:border-indigo-200 bg-white hover:bg-indigo-50 shadow-sm"
                           title="Open Investigation Console"
                         >
-                          <MessageSquare size={16} />
+                          {isLead ? <Eye size={16} /> : <MessageSquare size={16} />}
                         </motion.button>
                       </div>
                     </td>

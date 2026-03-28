@@ -22,6 +22,7 @@ public class ComplaintActionService {
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
     private final ComplaintService complaintService; // For logActivity
+    private final NotificationService notificationService;
 
     private String getCurrentUser() {
         org.springframework.security.core.Authentication auth = 
@@ -88,6 +89,7 @@ public class ComplaintActionService {
         return updated;
     }
 
+
     @Transactional
     public Complaint updateStatus(Long complaintId, ComplaintStatus status) {
         Complaint complaint = complaintRepository.findById(complaintId)
@@ -111,25 +113,47 @@ public class ComplaintActionService {
             currentUser.getCommitteePermissions().contains(CommitteePermission.COMPLAINT_HANDLER);
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
 
-        // Rule 1: Special permission for CLOSING (Only Lead, Head, or Admin)
+        // Rule 1: CLOSED → only Committee Lead, Escalation Head, or SuperAdmin
         if (status == ComplaintStatus.CLOSED && !isLead && !isEscalation && !isSuperAdmin) {
             throw new RuntimeException("Access Denied: Only Committee Leads or Escalation Heads can officially close cases.");
         }
 
-        // Rule 2: Committee Leads & Escalation Heads (Management) have GLOBAL status oversight.
-        // No restriction on setting IN_PROGRESS, RESOLVED, etc.
+        // Rule 2: Handlers can update to any status except CLOSED (handled above)
+        // Leads & Escalation Heads have full oversight.
 
-        // Rule 3: Complaint Handlers can update statuses for cases they are managing.
-        // If not assigned yet, they must have the HANDLER role to indicate pick-up.
-        if (isHandler && !isLead && !isEscalation && !isSuperAdmin) {
-             // Access control check moved to controller for unified handling
-        }
-
+        ComplaintStatus previousStatus = complaint.getStatus();
         complaint.setStatus(status);
         Complaint updated = complaintRepository.save(complaint);
-        
+
         String detail = String.format("Status updated to %s by %s", status, auth.getName());
         complaintService.logActivity(updated.getId(), "STATUS_UPDATE", auth.getName(), detail);
+
+        // Rule 3: When case is RESOLVED → notify all Committee Leads in the tenant
+        if (status == ComplaintStatus.RESOLVED && previousStatus != ComplaintStatus.RESOLVED) {
+            Long tenantId = currentUser.getTenant() != null ? currentUser.getTenant().getId() : null;
+            if (tenantId != null) {
+                java.util.List<User> tenantUsers = userRepository.findByTenantId(tenantId);
+                tenantUsers.stream()
+                    .filter(u -> u.getCommitteePermissions() != null &&
+                                 u.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD))
+                    .forEach(lead -> {
+                        String notifyDetail = String.format(
+                            "RESOLUTION ALERT: Case #%s (%s) has been marked RESOLVED by %s. Please review and close the case.",
+                            updated.getTrackingId(), updated.getTitle(), auth.getName()
+                        );
+                        complaintService.logActivity(updated.getId(), "RESOLUTION_PENDING_REVIEW", lead.getUsername(), notifyDetail);
+                        
+                        // Push to real notification bell system
+                        notificationService.createNotification(
+                            lead.getUsername(),
+                            "Case " + updated.getTrackingId() + " marked RESOLVED by " + auth.getName(),
+                            updated.getId(),
+                            tenantId
+                        );
+                    });
+            }
+        }
+
         return updated;
     }
 }

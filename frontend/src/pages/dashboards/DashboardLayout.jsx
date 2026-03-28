@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import NotificationBell from '../../components/layout/NotificationBell';
 
 // Dashboard Components
 import SuperAdminDashboard from './SuperAdminDashboard';
@@ -39,8 +40,8 @@ const DashboardLayout = () => {
   const menuItems = [
     // Basic Employee / Investigator Menus
     { label: 'Overview', icon: LayoutDashboard, path: '/dashboard', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
-    { label: 'Submit Complaint', icon: PlusCircle, path: '/submit', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
-    { label: 'My Complaints', icon: FileText, path: '/dashboard/complaints', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
+    { label: 'Submit Complaint', icon: PlusCircle, path: '/submit', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) && !u.committeePermissions?.includes('ESCALATION_HEAD') },
+    { label: 'My Complaints', icon: FileText, path: '/dashboard/complaints', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) && !u.committeePermissions?.includes('ESCALATION_HEAD') },
     { label: 'Investigations', icon: ShieldCheck, path: '/dashboard/assigned', show: (u) => u.committeePermissions?.length > 0 && !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
     
     // Super Admin Menus
@@ -137,8 +138,9 @@ const DashboardLayout = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="flex items-center gap-6">
+            <NotificationBell />
+            <div className="flex items-center gap-3 group cursor-pointer pl-2 border-l border-slate-200">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-slate-900 leading-tight">{(user.fullName || user.username)}</p>
                 <p className="text-[9px] text-slate-500 font-bold tracking-widest mt-0.5">
