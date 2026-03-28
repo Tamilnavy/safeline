@@ -1,9 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { Send, User, MessageSquare, Paperclip, FileText, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 
-const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = false, showHeader = true, minimal = false }) => {
+const MessageBoard = ({ 
+  complaintId, 
+  trackingId, 
+  pin, 
+  evidence = [], 
+  isStaff = false, 
+  showHeader = true, 
+  minimal = false,
+  hideChat = false,
+  title = "",
+  description = ""
+}) => {
   const [messages, setMessages] = useState([]);
+  const { user: currentUser } = useAuth();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [showEvidence, setShowEvidence] = useState(false);
@@ -14,14 +27,16 @@ const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = f
   };
 
   useEffect(() => {
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 10000); // Poll every 10s
-    return () => clearInterval(interval);
-  }, [complaintId, trackingId]);
+    if (!hideChat) {
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 10000); // Poll every 10s
+      return () => clearInterval(interval);
+    }
+  }, [complaintId, trackingId, hideChat]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!hideChat) scrollToBottom();
+  }, [messages, hideChat]);
 
   const fetchMessages = async () => {
     try {
@@ -80,7 +95,7 @@ const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = f
               <MessageSquare size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Communication Center</h3>
+              <h3 className="text-sm font-bold text-slate-900">{hideChat ? 'Case Summary' : 'Communication Center'}</h3>
             </div>
           </div>
           
@@ -129,7 +144,30 @@ const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = f
       )}
 
       <div className="flex-1 overflow-y-auto p-4 m-2 bg-slate-50/30 border border-slate-100/80 rounded-2xl space-y-6 scrollbar-hide">
-        {safeMessages.length === 0 ? (
+        {hideChat ? (
+          <div className="p-4 space-y-6 animate-in fade-in duration-500">
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Case Title</h4>
+              <p className="text-sm font-bold text-slate-800 leading-relaxed bg-white/50 p-4 rounded-xl border border-slate-100">
+                {title || 'No Title Available'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Issue Description</h4>
+              <div className="text-sm font-medium text-slate-600 leading-relaxed bg-white/50 p-4 rounded-xl border border-slate-100 whitespace-pre-wrap">
+                {description || 'No detailed description provided.'}
+              </div>
+            </div>
+            <div className="pt-6 border-t border-slate-100 flex flex-col items-center text-center">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
+                <User size={18} />
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest max-w-[200px]">
+                Chat history is restricted for management oversight.
+              </p>
+            </div>
+          </div>
+        ) : safeMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3">
             <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
               <User size={20} className="opacity-20" />
@@ -151,7 +189,11 @@ const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = f
                   {m.content}
                 </div>
                 <div className="mt-1.5 px-1 flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  <span>{m.senderDisplayName}</span>
+                  <span>
+                    {!isMe && m.senderRole === 'STAFF' && (!isStaff || (currentUser?.id && m.complaintReporterId === currentUser.id))
+                      ? 'Case Investigator'
+                      : m.senderDisplayName}
+                  </span>
                   <span>•</span>
                   <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
@@ -162,27 +204,29 @@ const MessageBoard = ({ complaintId, trackingId, pin, evidence = [], isStaff = f
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSend} className="p-4 bg-slate-50/50 border-t border-slate-100 flex gap-2">
-        <input
-          type="text"
-          className="flex-1 h-11 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-medium text-slate-900"
-          placeholder="Type your message..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          className="w-11 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading || !content.trim()}
-        >
-          {loading ? (
-            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-          ) : (
-            <Send size={18} />
-          )}
-        </button>
-      </form>
+      {!hideChat && (
+        <form onSubmit={handleSend} className="p-4 bg-slate-50/50 border-t border-slate-100 flex gap-2">
+          <input
+            type="text"
+            className="flex-1 h-11 px-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all text-sm font-medium text-slate-900"
+            placeholder="Type your message..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            disabled={loading}
+          />
+          <button
+            type="submit"
+            className="w-11 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || !content.trim()}
+          >
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Send size={18} />
+            )}
+          </button>
+        </form>
+      )}
     </div>
   );
 };

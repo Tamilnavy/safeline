@@ -28,7 +28,6 @@ public class TenantService {
     private final SLAPolicyRepository slaPolicyRepository;
     private final PasswordEncoder passwordEncoder;
     private final jakarta.persistence.EntityManager entityManager;
-    private Tenant savedTenant;
 
     // ------------------------------------------------
     // Get all tenants (mapped to Response with Admin details)
@@ -101,7 +100,10 @@ public class TenantService {
         admin.setPassword(passwordEncoder.encode(request.getAdminPassword()));
         admin.setTenant(savedTenant);
 
+        admin.setFullName(request.getName() + " Admin");
+        admin.setEmployeeId("ADM-" + savedTenant.getId());
         admin.setRole("ORG_ADMIN");
+        admin.setEnabled(true);
         userRepository.save(admin);
 
         // 4. Build Response

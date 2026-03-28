@@ -42,8 +42,17 @@ public class CommunicationService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        // Permissive approach: Any authenticated organization user can send messages.
-        // Tenant isolation is already active.
+        boolean isEscalation = sender.getCommitteePermissions() != null && 
+            sender.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.ESCALATION_HEAD);
+        boolean isLead = sender.getCommitteePermissions() != null && 
+            sender.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.COMMITTEE_LEAD);
+
+        boolean isReporter = complaint.getReporter() != null && complaint.getReporter().getId().equals(sender.getId());
+
+        // Security Restriction: Leads/Heads cannot send messages unless they are the reporter
+        if (!isReporter && (isLead && !isEscalation)) {
+            throw new RuntimeException("Committee Leads are not authorized to send internal messages.");
+        }
         
         ComplaintMessage message = new ComplaintMessage();
         message.setComplaint(complaint);
@@ -76,8 +85,19 @@ public class CommunicationService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        // Permissive approach: Any authenticated organization user can view messages.
-        // Tenant isolation is already active.
+        boolean isEscalation = staff.getCommitteePermissions() != null && 
+            staff.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.ESCALATION_HEAD);
+        boolean isLead = staff.getCommitteePermissions() != null && 
+            staff.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.COMMITTEE_LEAD);
+        boolean isHandler = staff.getCommitteePermissions() != null && 
+            staff.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.COMPLAINT_HANDLER);
+
+        boolean isReporter = complaint.getReporter() != null && complaint.getReporter().getId().equals(staff.getId());
+
+        // Security Restriction: Leads/Heads cannot read messages unless assigned OR they are the reporter
+        if (!isReporter && (isLead && !isEscalation && !isHandler)) {
+            throw new RuntimeException("Committee Leads are not authorized to view internal messages.");
+        }
         
         return messageRepository.findByComplaintIdOrderByCreatedAtAsc(complaintId);
     }

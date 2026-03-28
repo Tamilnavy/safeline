@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MessageBoard from '../../components/ui/MessageBoard';
 import ComplaintTable from '../../components/dashboard/ComplaintTable';
 import TriageModal from '../../components/dashboard/TriageModal';
-import ComplaintDetailsModal from '../../components/dashboard/ComplaintDetailsModal';
 import { useAuth } from '../../context/AuthContext';
 
 const InvestigatorDashboard = () => {
@@ -163,17 +162,20 @@ const InvestigatorDashboard = () => {
           <div className="overflow-x-auto table-container border-none shadow-none p-0!">
             <ComplaintTable
               complaints={complaints}
+              investigators={investigators}
               loading={loading}
               page={page}
               totalPages={totalPages}
               filterStatus={filter}
               isLead={isLead}
               isEscalation={isEscalation}
+              isHandler={isHandler}
+              showAssignment={isLead || isOrgAdmin}
               onAssign={handleAssign}
               onUpdateStatus={updateStatus}
               onPageChange={setPage}
               onFilterChange={(s) => { setFilter(s); setPage(0); }}
-              onViewDetails={setSelectedCase}
+              onViewDetails={(complaint) => navigate(`/dashboard/complaint/${complaint.id}`)}
               onTriage={setTriageComplaint}
               sortBy={sortBy}
               onSortChange={setSortBy}
@@ -187,14 +189,6 @@ const InvestigatorDashboard = () => {
         onClose={() => setTriageComplaint(null)}
         complaint={triageComplaint}
         onTriage={handleTriage}
-      />
-
-      <ComplaintDetailsModal 
-        isOpen={!!selectedCase}
-        onClose={() => setSelectedCase(null)}
-        complaint={selectedCase}
-        userRole={isEscalation ? 'ESCALATION' : (isLead || isOrgAdmin ? 'LEAD' : 'INVESTIGATOR')}
-        getStatusVariant={getStatusVariant}
       />
     </div>
   );

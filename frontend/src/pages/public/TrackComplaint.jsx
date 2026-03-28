@@ -242,28 +242,39 @@ const TrackComplaint = () => {
                 Case Progress
               </h3>
               <div className="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100">
-                {Array.isArray(activities) && activities.map((act, i) => (
-                  <div key={i} className="relative pl-10 group animate-in slide-in-from-right-2 duration-500" style={{ animationDelay: `${i * 150}ms` }}>
-                    <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 transition-transform flex items-center justify-center ${
-                      i === 0 ? 'bg-[#3b82f6] ring-4 ring-blue-50 scale-110' : 'bg-slate-200'
-                    }`}>
-                      {i === 0 && <Clock size={10} className="text-white" />}
-                    </div>
-                    <div>
-                      <p className={`text-[13px] font-bold uppercase tracking-wide transition-colors ${
-                        i === 0 ? 'text-[#3b82f6]' : 'text-slate-700'
+                {Array.isArray(activities) && activities.map((act, i) => {
+                  const maskIdentity = (detail) => {
+                    if (!detail) return '';
+                    // Rule: No reporter should ever see "who" performed an action or "who" is assigned.
+                    if (detail.includes('Status updated to')) return detail.split(' by ')[0];
+                    if (detail.includes('assigned case to')) return 'Case assigned for investigation';
+                    if (detail.includes('Case triaged by')) return 'Case triaged for priority';
+                    return detail;
+                  };
+
+                  return (
+                    <div key={i} className="relative pl-10 group animate-in slide-in-from-right-2 duration-500" style={{ animationDelay: `${i * 150}ms` }}>
+                      <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 transition-transform flex items-center justify-center ${
+                        i === 0 ? 'bg-[#3b82f6] ring-4 ring-blue-50 scale-110' : 'bg-slate-200'
                       }`}>
-                        {act.action.replace(/_/g, ' ')}
-                      </p>
-                      {act.detail && <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-snug">{act.detail}</p>}
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                          {new Date(act.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
-                        </span>
+                        {i === 0 && <Clock size={10} className="text-white" />}
+                      </div>
+                      <div>
+                        <p className={`text-[13px] font-bold uppercase tracking-wide transition-colors ${
+                          i === 0 ? 'text-[#3b82f6]' : 'text-slate-700'
+                        }`}>
+                          {act.activityType?.replace(/_/g, ' ') || 'SYSTEM ACTION'}
+                        </p>
+                        {act.detail && <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-snug">{maskIdentity(act.detail)}</p>}
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                            {new Date(act.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

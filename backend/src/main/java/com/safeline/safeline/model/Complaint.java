@@ -38,8 +38,6 @@ public class Complaint {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
-    @lombok.ToString.Exclude
-    @lombok.EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
@@ -97,8 +95,6 @@ public class Complaint {
     @JoinColumn(name = "assigned_to_id")
     private User assignedTo;
 
-    @lombok.ToString.Exclude
-    @lombok.EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "complaint", cascade = CascadeType.ALL)
     private List<ComplaintEvidence> evidences;
 

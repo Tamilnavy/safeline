@@ -14,7 +14,6 @@ import Badge from '../../components/ui/Badge';
 import AddUserModal from '../../components/dashboard/AddUserModal';
 import ComplaintTable from '../../components/dashboard/ComplaintTable';
 import TriageModal from '../../components/dashboard/TriageModal';
-import ComplaintDetailsModal from '../../components/dashboard/ComplaintDetailsModal';
 import { useAuth } from '../../context/AuthContext';
 
 const OrgAdminDashboard = () => {
@@ -27,7 +26,6 @@ const OrgAdminDashboard = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [stats, setStats] = useState({ total: 0, pending: 0, resolved: 0 });
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [triageComplaint, setTriageComplaint] = useState(null);
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const userRole = user?.role || 'EMPLOYEE';
@@ -198,14 +196,6 @@ const OrgAdminDashboard = () => {
         onTriage={handleTriage}
       />
 
-      <ComplaintDetailsModal 
-        isOpen={!!selectedComplaint}
-        onClose={() => setSelectedComplaint(null)}
-        complaint={selectedComplaint}
-        userLevel={userRole}
-        getStatusVariant={getStatusVariant}
-        getPriorityVariant={getPriorityVariant}
-      />
 
       <AddUserModal
         isOpen={showAddEmployee}

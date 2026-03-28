@@ -31,13 +31,23 @@ public class ComplaintActionService {
         }
         return "REPORTER";
     }
-
     public Complaint assignInvestigator(Long complaintId, Long investigatorId) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
         User investigator = userRepository.findById(investigatorId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (complaint.getReporter() != null) {
+            boolean sameId = investigator.getId().equals(complaint.getReporter().getId());
+            String invEmpId = investigator.getEmployeeId();
+            String repEmpId = complaint.getReporter().getEmployeeId();
+            boolean sameEmployeeId = invEmpId != null && invEmpId.equals(repEmpId);
+
+            if (sameId || sameEmployeeId) {
+                throw new RuntimeException("Conflict of Interest: The reporter of a case cannot be assigned as its investigator.");
+            }
+        }
 
         complaint.setAssignedTo(investigator);
         complaint.setStatus(ComplaintStatus.ASSIGNED);
@@ -90,9 +100,31 @@ public class ComplaintActionService {
             throw new RuntimeException("Unauthorized: Please log in to update case status.");
         }
 
-        // Permissive approach: Any authenticated organization user can update case status.
-        // Tenant isolation is handled by the TenantFilterAspect automatically.
-        
+        User currentUser = userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found: " + auth.getName()));
+
+        boolean isEscalation = currentUser.getCommitteePermissions() != null && 
+            currentUser.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD);
+        boolean isLead = currentUser.getCommitteePermissions() != null && 
+            currentUser.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD);
+        boolean isHandler = currentUser.getCommitteePermissions() != null && 
+            currentUser.getCommitteePermissions().contains(CommitteePermission.COMPLAINT_HANDLER);
+        boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
+
+        // Rule 1: Special permission for CLOSING (Only Lead, Head, or Admin)
+        if (status == ComplaintStatus.CLOSED && !isLead && !isEscalation && !isSuperAdmin) {
+            throw new RuntimeException("Access Denied: Only Committee Leads or Escalation Heads can officially close cases.");
+        }
+
+        // Rule 2: Committee Leads & Escalation Heads (Management) have GLOBAL status oversight.
+        // No restriction on setting IN_PROGRESS, RESOLVED, etc.
+
+        // Rule 3: Complaint Handlers can update statuses for cases they are managing.
+        // If not assigned yet, they must have the HANDLER role to indicate pick-up.
+        if (isHandler && !isLead && !isEscalation && !isSuperAdmin) {
+             // Access control check moved to controller for unified handling
+        }
+
         complaint.setStatus(status);
         Complaint updated = complaintRepository.save(complaint);
         

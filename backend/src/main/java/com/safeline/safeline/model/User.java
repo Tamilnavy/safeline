@@ -40,8 +40,6 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @lombok.ToString.Exclude
-    @lombok.EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     private Tenant tenant;

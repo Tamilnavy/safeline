@@ -52,28 +52,8 @@ public class DataInitializer implements CommandLineRunner {
             System.err.println("WARNING: Schema migration failed: " + e.getMessage());
         }
 
-        // 1. Default Tenant
-        Tenant defaultTenant = tenantRepository.findByDomain("default")
-                .orElseGet(() -> {
-                    Tenant t = new Tenant();
-                    t.setName("SafeLine Demo Corp");
-                    t.setDomain("default");
-                    return tenantRepository.save(t);
-                });
-
-        // 2. Local Organization Tenant (shal)
-        Tenant shalTenant = tenantRepository.findByDomain("shal")
-                .orElseGet(() -> {
-                    Tenant t = new Tenant();
-                    t.setName("Shal International Group");
-                    t.setDomain("shal");
-                    return tenantRepository.save(t);
-                });
-
-        // 3. Create Required System Bootstrap Admin
-        createTestUser("admin", "Admin User", "ADM-001", "admin@safeline.com", "admin123", defaultTenant, "SUPER_ADMIN", Set.of());
-        
-        // Removed legacy test users (Sara, John, etc.) as requested by user.
+        // 1. Create Required System Bootstrap Admin (GLOBAL - No Tenant)
+        createTestUser("admin", "Admin User", "ADM-001", "admin@safeline.com", "admin123", null, "SUPER_ADMIN", Set.of());
         
         // 4. Categories and SLA Policies (Required for system functionality)
         tenantRepository.findAll().forEach(tenant -> {

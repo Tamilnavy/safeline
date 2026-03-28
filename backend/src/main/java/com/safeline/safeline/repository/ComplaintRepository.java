@@ -16,6 +16,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     Optional<Complaint> findByTrackingId(String trackingId);
 
+    @Query(value = "SELECT * FROM complaints WHERE id = :id", nativeQuery = true)
+    Optional<Complaint> findUnfilteredById(@Param("id") Long id);
+
     Page<Complaint> findByReporterId(Long reporterId, Pageable pageable);
 
     Page<Complaint> findByTenantId(Long tenantId, Pageable pageable);
@@ -52,6 +55,20 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
                         "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
            nativeQuery = true)
     Page<Complaint> searchAdminComplaints(@Param("tenantId") Long tenantId, @Param("status") String status, @Param("search") String search, @Param("userId") Long userId, Pageable pageable);
+
+    @Query(value = "SELECT c.* FROM complaints c " +
+           "LEFT JOIN categories cat ON cat.id = c.category_id " +
+           "WHERE (c.assigned_to_id = :userId OR c.reporter_id = :userId) AND " +
+           "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
+           "(:status IS NULL OR c.status = :status) AND " +
+           "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           countQuery = "SELECT count(*) FROM complaints c " +
+                        "WHERE (c.assigned_to_id = :userId OR c.reporter_id = :userId) AND " +
+                        "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
+                        "(:status IS NULL OR c.status = :status) AND " +
+                        "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
+           nativeQuery = true)
+    Page<Complaint> searchHandlerComplaints(@Param("userId") Long userId, @Param("status") String status, @Param("search") String search, Pageable pageable);
 
     @Query(value = "SELECT c.* FROM complaints c " +
            "LEFT JOIN categories cat ON cat.id = c.category_id " +

@@ -6,16 +6,15 @@ import Badge from '../../components/ui/Badge';
 import { 
   PlusCircle, Search, ArrowUpRight, ChevronLeft, ChevronRight 
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import ComplaintDetailsModal from '../../components/dashboard/ComplaintDetailsModal';
 
 const EmployeeDashboard = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchMyComplaints();
@@ -107,7 +106,7 @@ const EmployeeDashboard = () => {
                       </td>
                       <td className="px-8 py-5 text-right">
                         <button 
-                          onClick={() => setSelectedComplaint(c)} 
+                          onClick={() => navigate(`/dashboard/complaint/${c.id}`)} 
                           className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-all decoration-none bg-none border-none p-0 cursor-pointer"
                         >
                           Track Details
@@ -145,12 +144,6 @@ const EmployeeDashboard = () => {
         </Card>
       </motion.div>
 
-      <ComplaintDetailsModal 
-        isOpen={!!selectedComplaint}
-        onClose={() => setSelectedComplaint(null)}
-        complaint={selectedComplaint}
-        userRole="EMPLOYEE"
-      />
     </div>
   );
 };

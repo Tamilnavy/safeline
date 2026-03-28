@@ -30,8 +30,6 @@ public class Category {
     private String description;
 
     @com.fasterxml.jackson.annotation.JsonIgnore
-    @lombok.ToString.Exclude
-    @lombok.EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;

@@ -32,6 +32,8 @@ public class ComplaintResponse {
     @com.fasterxml.jackson.annotation.JsonProperty("isSensitive")
     private boolean isSensitive;
     private String reporterUsername;
+    private String reporterEmployeeId;
+    private Long reporterId;
 
     private List<ComplaintEvidenceDTO> evidence;
 

@@ -43,6 +43,7 @@ const SubmitComplaint = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [isCommitteeMember, setIsCommitteeMember] = useState(false);
   const [copiedType, setCopiedType] = useState(null); // 'id' or 'pin'
 
   useEffect(() => {
@@ -51,6 +52,20 @@ const SubmitComplaint = () => {
     const token = localStorage.getItem('token');
     if (token) {
       setFormData(prev => ({ ...prev, isAnonymous: false }));
+      
+      // Check for committee permissions
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          if (user.committeePermissions && user.committeePermissions.length > 0) {
+            setIsCommitteeMember(true);
+            setFormData(prev => ({ ...prev, isSensitive: true }));
+          }
+        } catch (e) {
+          console.error('Failed to parse user data');
+        }
+      }
     }
   }, []);
 
@@ -304,7 +319,7 @@ const SubmitComplaint = () => {
                     )}
                   </div>
                 </div>
-
+                                
                 <div className="flex justify-between items-center pt-6 border-t border-slate-50">
                   <button
                     onClick={() => setStep(1)}
@@ -363,6 +378,44 @@ const SubmitComplaint = () => {
                       </label>
                     </div>
                   </div>
+                </div>
+
+                {/* Committee Confidentiality Notice */}
+                {isCommitteeMember && (
+                  <div className="p-5 bg-indigo-50 border border-indigo-100 rounded-3xl flex items-start gap-4 mb-2 animate-pulse-subtle">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                      <Shield size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900 leading-snug">Committee Confidentiality Protection</p>
+                      <p className="text-[12px] text-slate-600 font-medium leading-relaxed mt-1">
+                        As a committee member, your report is <span className="text-indigo-600 font-bold">automatically escalated</span> to the Escalation Head. This keeps your identity protected from local committee triage.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Anonymous Toggle */}
+                <div className="flex items-center justify-between p-6 bg-indigo-50/50 border border-indigo-100/30 rounded-3xl shadow-sm hover:shadow-md transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                      <Lock size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">Report Anonymously</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Hide your identity from management</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setFormData({ ...formData, isAnonymous: !formData.isAnonymous })}
+                    className={`w-12 h-6 rounded-full p-1 transition-all duration-300 relative border ${formData.isAnonymous ? 'bg-indigo-600 border-indigo-700' : 'bg-slate-200 border-slate-300'
+                      }`}
+                  >
+                    <motion.div
+                      animate={{ x: formData.isAnonymous ? 24 : 0 }}
+                      className="w-4 h-4 bg-white rounded-full shadow-sm"
+                    />
+                  </button>
                 </div>
 
                 {/* Severity Toggle */}
