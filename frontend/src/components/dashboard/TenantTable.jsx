@@ -5,6 +5,7 @@ const TenantTable = ({
   tenants, 
   onManage, 
   onDelete, 
+  onToggleStatus,
   loading 
 }) => {
   if (loading) {

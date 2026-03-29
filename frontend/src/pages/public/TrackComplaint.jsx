@@ -258,23 +258,29 @@ const TrackComplaint = () => {
                     if (!detail) return '';
                     let masked = detail;
                     
-                    // 1. Hide 'by [id]' references
-                    if (masked.includes(' by ')) {
-                      masked = masked.split(' by ')[0];
+                    // 1. Hide 'by [Identity]' (case-insensitive) - Take only what's before 'by '
+                    const lower = masked.toLowerCase();
+                    const byPatterns = [' by ', ' performed by ', ' created by '];
+                    for (const p of byPatterns) {
+                      const idx = lower.indexOf(p);
+                      if (idx !== -1) {
+                        masked = masked.substring(0, idx);
+                        break;
+                      }
                     }
                     
-                    // 2. Remove parenthetical info (contains identifiers like '(employee5)')
+                    // 2. Remove all parentheticals (prevents ID leaks like '(004)')
                     masked = masked.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
                     
-                    // 3. Standardize system labels
-                    if (masked.includes('RESOLUTION ALERT')) {
-                      return 'Final resolution proposed for review';
+                    // 3. Force clean status labels into generic updates
+                    if (masked.toUpperCase().includes('RESOLUTION ALERT')) {
+                      return 'The case has been finalized for resolution review.';
                     }
-                    if (masked.includes('assigned case to')) {
-                      return 'Case assigned for investigation';
+                    if (lower.includes('assigned case to') || lower.includes('case assigned')) {
+                      return 'The case has been assigned to a designated investigator.';
                     }
-                    if (masked.includes('triaged by')) {
-                      return 'Case triaged for priority';
+                    if (lower.includes('triaged')) {
+                      return 'The case has been triaged and prioritized for investigation.';
                     }
                     
                     return masked;

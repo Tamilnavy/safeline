@@ -21,10 +21,14 @@ const MessageBoard = ({
   const [loading, setLoading] = useState(false);
   const [showEvidence, setShowEvidence] = useState(false);
   const messagesEndRef = useRef(null);
+  const containerRef = useRef(null);
 
   const scrollToBottom = (smooth = true) => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto'
+      });
     }
   };
 
@@ -154,7 +158,10 @@ const MessageBoard = ({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-6 bg-slate-50/10 space-y-6 custom-scrollbar">
+      <div 
+        ref={containerRef}
+        className="flex-1 overflow-y-auto p-6 bg-slate-50/10 space-y-6 custom-scrollbar"
+      >
         {hideChat ? (
           <div className="p-4 space-y-6 animate-in fade-in duration-500">
             <div className="space-y-2">
@@ -187,16 +194,15 @@ const MessageBoard = ({
           </div>
         ) : (
           safeMessages.map((m, idx) => {
-            // Robust 'isMe' logic: 
-            // 1. If staff, must match current user's ID
-            // 2. If reporter (no currentUser object), any REPORTER role message is yours
-            const isMe = (isStaff && (m.senderId === currentUser?.id || m.senderUsername === currentUser?.username)) || 
-                         (!isStaff && m.senderRole === 'REPORTER');
+            // Robust alignment logic: 
+            // 1. In Staff/Investigator Console (isStaff is true): Staff on Right, Reporter on Left.
+            // 2. In Reporter Public Tracking (isStaff is false): Reporter on Right, Staff on Left.
+            const showOnRight = isStaff ? m.senderRole !== 'REPORTER' : m.senderRole === 'REPORTER';
             return (
-              <div key={idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+              <div key={idx} className={`flex flex-col ${showOnRight ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                 <div className={`
                   max-w-[85%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed
-                  ${isMe
+                  ${showOnRight
                     ? 'bg-indigo-600 text-white rounded-br-sm shadow-lg shadow-indigo-600/10'
                     : 'bg-slate-100 text-slate-900 rounded-bl-sm border border-slate-200'}
                 `}>

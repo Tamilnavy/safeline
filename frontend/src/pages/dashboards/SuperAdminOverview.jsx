@@ -3,7 +3,7 @@ import api from '../../services/api';
 import Card from '../../components/ui/Card';
 import Stat from '../../components/ui/Stat';
 import { 
-  Users, ShieldCheck, Building2, RefreshCw, Activity, AlertCircle
+  Users, ShieldCheck, Building2, RefreshCw, Activity, AlertCircle, FileText
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -53,9 +53,10 @@ const SuperAdminOverview = () => {
         </div>
       </header>
 
-      <div className="metrics-grid max-w-2xl mx-auto lg:grid-cols-2">
+      <div className="metrics-grid max-w-3xl mx-auto lg:grid-cols-3">
         <Stat label="Total Organizations" value={metrics.totalTenants} icon={Building2} />
         <Stat label="Platform Users" value={metrics.totalUsers} icon={Users} />
+        <Stat label="Total Reports" value={metrics.totalComplaints} icon={FileText} />
       </div>
 
       {error && (

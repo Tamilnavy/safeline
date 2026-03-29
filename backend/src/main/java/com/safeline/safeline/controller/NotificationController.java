@@ -55,4 +55,22 @@ public class NotificationController {
         }
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            notificationService.deleteNotification(id, auth.getName());
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/clear-all")
+    public ResponseEntity<Void> clearAllNotifications() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            notificationService.deleteAllNotifications(auth.getName());
+        }
+        return ResponseEntity.ok().build();
+    }
 }

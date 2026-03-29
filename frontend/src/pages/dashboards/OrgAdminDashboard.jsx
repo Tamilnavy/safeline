@@ -51,8 +51,6 @@ const OrgAdminDashboard = () => {
   }, [page, filterStatus, debouncedSearch, sortBy]);
 
   const fetchData = async () => {
-    if (userRole === 'ADMIN') return;
-    
     setLoading(true);
     try {
       let endpoint = `/complaints/all?page=${page}&size=10&sort=${sortBy}`;
@@ -62,16 +60,19 @@ const OrgAdminDashboard = () => {
       if (debouncedSearch.trim() !== '') {
         endpoint += `&category=${encodeURIComponent(debouncedSearch)}`;
       }
-      const resp = await api.get(endpoint);
-      setComplaints(resp.data.content || []);
-      setTotalPages(resp.data.totalPages || 0);
+      const [listResp, metricsResp] = await Promise.all([
+        api.get(endpoint),
+        api.get('/complaints/metrics')
+      ]);
 
-      const all = resp.data.content || [];
-      const pending = all.filter(c => !['RESOLVED', 'CLOSED', 'DISMISSED'].includes(c.status?.toUpperCase())).length;
+      setComplaints(listResp.data.content || []);
+      setTotalPages(listResp.data.totalPages || 0);
+
+      // Use the global metrics for the counter cards
       setStats({
-        total: resp.data.totalElements || 0,
-        pending,
-        resolved: (resp.data.totalElements || 0) - pending
+        total: metricsResp.data.total || 0,
+        pending: metricsResp.data.pending || 0,
+        resolved: metricsResp.data.resolved || 0
       });
     } catch (err) {
       console.error('Failed to fetch org complaints', err);
@@ -172,8 +173,8 @@ const OrgAdminDashboard = () => {
       {['ORG_ADMIN', 'ADMIN'].includes(userRole) && (
       <div className="metrics-grid">
         <Stat label="Total Users Enrolled" value={allTeam.length} icon={Users} />
-        <Stat label="Active Personnel" value={allTeam.filter(u => u.active !== false).length} icon={CheckCircle} />
-        <Stat label="System Settings" value={4} icon={Settings} />
+        <Stat label="Active Personnel" value={allTeam.filter(u => u.enabled !== false).length} icon={CheckCircle} />
+        <Stat label="Total Reports" value={stats.total} icon={FileText} />
       </div>
       )}
 

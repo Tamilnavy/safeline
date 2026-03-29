@@ -50,4 +50,19 @@ public class NotificationService {
     public void markAllAsRead(String username) {
         notificationRepository.markAllAsReadForUser(username);
     }
+
+    @Transactional
+    public void deleteNotification(@NonNull Long id, String username) {
+        if (id == null) return;
+        notificationRepository.findById(id).ifPresent(notification -> {
+            if (notification.getRecipientUsername().equals(username)) {
+                notificationRepository.delete(notification);
+            }
+        });
+    }
+
+    @Transactional
+    public void deleteAllNotifications(String username) {
+        notificationRepository.deleteAllByRecipientUsername(username);
+    }
 }

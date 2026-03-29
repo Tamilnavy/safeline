@@ -272,10 +272,11 @@ public class ComplaintController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
         boolean isCommitteeLead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD);
+        boolean isEscalationHead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD);
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
 
-        if (!isCommitteeLead && !isSuperAdmin) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only Committee Leads can triage cases.");
+        if (!isCommitteeLead && !isEscalationHead && !isSuperAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only Committee Leads or Escalation Heads can triage cases.");
         }
 
         return ResponseEntity.ok(mapToResponse(complaintActionService.triageComplaint(id, priority, classification, status)));
@@ -294,10 +295,11 @@ public class ComplaintController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = userRepository.findByUsername(auth.getName()).orElseThrow();
         boolean isCommitteeLead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD);
+        boolean isEscalationHead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD);
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
 
-        if (!isCommitteeLead && !isSuperAdmin) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only Committee Leads can assign cases.");
+        if (!isCommitteeLead && !isEscalationHead && !isSuperAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only Committee Leads or Escalation Heads can assign cases.");
         }
 
         return ResponseEntity.ok(complaintActionService.assignInvestigator(id, investigatorId));
@@ -350,7 +352,20 @@ public class ComplaintController {
         res.setClassification(c.getClassification() != null ? c.getClassification().name() : "GENERAL");
         res.setAnonymous(c.isAnonymous());
         res.setSensitive(c.isSensitive());
-        res.setReporterUsername(c.isAnonymous() ? "Anonymous" : (c.getReporter() != null ? c.getReporter().getUsername() : "Public User"));
+        boolean maskReporter = c.isAnonymous();
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                String currentUsername = auth.getName();
+                if (c.getReporter() != null && c.getReporter().getUsername().equals(currentUsername)) {
+                    maskReporter = false; // The reporter themselves can see their own identity
+                }
+            }
+        } catch (Exception ignored) {}
+
+        res.setReporterUsername(maskReporter ? "Anonymous" : (c.getReporter() != null ? c.getReporter().getUsername() : "Public User"));
+        res.setReporterId(maskReporter ? null : (c.getReporter() != null ? c.getReporter().getId() : null));
+        res.setReporterEmployeeId(maskReporter ? null : (c.getReporter() != null ? c.getReporter().getEmployeeId() : null));
         
         if (c.getAssignedTo() != null) {
             res.setAssignedToUsername(c.getAssignedTo().getUsername());

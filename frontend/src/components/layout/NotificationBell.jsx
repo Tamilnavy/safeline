@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, X, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -23,7 +23,7 @@ const NotificationBell = () => {
     // Optional polling every 30s
     const interval = setInterval(() => {
       fetchNotifications();
-    }, 30000);
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -54,6 +54,25 @@ const NotificationBell = () => {
     }
   };
 
+  const handleDelete = async (e, id) => {
+    e.stopPropagation(); // Don't trigger navigation
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error('Failed to delete notification', err);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await api.delete('/notifications/clear-all');
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear notifications', err);
+    }
+  };
+
   return (
     <div className="relative">
       <button 
@@ -74,11 +93,21 @@ const NotificationBell = () => {
           <div className="absolute top-12 right-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <h3 className="text-sm font-black text-slate-900">Notifications</h3>
-              {unreadCount > 0 && (
-                <button onClick={markAllAsRead} className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 transition-colors">
-                  Clear All
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} title="Mark all as read" className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                    Read All
+                  </button>
+                )}
+                {notifications.length > 0 && (
+                  <button onClick={handleDeleteAll} title="Delete all notifications" className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+                <button onClick={() => setShowDropdown(false)} title="Close" className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors">
+                  <X size={14} />
                 </button>
-              )}
+              </div>
             </div>
             
             <div className="max-h-80 overflow-y-auto custom-scrollbar">
@@ -92,19 +121,28 @@ const NotificationBell = () => {
                   <div 
                     key={notif.id}
                     onClick={() => handleNotificationClick(notif)}
-                    className={`block w-full text-left p-4 border-b border-slate-50 transition-colors cursor-pointer hover:bg-slate-50 pb-5
+                    className={`block w-full text-left p-4 border-b border-slate-50 transition-colors cursor-pointer hover:bg-slate-50 pb-5 group
                       ${!notif.read ? 'bg-indigo-50/30' : ''}`}
                   >
-                    <div className="flex gap-2">
-                      {!notif.read && <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0" />}
-                      <div>
-                        <p className={`text-xs ${!notif.read ? 'font-black text-slate-900' : 'font-semibold text-slate-700'} leading-snug`}>
-                          {notif.message}
-                        </p>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
-                          {new Date(notif.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })}
-                        </p>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex gap-2 min-w-0">
+                        {!notif.read && <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full mt-1.5 flex-shrink-0" />}
+                        <div className="min-w-0">
+                          <p className={`text-xs ${!notif.read ? 'font-black text-slate-900' : 'font-semibold text-slate-700'} leading-snug break-words`}>
+                            {notif.message}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
+                            {new Date(notif.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' })}
+                          </p>
+                        </div>
                       </div>
+                      <button 
+                        onClick={(e) => handleDelete(e, notif.id)}
+                        className="p-1 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all shrink-0"
+                        title="Delete"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                   </div>
                 ))

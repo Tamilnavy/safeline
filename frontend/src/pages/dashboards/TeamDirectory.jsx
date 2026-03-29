@@ -144,17 +144,25 @@ const TeamDirectory = () => {
                       return m.committeePermissions?.includes(filterRole);
                     })
                     .map(member => (
-                    <tr key={member.id} className="table-row group cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setSelectedMember(member)}>
+                    <tr key={member.id} className={`table-row group cursor-pointer hover:bg-slate-50 transition-colors ${member.enabled === false ? 'opacity-60 grayscale-[0.3]' : ''}`} onClick={() => setSelectedMember(member)}>
                       <td className="px-6 py-4 border-b border-slate-100">
                         <div className="flex items-center">
                           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-100 to-blue-50 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200/50 mr-4 group-hover:scale-105 transition-transform shadow-sm text-sm">
                             {(member.fullName || member.username || '?').charAt(0).toUpperCase()}
                           </div>
-                          <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors whitespace-nowrap">{member.fullName || member.username}</div>
+                          <div className="flex flex-col">
+                            <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors whitespace-nowrap flex items-center gap-2">
+                              {member.fullName || member.username}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 border-b border-slate-100 text-center">
-                        {(member.employeeId || member.username) && (
+                        {member.enabled === false ? (
+                          <div className="text-[9px] font-black text-rose-600 bg-rose-50 inline-flex items-center px-2 py-1 rounded border border-rose-100 uppercase tracking-widest shadow-sm">
+                            DEACTIVATED
+                          </div>
+                        ) : (member.employeeId || member.username) && (
                           <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 inline-flex items-center px-2 py-0.5 rounded border border-indigo-100/50 tracking-wider shadow-sm transition-colors group-hover:bg-white tracking-widest">
                             {member.employeeId || member.username}
                           </div>
@@ -193,11 +201,19 @@ const TeamDirectory = () => {
                 {selectedMember.email}
               </p>
               
-              <div className="mt-5 inline-flex items-center px-4 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm">
-                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-                  ID: <span className="text-indigo-600">{selectedMember.employeeId || selectedMember.username}</span>
-                </span>
-              </div>
+              {selectedMember.enabled === false ? (
+                <div className="mt-5 inline-flex items-center px-4 py-1.5 bg-rose-50 border border-rose-100 rounded-full shadow-sm">
+                  <span className="text-[11px] font-black text-rose-600 uppercase tracking-widest">
+                    ACCOUNT DEACTIVATED
+                  </span>
+                </div>
+              ) : (
+                <div className="mt-5 inline-flex items-center px-4 py-1.5 bg-white border border-slate-200 rounded-full shadow-sm">
+                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+                    ID: <span className="text-indigo-600">{selectedMember.employeeId || selectedMember.username}</span>
+                  </span>
+                </div>
+              )}
             </div>
             
             <div className="p-6 space-y-4">

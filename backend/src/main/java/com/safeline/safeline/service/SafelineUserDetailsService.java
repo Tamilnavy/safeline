@@ -46,6 +46,11 @@ public class SafelineUserDetailsService implements UserDetailsService {
             throw new org.springframework.security.authentication.DisabledException("Organization is deactivated");
         }
 
+        if (!user.isEnabled()) {
+            System.err.println("DEBUG: Blocked login attempt for deactivated user: " + user.getUsername());
+            throw new org.springframework.security.authentication.DisabledException("User account is deactivated");
+        }
+
         return new com.safeline.safeline.security.TenantAwareUserDetails(
                 user.getUsername(),
                 user.getPassword(),

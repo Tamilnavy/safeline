@@ -111,6 +111,11 @@ const InvestigationDetails = () => {
     </div>
   );
 
+  const isReporter = user?.id === complaint?.reporterId || (user?.username && complaint?.reporterUsername && user.username === complaint.reporterUsername);
+  const isStaff = user?.committeePermissions && user.committeePermissions.length > 0;
+  // Personnel can only manage cases they DID NOT report themselves
+  const canManage = isStaff && !isReporter;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -145,8 +150,8 @@ const InvestigationDetails = () => {
               <span className="text-[11px] font-black uppercase tracking-widest text-emerald-600">{complaint.status?.replace(/_/g, ' ')}</span>
             </div>
 
-            {/* Manage Status Trigger - Restricted to Committee Lead */}
-            {user?.committeePermissions?.includes('COMMITTEE_LEAD') && (
+            {/* Manage Status Trigger - Restricted to Committee Lead & Escalation Head (and NOT the reporter) */}
+            {(isStaff && !isReporter && (user?.committeePermissions?.includes('COMMITTEE_LEAD') || user?.committeePermissions?.includes('ESCALATION_HEAD'))) && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -241,15 +246,15 @@ const InvestigationDetails = () => {
               </div>
             )}
 
-            {/* Communication Center */}
-            {!user?.committeePermissions?.includes('COMMITTEE_LEAD') && (
+            {/* Communication Center - Hidden for Committee Leads (Oversight Mode), unless they are the reporter */}
+            {(!user?.committeePermissions?.includes('COMMITTEE_LEAD') || isReporter) && (
               <div className="bg-white rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white overflow-hidden flex flex-col min-h-[550px]">
                 <div className="bg-white rounded-b-[40px] overflow-hidden flex flex-col h-[500px]">
                   <div className="flex-1 relative min-h-0">
                     <MessageBoard 
                       complaintId={complaint.id} 
                       initialMessages={[]} 
-                      isStaff={true} 
+                      isStaff={canManage} 
                       showHeader={true}
                       title="Investigation Communication"
                     />
@@ -265,8 +270,8 @@ const InvestigationDetails = () => {
             animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-4 space-y-8"
           >
-            {/* Inline Lifecycle Status (Restored for Handler per request) */}
-            {user?.committeePermissions?.includes('COMPLAINT_HANDLER') && 
+            {/* Inline Lifecycle Status - Restricted to Staff who are NOT the reporter */}
+            {(isStaff && !isReporter && (user?.committeePermissions?.includes('COMPLAINT_HANDLER') || user?.committeePermissions?.includes('ESCALATION_HEAD'))) && 
              !user?.committeePermissions?.includes('COMMITTEE_LEAD') && (
               <div className="bg-white p-10 rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white relative overflow-hidden ring-1 ring-indigo-50/50">
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Lifecycle Update</p>
@@ -298,18 +303,41 @@ const InvestigationDetails = () => {
               </h3>
               <div className="space-y-10 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 max-h-[400px] overflow-y-auto custom-scrollbar pr-4 pb-4">
                 {activities.map((act, i) => {
+                  const isReporter = user?.id === complaint?.reporterId || (user?.username && complaint?.reporterUsername && user.username === complaint.reporterUsername);
                   const isStaff = user?.committeePermissions && user.committeePermissions.length > 0;
-                  const isReporter = user?.id === complaint?.reporterId;
-                  // Unmask for ALL staff, mask ONLY for the public reporter view.
+                  // Mask for ALL reporters (even if they are staff) and non-staff viewers.
                   const shouldMask = !isStaff || isReporter;
 
                   const maskIdentity = (detail) => {
                     if (!detail || !shouldMask) return detail;
                     let masked = detail;
-                    if (masked.includes(' by ')) masked = masked.split(' by ')[0];
+                    
+                    // 1. Hide 'by [Any Identity]' (case-insensitive)
+                    // We take everything before the first 'by ' to ensure names are never shown.
+                    const lower = masked.toLowerCase();
+                    const byPatterns = [' by ', ' performed by ', ' created by '];
+                    for (const p of byPatterns) {
+                      const idx = lower.indexOf(p);
+                      if (idx !== -1) {
+                        masked = masked.substring(0, idx);
+                        break;
+                      }
+                    }
+                    
+                    // 2. Remove all parentheticals (prevents ID leaks like '(004)' or '(jdoe)')
                     masked = masked.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
-                    if (masked.includes('RESOLUTION ALERT:')) return 'Case has been submitted for final resolution review.';
-                    if (masked.includes('assigned case to')) return 'Case assigned for investigation';
+                    
+                    // 3. Scrub sensitive system labels into generic status updates
+                    if (masked.toUpperCase().includes('RESOLUTION ALERT')) {
+                      return 'The case has been finalized for resolution review.';
+                    }
+                    if (lower.includes('assigned case to') || lower.includes('case assigned')) {
+                      return 'The case has been assigned to a designated investigator.';
+                    }
+                    if (lower.includes('triaged')) {
+                      return 'The case has been triaged and prioritized for investigation.';
+                    }
+                    
                     return masked;
                   };
 
@@ -375,7 +403,11 @@ const InvestigationDetails = () => {
                     {['SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED']
                       .filter(s => {
                         const isLead = user?.committeePermissions?.includes('COMMITTEE_LEAD');
-                        if (isLead) return s === 'CLOSED';
+                        const isEscalation = user?.committeePermissions?.includes('ESCALATION_HEAD');
+                        
+                        // Committee Lead and Escalation Head only have 'CLOSED' option for final oversight review
+                        if (isLead || isEscalation) return s === 'CLOSED';
+                        
                         const isHandlerOnly = user?.committeePermissions?.includes('COMPLAINT_HANDLER') &&
                           !user?.committeePermissions?.includes('COMMITTEE_LEAD') &&
                           !user?.committeePermissions?.includes('ESCALATION_HEAD');

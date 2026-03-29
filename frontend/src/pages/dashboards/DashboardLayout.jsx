@@ -139,7 +139,7 @@ const DashboardLayout = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            <NotificationBell />
+            {!['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(user.role) && <NotificationBell />}
             <div className="flex items-center gap-3 group cursor-pointer pl-2 border-l border-slate-200">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-slate-900 leading-tight">{(user.fullName || user.username)}</p>

@@ -9,16 +9,19 @@ import com.safeline.safeline.repository.ComplaintRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommunicationService {
 
     private final ComplaintMessageRepository messageRepository;
     private final ComplaintRepository complaintRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
     // 1. Send Message as Reporter (Anonymous)
     public ComplaintMessage sendMessageAsReporter(MessageRequest request) {
@@ -34,7 +37,19 @@ public class CommunicationService {
         message.setContent(request.getContent());
         message.setSenderRole("REPORTER");
         
-        return messageRepository.save(message);
+        ComplaintMessage savedMessage = messageRepository.save(message);
+
+        // Notify Investigator (if assigned)
+        if (complaint.getAssignedTo() != null) {
+            notificationService.createNotification(
+                complaint.getAssignedTo().getUsername(),
+                "You have a new message for complaint #" + complaint.getTrackingId(),
+                complaint.getId(),
+                complaint.getTenant().getId()
+            );
+        }
+
+        return savedMessage;
     }
 
     // 2. Send Message as Investigator/Staff
@@ -59,10 +74,29 @@ public class CommunicationService {
         message.setContent(content);
         message.setSender(sender);
         
+        // Scenario A: Reporter sends message -> Notify Assigned Investigator
         if (complaint.getReporter() != null && complaint.getReporter().getId().equals(sender.getId())) {
             message.setSenderRole("REPORTER");
-        } else {
+            if (complaint.getAssignedTo() != null) {
+                notificationService.createNotification(
+                    complaint.getAssignedTo().getUsername(),
+                    "You have a new message for complaint #" + complaint.getTrackingId(),
+                    complaint.getId(),
+                    complaint.getTenant().getId()
+                );
+            }
+        } 
+        // Scenario B: Investigator sends message -> Notify Reporter (if registered)
+        else {
             message.setSenderRole("STAFF");
+            if (complaint.getReporter() != null) {
+                notificationService.createNotification(
+                    complaint.getReporter().getUsername(),
+                    "A new message has been received on your case #" + complaint.getTrackingId(),
+                    complaint.getId(),
+                    complaint.getTenant().getId()
+                );
+            }
         }
         
         return messageRepository.save(message);

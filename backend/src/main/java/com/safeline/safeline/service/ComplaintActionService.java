@@ -68,6 +68,15 @@ public class ComplaintActionService {
         String detail = String.format("%s assigned case to %s (%s)", 
                         getCurrentUser(), investigatorName, investigator.getRole());
         complaintService.logActivity(updated.getId(), "INVESTIGATOR_ASSIGNED", getCurrentUser(), detail);
+
+        // Notify the investigator
+        notificationService.createNotification(
+            investigator.getUsername(),
+            "A new case #" + updated.getTrackingId() + " is assigned to you",
+            updated.getId(),
+            updated.getTenant() != null ? updated.getTenant().getId() : null
+        );
+
         return updated;
     }
 
