@@ -30,12 +30,15 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     @Query(value = "SELECT c.* FROM complaints c " +
            "LEFT JOIN categories cat ON cat.id = c.category_id " +
            "WHERE c.tenant_id = :tenantId AND " +
-           "c.type = :type AND " +
+           "((:type = 'SENSITIVE' AND (c.is_sensitive = true OR c.type = 'SENSITIVE')) OR " +
+           " (:type = 'NORMAL' AND (c.is_sensitive = false OR c.is_sensitive IS NULL OR c.type = 'NORMAL'))) AND " +
            "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
            "(:status IS NULL OR c.status = :status) AND " +
            "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",
            countQuery = "SELECT count(*) FROM complaints c " +
-                        "WHERE c.tenant_id = :tenantId AND c.type = :type AND " +
+                        "WHERE c.tenant_id = :tenantId AND " +
+                        "((:type = 'SENSITIVE' AND (c.is_sensitive = true OR c.type = 'SENSITIVE')) OR " +
+                        " (:type = 'NORMAL' AND (c.is_sensitive = false OR c.is_sensitive IS NULL OR c.type = 'NORMAL'))) AND " +
                         "(c.accused_user_id IS NULL OR c.accused_user_id != :userId) AND " +
                         "(:status IS NULL OR c.status = :status) AND " +
                         "(:search IS NULL OR CAST(c.title AS TEXT) ILIKE CONCAT('%', :search, '%') OR CAST(c.tracking_id AS TEXT) ILIKE CONCAT('%', :search, '%'))",

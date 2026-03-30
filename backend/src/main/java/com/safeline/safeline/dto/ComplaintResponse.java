@@ -11,6 +11,7 @@ public class ComplaintResponse {
     private String trackingId;
     private String rawPin;
     private String status;   // String representation of enum
+    private String type;     // String representation of enum (NORMAL or SENSITIVE)
     private LocalDateTime createdAt;
     
     // Additional fields for list view

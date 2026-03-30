@@ -13,7 +13,7 @@ import ComplaintTable from '../../components/dashboard/ComplaintTable';
 import TriageModal from '../../components/dashboard/TriageModal';
 import { useAuth } from '../../context/AuthContext';
 
-const InvestigatorDashboard = () => {
+const InvestigatorDashboard = ({ viewMode }) => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
@@ -27,23 +27,22 @@ const InvestigatorDashboard = () => {
 
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  
+
   const isLead = user?.committeePermissions?.includes('COMMITTEE_LEAD');
   const isEscalation = user?.committeePermissions?.includes('ESCALATION_HEAD');
   const isHandler = user?.committeePermissions?.includes('COMPLAINT_HANDLER');
   const isOrgAdmin = ['ORG_ADMIN', 'ADMIN'].includes(user?.role);
-  
+
   const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED'];
 
   useEffect(() => {
-    // Wait until auth context has finished loading before fetching
     if (authLoading || !user) return;
     fetchData();
-    // Allow management roles to see investigator list for re-assignment if needed
-    if (isLead || isEscalation || ['ORG_ADMIN', 'ADMIN'].includes(user?.role)) {
+    // Fetch investigators list ONLY for Lead/Escalation/Admin modes for assignment
+    if (viewMode === 'LEAD' || viewMode === 'ESCALATION' || ['ORG_ADMIN', 'ADMIN'].includes(user?.role)) {
       fetchInvestigators();
     }
-  }, [page, filter, searchTerm, sortBy, user, authLoading]);
+  }, [page, filter, searchTerm, sortBy, user, authLoading, viewMode]);
 
 
   const fetchInvestigators = async () => {
@@ -58,13 +57,19 @@ const InvestigatorDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Logic: Leads, Escalation Heads, and Org Admins see the "all" view (filtered by backend)
-      // Standard handlers see only "assigned"
-      const baseEndpoint = (isLead || isEscalation || isOrgAdmin) ? '/complaints/all' : '/complaints/assigned';
+      // Endpoint logic: 
+      // LEAD/ESCALATION/ADMIN modes see the "all" view (backend filters by permissions)
+      // HANDLER mode sees only "assigned"
+      const baseEndpoint = (viewMode === 'LEAD' || viewMode === 'ESCALATION' || isOrgAdmin) ? '/complaints/all' : '/complaints/assigned';
 
       const queryParams = [];
       if (filter !== 'ALL') queryParams.push(`status=${filter}`);
       if (searchTerm.trim() !== '') queryParams.push(`search=${encodeURIComponent(searchTerm.trim())}`);
+      
+      // Add explicit type filtering for segmented modes
+      if (viewMode === 'LEAD') queryParams.push('type=NORMAL');
+      if (viewMode === 'ESCALATION') queryParams.push('type=SENSITIVE');
+
       queryParams.push(`sort=${sortBy}`);
       queryParams.push(`page=${page}&size=10`);
 
@@ -118,9 +123,9 @@ const InvestigatorDashboard = () => {
   };
 
   const getDashboardTitle = () => {
-    if (isEscalation) return 'Escalation Intelligence';
-    if (isLead || isOrgAdmin) return 'Committee Oversight';
-    if (isHandler) return 'Case Investigation';
+    if (viewMode === 'ESCALATION') return 'Escalation Hub';
+    if (viewMode === 'LEAD' || isOrgAdmin) return 'Lead Oversight';
+    if (viewMode === 'HANDLER') return 'My Assignments';
     return 'Specialized Intelligence';
   };
 
@@ -135,29 +140,31 @@ const InvestigatorDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">{getDashboardTitle()}</h1>
           <p className="text-slate-500 text-sm font-medium">
-            {isLead || isEscalation ? 'Global organization oversight and routing' : 'Personal assignments and case monitor'}
+            {viewMode === 'LEAD' ? 'Assign and triage organization reports' : 
+             viewMode === 'ESCALATION' ? 'Oversight and handling of sensitive escalations' : 
+             'Manage and investigate cases assigned to you'}
           </p>
         </div>
       </header>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col mb-4">
-         <div className="relative w-full sm:max-w-md">
-           <input
-             type="text"
-             placeholder="Search tracking ID, Title, or Reporter..."
-             className="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
-             value={searchInput}
-             onChange={(e) => setSearchInput(e.target.value)}
-           />
-           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-         </div>
+        <div className="relative w-full sm:max-w-md">
+          <input
+            type="text"
+            placeholder="Search tracking ID, Title, or Reporter..."
+            className="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+        </div>
       </div>
 
       <motion.div variants={itemVariants}>
         <Card
           title="Case Inventory"
-          subtitle={isLead || isEscalation ? "Overview of all reports requiring your attention." : "Reports explicitly assigned to you for investigation."}
+          subtitle={viewMode === 'LEAD' || viewMode === 'ESCALATION' ? "Overview of all reports requiring your attention." : "Reports explicitly assigned to you for investigation."}
         >
           <div className="overflow-x-auto table-container border-none shadow-none p-0!">
             <ComplaintTable
@@ -167,10 +174,12 @@ const InvestigatorDashboard = () => {
               page={page}
               totalPages={totalPages}
               filterStatus={filter}
+              viewMode={viewMode}
               isLead={isLead}
               isEscalation={isEscalation}
               isHandler={isHandler}
-              showAssignment={isLead || isOrgAdmin}
+              user={user}
+              showAssignment={viewMode === 'LEAD' || isOrgAdmin}
               onAssign={handleAssign}
               onUpdateStatus={updateStatus}
               onPageChange={setPage}

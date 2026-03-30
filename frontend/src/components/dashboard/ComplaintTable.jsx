@@ -20,6 +20,8 @@ const ComplaintTable = ({
   isLead = false,
   isEscalation = false,
   isHandler = false,
+  user = {},
+  viewMode = 'HANDLER',
   sortBy,
   onSortChange
 }) => {
@@ -49,7 +51,7 @@ const ComplaintTable = ({
       width: 'max-content'
     });
     setEditingRoleId(complaint.id);
-    setActiveRoleLevel(null); 
+    setActiveRoleLevel(null);
   };
 
   const toggleStatusPopup = (e, id) => {
@@ -92,11 +94,11 @@ const ComplaintTable = ({
   const getRoleLabel = (complaint) => {
     const inv = getAssignedInvestigator(complaint);
     if (!inv) return 'Unassigned';
-    
+
     if (inv.committeePermissions?.includes('ESCALATION_HEAD')) return 'Escalation Head';
     if (inv.committeePermissions?.includes('COMMITTEE_LEAD')) return 'Committee Lead';
     if (inv.committeePermissions?.includes('COMPLAINT_HANDLER')) return 'Complaint Handler';
-    
+
     return 'Employee';
   };
 
@@ -114,13 +116,15 @@ const ComplaintTable = ({
       'COMPLAINT_HANDLER': [],
       'MEMBER': []
     };
-    
+
     investigators.forEach(inv => {
       const perms = inv.committeePermissions || [];
-      if (perms.includes('ESCALATION_HEAD')) groups['ESCALATION_HEAD'].push(inv);
-      else if (perms.includes('COMMITTEE_LEAD')) groups['COMMITTEE_LEAD'].push(inv);
-      else if (perms.includes('COMPLAINT_HANDLER')) groups['COMPLAINT_HANDLER'].push(inv);
-      else groups['MEMBER'].push(inv);
+      let matched = false;
+      if (perms.includes('ESCALATION_HEAD')) { groups['ESCALATION_HEAD'].push(inv); matched = true; }
+      if (perms.includes('COMMITTEE_LEAD')) { groups['COMMITTEE_LEAD'].push(inv); matched = true; }
+      if (perms.includes('COMPLAINT_HANDLER')) { groups['COMPLAINT_HANDLER'].push(inv); matched = true; }
+      
+      if (!matched) groups['MEMBER'].push(inv);
     });
     return groups;
   })();
@@ -136,9 +140,13 @@ const ComplaintTable = ({
   // Escalation Head → can only assign to other Escalation Heads
   // Committee Lead → can only assign to Complaint Handlers (their job is to route, not investigate)
   const getFilteredRoleOrder = () => {
-    if (isEscalation) return roleOrder.filter(r => r.id === 'ESCALATION_HEAD');
-    if (isLead) return roleOrder.filter(r => r.id === 'COMPLAINT_HANDLER');
-    return roleOrder;
+    // If Admin/SuperAdmin, see everything
+    if (user?.role && ['SUPER_ADMIN', 'ORG_ADMIN', 'ADMIN'].includes(user.role)) return roleOrder;
+
+    if (viewMode === 'LEAD') return roleOrder.filter(r => r.id === 'COMPLAINT_HANDLER');
+    if (viewMode === 'ESCALATION') return roleOrder.filter(r => r.id === 'ESCALATION_HEAD');
+    
+    return []; // No investigative powers in other modes (like HANDLER mode)
   };
   const filteredRoleOrder = getFilteredRoleOrder();
 
@@ -150,19 +158,18 @@ const ComplaintTable = ({
             <button
               key={s}
               onClick={() => onFilterChange(s)}
-              className={`btn transition-all whitespace-nowrap ${
-                filterStatus === s ? 'btn-primary' : 'btn-secondary text-xs py-1.5'
-              }`}
+              className={`btn transition-all whitespace-nowrap ${filterStatus === s ? 'btn-primary' : 'btn-secondary text-xs py-1.5'
+                }`}
             >
               {s.replace(/_/g, ' ')}
             </button>
           ))}
         </div>
-        
+
         {onSortChange && (
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-10 shadow-sm transition-all shrink-0">
             <ArrowUpDown size={14} className="text-slate-400" />
-            <select 
+            <select
               className="bg-transparent text-sm text-slate-600 font-medium outline-none border-none cursor-pointer focus:ring-0 flex-1 min-w-[120px]"
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value)}
@@ -227,7 +234,7 @@ const ComplaintTable = ({
                         <span className="text-xs font-bold text-slate-800">
                           {c.anonymous ? (c.anonymousId || 'ANON-REPORTER') : (c.reporterUsername || 'Public User')}
                         </span>
-                        {c.anonymous ? 
+                        {c.anonymous ?
                           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Anonymous</span> :
                           <span className="text-[9px] text-indigo-500 font-bold uppercase tracking-tighter">Identified</span>}
                       </div>
@@ -241,16 +248,15 @@ const ComplaintTable = ({
                         <div className="relative">
                           <button
                             onClick={(e) => toggleRolePopup(e, c)}
-                            className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border shadow-sm transition-all focus:outline-none min-w-[140px] ${
-                              getRoleLabel(c) === 'Unassigned' 
-                                ? 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-white hover:border-slate-300' 
-                                : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
-                            } ${editingRoleId === c.id ? 'ring-2 ring-indigo-500/20 border-indigo-300' : ''}`}
+                            className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border shadow-sm transition-all focus:outline-none min-w-[140px] ${getRoleLabel(c) === 'Unassigned'
+                              ? 'bg-slate-50 border-slate-200 text-slate-400 hover:bg-white hover:border-slate-300'
+                              : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+                              } ${editingRoleId === c.id ? 'ring-2 ring-indigo-500/20 border-indigo-300' : ''}`}
                           >
                             <span className="text-[11px] font-bold tracking-wide truncate max-w-[220px]">
-                              {getAssignedInvestigator(c) 
-                                  ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
-                                  : 'Untriaged / Unassigned'}
+                              {getAssignedInvestigator(c)
+                                ? `${getRoleLabel(c)} - ${getAssignedInvestigator(c).fullName || getAssignedInvestigator(c).username}`
+                                : 'Untriaged / Unassigned'}
                             </span>
                             <ChevronRight size={14} className={`shrink-0 transition-transform ${editingRoleId === c.id ? 'rotate-90' : ''}`} />
                           </button>
@@ -261,7 +267,7 @@ const ComplaintTable = ({
                               <div style={rolePopupStyle} className="bg-white rounded-xl shadow-lg border border-slate-200 p-2 w-fit max-w-sm animate-in fade-in zoom-in-95 duration-150">
                                 {activeRoleLevel ? (
                                   <div className="flex flex-col space-y-1">
-                                    <button 
+                                    <button
                                       onClick={(e) => { e.stopPropagation(); setActiveRoleLevel(null); }}
                                       className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-50 text-slate-500 font-semibold text-[10px] uppercase tracking-wider hover:bg-slate-100 hover:text-slate-800 transition-colors"
                                     >
@@ -276,11 +282,10 @@ const ComplaintTable = ({
                                           <button
                                             key={inv.id}
                                             onClick={() => handleAssignUser(c.id, inv.id)}
-                                            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${
-                                              getAssignedInvestigator(c)?.id === inv.id 
-                                                ? 'bg-indigo-50 text-indigo-600 font-semibold' 
-                                                : 'text-slate-600 font-medium'
-                                            }`}
+                                            className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors hover:bg-slate-100 ${getAssignedInvestigator(c)?.id === inv.id
+                                              ? 'bg-indigo-50 text-indigo-600 font-semibold'
+                                              : 'text-slate-600 font-medium'
+                                              }`}
                                           >
                                             {inv.fullName || inv.username} ({inv.employeeId || 'ID UNKNOWN'})
                                           </button>
@@ -315,7 +320,7 @@ const ComplaintTable = ({
 
                     <td className="px-2 py-5">
                       <div className="flex gap-1.5 justify-center items-center">
-                         <motion.button
+                        <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => onViewDetails(c)}

@@ -1,54 +1,52 @@
 package com.safeline.safeline.controller;
 
-import com.safeline.safeline.model.ComplaintEvidence;
-import com.safeline.safeline.repository.ComplaintEvidenceRepository;
-import com.safeline.safeline.service.FileStorageService;
+import com.safeline.safeline.model.*;
+import com.safeline.safeline.repository.*;
+import com.safeline.safeline.service.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.nio.file.Path;
-import java.util.List;
+import org.springframework.http.MediaType;
 
 @RestController
-@RequestMapping("/api/evidence")
+@RequestMapping("/api/complaints")
 @RequiredArgsConstructor
 public class EvidenceController {
 
     private final ComplaintEvidenceRepository evidenceRepository;
     private final FileStorageService fileStorageService;
+    private final UserRepository userRepository;
 
-    @GetMapping("/complaint/{complaintId}")
-    @PreAuthorize("hasAnyAuthority('LEVEL_1', 'LEVEL_2')")
-    public ResponseEntity<List<ComplaintEvidence>> getEvidence(@PathVariable Long complaintId) {
-        return ResponseEntity.ok(evidenceRepository.findByComplaintId(complaintId));
-    }
+    @GetMapping("/evidence/{id}/download")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<byte[]> downloadEvidence(@PathVariable Long id) {
+        ComplaintEvidence evidence = evidenceRepository.findById(id).orElse(null);
+        if (evidence == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        
+        Complaint complaint = evidence.getComplaint();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userRepository.findByUsername(auth.getName()).orElseThrow();
+        
+        boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
+        boolean isCommitteeMember = currentUser.getCommitteePermissions() != null && 
+            (currentUser.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD) || 
+             currentUser.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD));
+        
+        boolean isHandler = complaint.getAssignedTo() != null && complaint.getAssignedTo().getId().equals(currentUser.getId());
+        boolean isReporter = complaint.getReporter() != null && complaint.getReporter().getId().equals(currentUser.getId());
 
-    @GetMapping("/download/{id}")
-    @PreAuthorize("hasAnyAuthority('LEVEL_1', 'LEVEL_2')")
-    public ResponseEntity<Resource> download(@PathVariable Long id) {
-        ComplaintEvidence evidence = evidenceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Evidence not found"));
-
-        try {
-            Path file = fileStorageService.load(evidence.getFilePath());
-            Resource resource = new UrlResource(file.toUri());
-
-            if (resource.exists() || resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + evidence.getFileName() + "\"")
-                        .contentType(MediaType.parseMediaType(evidence.getContentType()))
-                        .body(resource);
-            } else {
-                throw new RuntimeException("Could not read the file!");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error: " + e.getMessage());
+        if (!isSuperAdmin && !isCommitteeMember && !isHandler && !isReporter) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
+        byte[] content = fileStorageService.loadAsBytes(evidence.getFilePath());
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + evidence.getFileName() + "\"")
+                .contentType(MediaType.parseMediaType(evidence.getContentType()))
+                .body(content);
     }
 }

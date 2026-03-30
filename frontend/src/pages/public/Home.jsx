@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShieldCheck, FileSearch, ArrowRight, PlusCircle, Search } from 'lucide-react';
+import { ShieldCheck, FileSearch, ArrowRight, PlusCircle, Search, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -42,10 +44,23 @@ const Home = () => {
 
           <motion.p 
             variants={itemVariants} 
-            className="text-slate-500 max-w-2xl mx-auto text-sm md:text-base font-medium opacity-85 leading-relaxed"
+            className="text-slate-500 max-w-2xl mx-auto text-sm md:text-base font-medium opacity-85 leading-relaxed mb-8"
           >
             Provide employees with a trusted platform to report concerns while enabling organizations to resolve issues responsibly.
           </motion.p>
+
+          {user && (
+            <motion.div variants={itemVariants} className="flex justify-center">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="h-12 px-8 bg-slate-900 text-white text-[13px] font-black rounded-2xl shadow-xl shadow-slate-900/20 transition-all flex items-center gap-3 hover:bg-slate-800 active:scale-95 group"
+              >
+                <LayoutDashboard size={18} className="text-indigo-400 group-hover:rotate-12 transition-transform" />
+                <span>Return to Dashboard</span>
+                <ArrowRight size={16} />
+              </button>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Compact Action Cards */}
@@ -76,7 +91,7 @@ const Home = () => {
               </div>
             </div>
 
-            <h3 className="text-lg font-bold text-slate-800 mb-1 tracking-tight uppercase tracking-wider">Submit Safe Report</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-1 uppercase tracking-wider">Submit Safe Report</h3>
             <p className="text-slate-400 text-[12px] font-medium mb-8 max-w-[240px]">Report misconduct securely and anonymously.</p>
             
             <button 
@@ -109,7 +124,7 @@ const Home = () => {
               </div>
             </div>
 
-            <h3 className="text-lg font-bold text-slate-800 mb-1 tracking-tight uppercase tracking-wider">Track Existing Report</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-1 uppercase tracking-wider">Track Existing Report</h3>
             <p className="text-slate-400 text-[12px] font-medium mb-8 max-w-[240px]">Check the status of your submitted report.</p>
             
             <button 

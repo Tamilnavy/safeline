@@ -33,6 +33,28 @@ public class ComplaintService {
     private final PasswordEncoder passwordEncoder;
     private final AnonymityService anonymityService;
 
+    @jakarta.annotation.PostConstruct
+    public void syncLegacyData() {
+        System.out.println("DEBUG: Starting Data Sync for Legacy Complaints...");
+        List<Complaint> all = complaintRepository.findAll();
+        for (Complaint c : all) {
+            boolean changed = false;
+            // Sync isSensitive (boolean) with type (enum)
+            if (c.getType() == ComplaintType.SENSITIVE && !c.isSensitive()) {
+                c.setSensitive(true);
+                changed = true;
+            } else if (c.getType() == ComplaintType.NORMAL && c.isSensitive()) {
+                c.setSensitive(false);
+                changed = true;
+            }
+            
+            if (changed) {
+                complaintRepository.save(c);
+            }
+        }
+        System.out.println("DEBUG: Data Sync Completed.");
+    }
+
     private String getCurrentUser() {
         org.springframework.security.core.Authentication auth = 
             org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();

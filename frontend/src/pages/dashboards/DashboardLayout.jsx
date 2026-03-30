@@ -42,12 +42,15 @@ const DashboardLayout = () => {
     { label: 'Overview', icon: LayoutDashboard, path: '/dashboard', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
     { label: 'Submit Complaint', icon: PlusCircle, path: '/submit', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) && !u.committeePermissions?.includes('ESCALATION_HEAD') },
     { label: 'My Complaints', icon: FileText, path: '/dashboard/complaints', show: (u) => !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) && !u.committeePermissions?.includes('ESCALATION_HEAD') },
-    { label: 'Investigations', icon: ShieldCheck, path: '/dashboard/assigned', show: (u) => u.committeePermissions?.length > 0 && !['SUPER_ADMIN', 'ADMIN', 'ORG_ADMIN'].includes(u.role) },
-    
+    // Investigator Specialized Menus (Segmented by Role)
+    { label: 'Lead Oversight', icon: Users, path: '/dashboard/oversight', show: (u) => u.committeePermissions?.includes('COMMITTEE_LEAD') },
+    { label: 'Escalation Hub', icon: ShieldCheck, path: '/dashboard/escalation', show: (u) => u.committeePermissions?.includes('ESCALATION_HEAD') },
+    { label: 'My Assignments', icon: FileText, path: '/dashboard/handler', show: (u) => u.committeePermissions?.includes('COMPLAINT_HANDLER') },
+
     // Super Admin Menus
     { label: 'Global Overview', icon: LayoutDashboard, path: '/dashboard/overview', show: (u) => u.role === 'SUPER_ADMIN' },
     { label: 'Organization Registry', icon: Settings, path: '/dashboard/registry', show: (u) => u.role === 'SUPER_ADMIN' },
-    
+
     // Setup Admin Menus (Strictly Setup Role per Prompt)
     { label: 'Dashboard Overview', icon: LayoutDashboard, path: '/dashboard/org', show: (u) => ['ADMIN', 'ORG_ADMIN'].includes(u.role) },
     { label: 'User Management', icon: Users, path: '/dashboard/team', show: (u) => ['ADMIN', 'ORG_ADMIN'].includes(u.role) },
@@ -59,11 +62,19 @@ const DashboardLayout = () => {
     if (user.role === 'SUPER_ADMIN') return 'Platform Super Admin';
     if (user.role === 'ORG_ADMIN') return 'Organization Owner';
     if (user.role === 'ADMIN') return 'Admin';
-    
-    if (user.committeePermissions?.includes('ESCALATION_HEAD')) return 'Escalation Head';
-    if (user.committeePermissions?.includes('COMMITTEE_LEAD')) return 'Committee Lead';
-    if (user.committeePermissions?.includes('COMPLAINT_HANDLER')) return 'Complaint Handler';
-    
+
+    if (user.committeePermissions && user.committeePermissions.length > 0) {
+      // Map permissions to readable names and join
+      return user.committeePermissions
+        .map(p => {
+          if (p === 'ESCALATION_HEAD') return 'Escalation Head';
+          if (p === 'COMMITTEE_LEAD') return 'Committee Lead';
+          if (p === 'COMPLAINT_HANDLER') return 'Complaint Handler';
+          return p.replace(/_/g, ' ');
+        })
+        .join(' / ');
+    }
+
     return 'Employee';
   };
 
@@ -164,7 +175,10 @@ const DashboardLayout = () => {
               <Route path="/" element={<DashboardDispatcher user={user} />} />
               <Route path="/overview" element={user.role === 'SUPER_ADMIN' ? <SuperAdminOverview /> : <Navigate to="/dashboard" />} />
               <Route path="/complaints" element={<EmployeeDashboard />} />
-              <Route path="/assigned" element={user.committeePermissions?.length > 0 ? <InvestigatorDashboard /> : <Navigate to="/dashboard" />} />
+              <Route path="/oversight" element={<InvestigatorDashboard viewMode="LEAD" />} />
+              <Route path="/escalation" element={<InvestigatorDashboard viewMode="ESCALATION" />} />
+              <Route path="/handler" element={<InvestigatorDashboard viewMode="HANDLER" />} />
+              <Route path="/assigned" element={<Navigate to="/dashboard/handler" />} />
               <Route path="/complaint/:id" element={<InvestigationDetails />} />
               <Route path="/org" element={<OrgAdminDashboard />} />
               <Route
@@ -184,13 +198,18 @@ const DashboardLayout = () => {
 
 const DashboardDispatcher = ({ user }) => {
   if (user.role === 'SUPER_ADMIN') return <SuperAdminOverview />;
-  
+
   // Committee roles take precedence for investigators
-  if (user.committeePermissions?.length > 0) return <InvestigatorDashboard />;
-  
+  if (user.committeePermissions?.length > 0) {
+    let mode = 'HANDLER';
+    if (user.committeePermissions.includes('COMMITTEE_LEAD')) mode = 'LEAD';
+    else if (user.committeePermissions.includes('ESCALATION_HEAD')) mode = 'ESCALATION';
+    return <InvestigatorDashboard viewMode={mode} />;
+  }
+
   // Organization Admins land on Dashboard Overview
   if (user.role === 'ORG_ADMIN' || user.role === 'ADMIN') return <OrgAdminDashboard />;
-  
+
   // Default to Employee Dashboard
   return <EmployeeDashboard />;
 };
