@@ -44,14 +44,14 @@ public class CommunicationController {
             @RequestBody String content,
             Authentication auth) {
         
-        User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User user = userRepository.getAuthenticatedUser(auth.getName());
         return ResponseEntity.ok(communicationService.sendMessageAsStaff(complaintId, content, user));
     }
 
     @GetMapping("/messages-staff/{complaintId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ComplaintMessage>> getAsStaff(@PathVariable Long complaintId, Authentication auth) {
-        User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User user = userRepository.getAuthenticatedUser(auth.getName());
         return ResponseEntity.ok(communicationService.getMessagesForStaff(complaintId, user));
     }
 }

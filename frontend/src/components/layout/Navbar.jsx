@@ -33,12 +33,7 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-2">
-                <Link
-                  to="/dashboard"
-                  className="h-9 px-5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center whitespace-nowrap"
-                >
-                  Dashboard
-                </Link>
+
                 <button
                   onClick={() => { logout(); navigate('/'); }}
                   className="h-9 px-4 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 text-[11px] font-bold rounded-lg transition-all"

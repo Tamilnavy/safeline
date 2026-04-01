@@ -62,10 +62,17 @@ public class AuthController {
         response.setToken(token);
         response.setUsername(userDetails.getUsername());
         
-        userRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
-            response.setRole(u.getRole());
-            response.setCommitteePermissions(u.getCommitteePermissions());
-        });
+        try {
+             Long userTenantId = (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails) ?
+                     ((com.safeline.safeline.security.TenantAwareUserDetails) userDetails).getTenantId() : null;
+             User u = userTenantId != null ? 
+                      userRepository.findByUsernameAndTenantId(userDetails.getUsername(), userTenantId).orElse(null) :
+                      userRepository.findByUsername(userDetails.getUsername()).stream().filter(user -> user.getTenant() == null).findFirst().orElse(null);
+             if (u != null) {
+                 response.setRole(u.getRole());
+                 response.setCommitteePermissions(u.getCommitteePermissions());
+             }
+        } catch (Exception ignored) {}
 
         if (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails tenantUser) {
             Long tenantId = tenantUser.getTenantId();
@@ -151,10 +158,17 @@ public class AuthController {
             AuthResponse response = new AuthResponse();
             response.setToken(token);
             response.setUsername(userDetails.getUsername());
-            userRepository.findByUsername(userDetails.getUsername()).ifPresent(u -> {
-                response.setRole(u.getRole());
-                response.setCommitteePermissions(u.getCommitteePermissions());
-            });
+            try {
+                 Long userTenantId = (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails) ?
+                         ((com.safeline.safeline.security.TenantAwareUserDetails) userDetails).getTenantId() : null;
+                 User u = userTenantId != null ? 
+                          userRepository.findByUsernameAndTenantId(userDetails.getUsername(), userTenantId).orElse(null) :
+                          userRepository.findByUsername(userDetails.getUsername()).stream().filter(user -> user.getTenant() == null).findFirst().orElse(null);
+                 if (u != null) {
+                     response.setRole(u.getRole());
+                     response.setCommitteePermissions(u.getCommitteePermissions());
+                 }
+            } catch (Exception ignored) {}
 
             if (userDetails instanceof com.safeline.safeline.security.TenantAwareUserDetails) {
                 response.setTenantId(

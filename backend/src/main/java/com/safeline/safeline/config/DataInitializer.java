@@ -8,7 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
+
 import java.util.Set;
 import java.util.HashSet;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -40,6 +40,28 @@ public class DataInitializer implements CommandLineRunner {
                 jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN access_role DROP NOT NULL");
             } catch (Exception e) {
                 // Ignore if column doesn't exist
+            }
+
+            // Drop legacy global unique constraints on email and username
+            try {
+                jdbcTemplate.execute(
+                    "DO $$ DECLARE " +
+                    "   row record; " +
+                    "BEGIN " +
+                    "   FOR row IN SELECT tc.constraint_name " +
+                    "   FROM information_schema.table_constraints tc " +
+                    "   JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) " +
+                    "   WHERE constraint_type = 'UNIQUE' AND tc.table_name = 'users' " +
+                    "   AND ccu.column_name IN ('email', 'username') " +
+                    "   GROUP BY tc.constraint_name HAVING count(*) = 1 " + // Only drop single-column unique constraints
+                    "   LOOP " +
+                    "       EXECUTE 'ALTER TABLE users DROP CONSTRAINT ' || quote_ident(row.constraint_name); " +
+                    "   END LOOP; " +
+                    "END; $$"
+                );
+                System.out.println("DEBUG: Dropped legacy global unique constraints on users table.");
+            } catch (Exception e) {
+                System.err.println("WARNING: Failed to drop legacy unique constraints: " + e.getMessage());
             }
             
             // Complaints table
@@ -85,7 +107,8 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createTestUser(String username, String fullName, String empId, String email, String password, Tenant tenant, String role, Set<CommitteePermission> perms) {
-        User user = userRepository.findByUsername(username).orElseGet(() -> {
+        java.util.List<User> users = userRepository.findByUsername(username);
+        User user = users.stream().filter(u -> u.getTenant() == tenant).findFirst().orElseGet(() -> {
             User u = new User();
             u.setUsername(username);
             u.setPassword(passwordEncoder.encode(password));

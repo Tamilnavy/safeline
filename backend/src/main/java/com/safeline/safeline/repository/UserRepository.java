@@ -5,12 +5,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUsername(String username);
-    Optional<User> findByUsernameIgnoreCase(String username);
+    java.util.List<User> findByUsername(String username);
+    java.util.List<User> findByUsernameIgnoreCase(String username);
     Optional<User> findByUsernameAndTenantId(String username, Long tenantId);
     Optional<User> findByUsernameIgnoreCaseAndTenantId(String username, Long tenantId);
-    Optional<User> findByEmail(String email);
+    java.util.List<User> findByEmail(String email);
+    Optional<User> findByEmailAndTenantId(String email, Long tenantId);
     Optional<User> findByEmployeeIdAndTenantId(String employeeId, Long tenantId);
+
+    default User getAuthenticatedUser(String username) {
+        Long tenantId = com.safeline.safeline.security.TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return findByUsernameAndTenantId(username, tenantId).orElseThrow(() -> new RuntimeException("User not found: " + username));
+        }
+        java.util.List<User> users = findByUsername(username);
+        if (users.isEmpty()) throw new RuntimeException("User not found: " + username);
+        return users.stream().filter(u -> u.getTenant() == null).findFirst()
+                .orElseThrow(() -> new RuntimeException("Ambiguous user without tenant context: " + username));
+    }
 
     @org.springframework.data.jpa.repository.Query(
         value = "SELECT DISTINCT u.* FROM users u " +

@@ -3,16 +3,8 @@ package com.safeline.safeline.service;
 import com.safeline.safeline.model.*;
 import com.safeline.safeline.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.stream.Collectors;
-import java.util.Set;
-import org.springframework.security.core.GrantedAuthority;
 
 @Service
 @RequiredArgsConstructor
@@ -111,15 +103,27 @@ public class ComplaintActionService {
             throw new RuntimeException("Unauthorized: Please log in to update case status.");
         }
 
-        User currentUser = userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new RuntimeException("User not found: " + auth.getName()));
+        Long tenantId = null;
+        if (auth.getPrincipal() instanceof com.safeline.safeline.security.TenantAwareUserDetails tenantUser) {
+            tenantId = tenantUser.getTenantId();
+        }
+
+        User currentUser;
+        if (tenantId != null) {
+            currentUser = userRepository.findByUsernameAndTenantId(auth.getName(), tenantId)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + auth.getName()));
+        } else {
+            java.util.List<User> users = userRepository.findByUsername(auth.getName());
+            if (users.isEmpty()) throw new RuntimeException("User not found: " + auth.getName());
+            currentUser = users.stream().filter(u -> u.getTenant() == null).findFirst()
+                    .orElseThrow(() -> new RuntimeException("Ambiguous user: " + auth.getName()));
+        }
 
         boolean isEscalation = currentUser.getCommitteePermissions() != null && 
             currentUser.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD);
         boolean isLead = currentUser.getCommitteePermissions() != null && 
             currentUser.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD);
-        boolean isHandler = currentUser.getCommitteePermissions() != null && 
-            currentUser.getCommitteePermissions().contains(CommitteePermission.COMPLAINT_HANDLER);
+
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
 
         // Rule 1: CLOSED → only Committee Lead, Escalation Head, or SuperAdmin
@@ -139,25 +143,27 @@ public class ComplaintActionService {
 
         // Rule 3: When case is RESOLVED → notify all Committee Leads in the tenant
         if (status == ComplaintStatus.RESOLVED && previousStatus != ComplaintStatus.RESOLVED) {
-            Long tenantId = currentUser.getTenant() != null ? currentUser.getTenant().getId() : null;
-            if (tenantId != null) {
-                java.util.List<User> tenantUsers = userRepository.findByTenantId(tenantId);
+            String resolutionDetail = String.format(
+                "RESOLUTION ALERT: Case #%s (%s) has been marked RESOLVED by %s. Please review and close the case.",
+                updated.getTrackingId(), updated.getTitle(), auth.getName()
+            );
+            
+            // Log global activity once for the timeline
+            complaintService.logActivity(updated.getId(), "RESOLUTION_PENDING_REVIEW", auth.getName(), resolutionDetail);
+
+            Long currentTenantId = currentUser.getTenant() != null ? currentUser.getTenant().getId() : null;
+            if (currentTenantId != null) {
+                java.util.List<User> tenantUsers = userRepository.findByTenantId(currentTenantId);
                 tenantUsers.stream()
                     .filter(u -> u.getCommitteePermissions() != null &&
                                  u.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD))
                     .forEach(lead -> {
-                        String notifyDetail = String.format(
-                            "RESOLUTION ALERT: Case #%s (%s) has been marked RESOLVED by %s. Please review and close the case.",
-                            updated.getTrackingId(), updated.getTitle(), auth.getName()
-                        );
-                        complaintService.logActivity(updated.getId(), "RESOLUTION_PENDING_REVIEW", lead.getUsername(), notifyDetail);
-                        
-                        // Push to real notification bell system
+                        // Push to real notification bell system for each lead
                         notificationService.createNotification(
                             lead.getUsername(),
                             "Case " + updated.getTrackingId() + " marked RESOLVED by " + auth.getName(),
                             updated.getId(),
-                            tenantId
+                            currentTenantId
                         );
                     });
             }

@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.stream.Collectors;
+
 
 @Service
 public class SafelineUserDetailsService implements UserDetailsService {
@@ -28,11 +28,19 @@ public class SafelineUserDetailsService implements UserDetailsService {
         User user;
         if (tenantId != null) {
             user = userRepository.findByUsernameIgnoreCaseAndTenantId(username, tenantId)
-                    .orElseGet(() -> userRepository.findByUsernameIgnoreCase(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username)));
+                    .orElseGet(() -> {
+                        java.util.List<User> users = userRepository.findByUsernameIgnoreCase(username);
+                        if (users.isEmpty()) throw new UsernameNotFoundException("User not found in this domain: " + username);
+                        return users.stream().filter(u -> u.getTenant() == null).findFirst().orElseThrow(() -> 
+                            new UsernameNotFoundException("User not found in this domain, and is not a global administrator: " + username)
+                        );
+                    });
         } else {
-            user = userRepository.findByUsernameIgnoreCase(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+            java.util.List<User> users = userRepository.findByUsernameIgnoreCase(username);
+            if (users.isEmpty()) throw new UsernameNotFoundException("User not found: " + username);
+            user = users.stream().filter(u -> u.getTenant() == null).findFirst().orElseThrow(() -> 
+                new UsernameNotFoundException("No domain context provided and user is not a global administrator: " + username)
+            );
         }
 
         if (user.getTenant() != null) {

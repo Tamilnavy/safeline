@@ -181,7 +181,6 @@ const InvestigatorDashboard = ({ viewMode }) => {
               user={user}
               showAssignment={viewMode === 'LEAD' || isOrgAdmin}
               onAssign={handleAssign}
-              onUpdateStatus={updateStatus}
               onPageChange={setPage}
               onFilterChange={(s) => { setFilter(s); setPage(0); }}
               onViewDetails={(complaint) => navigate(`/dashboard/complaint/${complaint.id}`)}

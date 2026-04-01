@@ -29,7 +29,7 @@ public class EvidenceController {
         
         Complaint complaint = evidence.getComplaint();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User currentUser = userRepository.getAuthenticatedUser(auth.getName());
         
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
         boolean isCommitteeMember = currentUser.getCommitteePermissions() != null && 

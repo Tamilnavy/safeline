@@ -21,7 +21,7 @@ const StatusUpdateModal = ({ show, setShow, complaint, user, handleUpdateStatus 
                   </div>
                   <div>
                     <h3 className="text-xl font-black text-slate-900">Resolution Center</h3>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Update Lifecycle Status</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Update Case Status</p>
                   </div>
                 </div>
                 <button
@@ -37,10 +37,12 @@ const StatusUpdateModal = ({ show, setShow, complaint, user, handleUpdateStatus 
                   .filter(s => {
                     const isLead = user?.committeePermissions?.includes('COMMITTEE_LEAD');
                     const isEscalation = user?.committeePermissions?.includes('ESCALATION_HEAD');
+                    const isHandler = user?.committeePermissions?.includes('COMPLAINT_HANDLER');
                     const isAssigned = user?.id === complaint.assignedToId;
+                    
                     if (s === 'CLOSED') return isLead || isEscalation;
                     if (['UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'ASSIGNED'].includes(s)) {
-                      return isAssigned || isLead || isEscalation;
+                      return isAssigned || isLead || isEscalation || isHandler;
                     }
                     return true;
                   })

@@ -33,6 +33,7 @@ const InvestigationHeader = ({ complaint, isStaff, isReporter, user, setShowStat
         {(isStaff && !isReporter && (
           user?.committeePermissions?.includes('COMMITTEE_LEAD') ||
           user?.committeePermissions?.includes('ESCALATION_HEAD') ||
+          user?.committeePermissions?.includes('COMPLAINT_HANDLER') ||
           user?.id === complaint.assignedToId
         )) && (
           <motion.button
@@ -44,7 +45,7 @@ const InvestigationHeader = ({ complaint, isStaff, isReporter, user, setShowStat
             <Settings size={14} />
             {complaint.status === 'RESOLVED' && (user?.committeePermissions?.includes('COMMITTEE_LEAD') || user?.committeePermissions?.includes('ESCALATION_HEAD'))
               ? 'Finalize & Close Case'
-              : 'Update Case Status'}
+              : 'Update Status'}
           </motion.button>
         )}
       </div>

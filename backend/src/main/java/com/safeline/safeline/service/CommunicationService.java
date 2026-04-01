@@ -57,17 +57,12 @@ public class CommunicationService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
 
-        boolean isEscalation = sender.getCommitteePermissions() != null && 
-            sender.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.ESCALATION_HEAD);
-        boolean isLead = sender.getCommitteePermissions() != null && 
-            sender.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.COMMITTEE_LEAD);
-
         boolean isReporter = complaint.getReporter() != null && complaint.getReporter().getId().equals(sender.getId());
 
-        // Security Restriction: Leads/Heads cannot send messages unless they are the reporter
-        if (!isReporter && (isLead && !isEscalation)) {
-            throw new RuntimeException("Committee Leads are not authorized to send internal messages.");
-        }
+        // Rule: Leads/Heads/Handlers have permission to participate.
+        // We ensure ORG_ADMIN/ADMIN are also treated as staff via controller logic.
+        // There's no longer a restriction blocking Leads from sending messages.
+
         
         ComplaintMessage message = new ComplaintMessage();
         message.setComplaint(complaint);
@@ -75,7 +70,7 @@ public class CommunicationService {
         message.setSender(sender);
         
         // Scenario A: Reporter sends message -> Notify Assigned Investigator
-        if (complaint.getReporter() != null && complaint.getReporter().getId().equals(sender.getId())) {
+        if (isReporter) {
             message.setSenderRole("REPORTER");
             if (complaint.getAssignedTo() != null) {
                 notificationService.createNotification(
@@ -116,22 +111,12 @@ public class CommunicationService {
 
     // 4. Get messages for staff
     public List<ComplaintMessage> getMessagesForStaff(Long complaintId, User staff) {
-        Complaint complaint = complaintRepository.findById(complaintId)
-                .orElseThrow(() -> new RuntimeException("Complaint not found"));
-
-        boolean isEscalation = staff.getCommitteePermissions() != null && 
-            staff.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.ESCALATION_HEAD);
-        boolean isLead = staff.getCommitteePermissions() != null && 
-            staff.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.COMMITTEE_LEAD);
-        boolean isHandler = staff.getCommitteePermissions() != null && 
-            staff.getCommitteePermissions().contains(com.safeline.safeline.model.CommitteePermission.COMPLAINT_HANDLER);
-
-        boolean isReporter = complaint.getReporter() != null && complaint.getReporter().getId().equals(staff.getId());
-
-        // Security Restriction: Leads/Heads cannot read messages unless assigned OR they are the reporter
-        if (!isReporter && (isLead && !isEscalation && !isHandler)) {
-            throw new RuntimeException("Committee Leads are not authorized to view internal messages.");
+        if (!complaintRepository.existsById(complaintId)) {
+            throw new RuntimeException("Complaint not found");
         }
+
+        // All committee members (Leads, Heads, Handlers) and the Reporter can monitor internal messages.
+
         
         return messageRepository.findByComplaintIdOrderByCreatedAtAsc(complaintId);
     }

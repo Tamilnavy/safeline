@@ -26,15 +26,13 @@ const ComplaintTable = ({
   onSortChange
 }) => {
   const statusStages = ['ALL', 'SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED'];
-  const updateStages = ['SUBMITTED', 'ASSIGNED', 'UNDER_REVIEW', 'INVESTIGATING', 'RESOLVED', 'CLOSED'];
+
 
   // Track open role popover
   const [editingRoleId, setEditingRoleId] = useState(null);
   const [activeRoleLevel, setActiveRoleLevel] = useState(null);
   const [rolePopupStyle, setRolePopupStyle] = useState({});
-  // Track which complaint row has its status dropdown open
-  const [editingStatusId, setEditingStatusId] = useState(null);
-  const [popupStyle, setPopupStyle] = useState({});
+
 
   const toggleRolePopup = (e, complaint) => {
     e.stopPropagation();
@@ -54,22 +52,7 @@ const ComplaintTable = ({
     setActiveRoleLevel(null);
   };
 
-  const toggleStatusPopup = (e, id) => {
-    e.stopPropagation();
-    if (editingStatusId === id) {
-      setEditingStatusId(null);
-      return;
-    }
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPopupStyle({
-      position: 'fixed',
-      top: rect.bottom + 6,
-      right: window.innerWidth - rect.right,
-      zIndex: 201,
-      width: 'max-content'
-    });
-    setEditingStatusId(id);
-  };
+
 
   const getStatusVariant = (status) => {
     switch (status) {
@@ -327,7 +310,7 @@ const ComplaintTable = ({
                           className="p-2 rounded-lg text-indigo-600 transition-all border border-slate-200 hover:border-indigo-200 bg-white hover:bg-indigo-50 shadow-sm"
                           title="Open Investigation Console"
                         >
-                          {isLead ? <Eye size={16} /> : <MessageSquare size={16} />}
+                          {viewMode === 'LEAD' || viewMode === 'ESCALATION' || viewMode === 'HANDLER' || isOrgAdmin ? <Eye size={16} /> : <MessageSquare size={16} />}
                         </motion.button>
                       </div>
                     </td>

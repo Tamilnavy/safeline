@@ -51,8 +51,10 @@ public class UserService {
             String normalizedId = normalizeEmployeeId(request.getEmployeeId());
             request.setEmployeeId(normalizedId);
 
-            if (request.getEmail() != null && userRepository.findByEmail(request.getEmail()).isPresent()) {
-                throw new IllegalArgumentException("Email '" + request.getEmail() + "' is already in use");
+            if (request.getEmail() != null && request.getTenantId() != null) {
+                if (userRepository.findByEmailAndTenantId(request.getEmail(), request.getTenantId()).isPresent()) {
+                    throw new IllegalArgumentException("Email '" + request.getEmail() + "' is already in use in this organization");
+                }
             }
 
             User user = new User();
@@ -99,8 +101,8 @@ public class UserService {
 
             // Map employee ID securely to the unique Login Handle (username)
             String loginHandle = request.getEmployeeId();
-            if (userRepository.findByUsername(loginHandle).isPresent()) {
-                throw new IllegalArgumentException("Employee ID '" + request.getEmployeeId() + "' is already registered globally.");
+            if (userRepository.findByUsernameAndTenantId(loginHandle, effectiveTenantId).isPresent()) {
+                throw new IllegalArgumentException("Employee ID '" + request.getEmployeeId() + "' is already registered in this organization.");
             }
             user.setUsername(loginHandle);
 

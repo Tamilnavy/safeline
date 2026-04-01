@@ -69,8 +69,10 @@ public class PublicComplaintController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String domain) throws Exception {
         ComplaintRequest request = objectMapper.readValue(requestStr, ComplaintRequest.class);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User reporter = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) 
-                ? userRepository.findByUsername(auth.getName()).orElse(null) : null;
+        User reporter = null;
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            try { reporter = userRepository.getAuthenticatedUser(auth.getName()); } catch (Exception ignored) {}
+        }
 
         Tenant tenant;
         if (reporter != null && reporter.getTenant() != null) {
@@ -130,7 +132,7 @@ public class PublicComplaintController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User user = userRepository.getAuthenticatedUser(auth.getName());
         Page<Complaint> complaints = complaintQueryService.getMyComplaints(user.getId(), pageable);
         return ResponseEntity.ok(complaints.map(mapper::mapToResponse));
     }

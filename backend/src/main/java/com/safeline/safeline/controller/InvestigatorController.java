@@ -65,8 +65,12 @@ public class InvestigatorController {
             
             if (finalTenantId == null) return ResponseEntity.badRequest().build();
             
-            User user = userRepository.findByUsername(currentAuth.getName()).orElse(null);
-            if (user == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            User user;
+            try {
+                user = userRepository.getAuthenticatedUser(currentAuth.getName());
+            } catch (Exception ex) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
             
             boolean isSuperAdmin = currentAuth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
             java.util.Set<CommitteePermission> perms = user.getCommitteePermissions();
@@ -98,7 +102,7 @@ public class InvestigatorController {
     @Transactional(readOnly = true)
     public ResponseEntity<ComplaintResponse> getById(@PathVariable Long id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User currentUser = userRepository.getAuthenticatedUser(auth.getName());
         Complaint complaint = complaintQueryService.getById(id);
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
         boolean isCommitteeMember = currentUser.getCommitteePermissions() != null && 
@@ -116,7 +120,7 @@ public class InvestigatorController {
     @Transactional(readOnly = true)
     public ResponseEntity<Page<ComplaintResponse>> getAssigned(
             Authentication auth, @RequestParam(required = false) ComplaintStatus status, @RequestParam(required = false) String search, Pageable pageable) {
-        User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User user = userRepository.getAuthenticatedUser(auth.getName());
         org.springframework.data.domain.Sort remappedSort = org.springframework.data.domain.Sort.by(
             pageable.getSort().stream().map(order -> {
                 String prop = order.getProperty().replace("createdAt", "created_at").replace("updatedAt", "updated_at");
@@ -133,7 +137,7 @@ public class InvestigatorController {
             @PathVariable Long id, @RequestParam Priority priority,
             @RequestParam Classification classification, @RequestParam(required = false) ComplaintStatus status) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User user = userRepository.getAuthenticatedUser(auth.getName());
         boolean isCommitteeLead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD);
         boolean isEscalationHead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD);
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));
@@ -154,7 +158,7 @@ public class InvestigatorController {
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'ORG_ADMIN', 'ADMIN') or isAuthenticated()")
     public ResponseEntity<?> assign(@PathVariable Long id, @RequestParam Long investigatorId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User user = userRepository.findByUsername(auth.getName()).orElseThrow();
+        User user = userRepository.getAuthenticatedUser(auth.getName());
         boolean isCommitteeLead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.COMMITTEE_LEAD);
         boolean isEscalationHead = user.getCommitteePermissions() != null && user.getCommitteePermissions().contains(CommitteePermission.ESCALATION_HEAD);
         boolean isSuperAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SUPER_ADMIN"));

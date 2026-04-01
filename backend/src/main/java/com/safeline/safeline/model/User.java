@@ -12,7 +12,10 @@ import org.hibernate.annotations.ParamDef;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+    @UniqueConstraint(columnNames={"username", "tenant_id"}),
+    @UniqueConstraint(columnNames={"email", "tenant_id"})
+})
 @lombok.Getter
 @lombok.Setter
 @lombok.EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -25,7 +28,7 @@ public class User {
     @lombok.EqualsAndHashCode.Include
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String username;
 
     @Column(name = "full_name")
@@ -37,7 +40,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)

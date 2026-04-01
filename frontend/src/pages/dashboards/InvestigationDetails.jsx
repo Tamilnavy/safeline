@@ -92,7 +92,7 @@ const InvestigationDetails = () => {
   );
 
   const isReporter = user?.id === complaint?.reporterId || (user?.username && complaint?.reporterUsername && user.username === complaint.reporterUsername);
-  const isStaff = user?.committeePermissions && user.committeePermissions.length > 0;
+  const isStaff = (user?.committeePermissions && user.committeePermissions.length > 0) || ['ORG_ADMIN', 'ADMIN'].includes(user?.role);
   const canManage = isStaff && !isReporter;
 
   return (
@@ -130,7 +130,7 @@ const InvestigationDetails = () => {
               onDownload={handleDownloadEvidence}
             />
 
-            {(!user?.committeePermissions?.includes('COMMITTEE_LEAD') || isReporter || user.id === complaint.assignedToId) && (
+            {(isStaff || isReporter) && (
               <div className="bg-white rounded-[40px] shadow-2xl shadow-indigo-500/5 border border-white overflow-hidden flex flex-col min-h-[550px]">
                 <div className="bg-white rounded-b-[40px] overflow-hidden flex flex-col h-[500px]">
                   <div className="flex-1 relative min-h-0">
